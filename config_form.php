@@ -200,35 +200,33 @@ class saas_export_config_form extends moodleform {
                         foreach ($mapped_courses as $mapped_course) {
                             $offer_title = $mapped_course->name . ' ('. $mapped_course->year .'-'. $mapped_course->period . ')';
                             $mform->addElement('header', $offer_title, $offer_title);
-                            if ($mapped_course->categoryid != -1) {
-                                $sql = "SELECT DISTINCT g.name
-                                          FROM {saas_ofertas_disciplinas} AS od
-                                          JOIN {groups} AS g
-                                            ON g.courseid = od.courseid
-                                         WHERE od.enable = 1
-                                           AND od.saas_course_offer_id = ?";
-                                $params = array('course_offer_id'=> $mapped_course->id);
+                            $sql = "SELECT DISTINCT g.name
+                                      FROM {saas_ofertas_disciplinas} AS od
+                                      JOIN {groups} AS g
+                                        ON g.courseid = od.courseid
+                                     WHERE od.enable = 1
+                                       AND od.saas_course_offer_id = ?";
+                            $params = array('course_offer_id'=> $mapped_course->id);
 
-                                $groups = $DB->get_records_sql($sql, $params);
-                                $not_mapped_groups = array();
+                            $groups = $DB->get_records_sql($sql, $params);
+                            $not_mapped_groups = array();
 
-                                if (empty($groups)) {
-                                    $mform->addElement('html', get_string('no_groups_found','report_saas_export'));
-                                } else {
-                                    foreach ($groups as $g) {
-                                        if (array_key_exists($g->name, $mapped_polos)) {
-                                            $mform->addElement('advcheckbox', 'map['.$mapped_course->id.']['.$g->name.']', $g->name, '', null, array(0,1));
-                                            $mform->setDefault('map['.$mapped_course->id.']['.$g->name.']', $mapped_polos[$g->name]);
-                                        } else {
-                                            $not_mapped_groups[] = $g;
-                                        }
+                            if (empty($groups)) {
+                                $mform->addElement('html', get_string('no_groups_found','report_saas_export'));
+                            } else {
+                                foreach ($groups as $g) {
+                                    if (array_key_exists($g->name, $mapped_polos)) {
+                                        $mform->addElement('advcheckbox', 'map['.$mapped_course->id.']['.$g->name.']', $g->name, '', null, array(0,1));
+                                        $mform->setDefault('map['.$mapped_course->id.']['.$g->name.']', $mapped_polos[$g->name]);
+                                    } else {
+                                        $not_mapped_groups[] = $g;
                                     }
                                 }
+                            }
 
-                                if (!empty($not_mapped_groups)){
-                                    foreach ($not_mapped_groups as $g){
-                                        $mform->addElement('advcheckbox', 'map['.$mapped_course->id.']['.$g->name.']', $g->name, ' (Novo grupo Moodle)', null, array(0,1));
-                                    }
+                            if (!empty($not_mapped_groups)){
+                                foreach ($not_mapped_groups as $g){
+                                    $mform->addElement('advcheckbox', 'map['.$mapped_course->id.']['.$g->name.']', $g->name, ' (Novo grupo Moodle)', null, array(0,1));
                                 }
                             }
                         }

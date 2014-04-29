@@ -23,6 +23,8 @@ class saas {
         global $DB;
 	
         $this->config = get_config('saas_export');
+        $this->config->cpf_tutor_polo_field = $this->config->cpf_tutor_field;
+        $this->config->name_tutor_polo_field = $this->config->name_tutor_field;
     }
 
     function update_offers() {
@@ -187,21 +189,23 @@ class saas {
 
         $courses_offers_polos = $formdata->map;
         foreach ($courses_offers_polos as $course_id => $polos) {
+            $existing = $DB->get_records_menu('saas_polos', array('course_offer_id'=>$course_id), null, 'id, 1');
             foreach ($polos as $polo => $checked) {
-                if (!$DB->record_exists('saas_polos', array('groupname'=>$polo, 'course_offer_id'=>$course_id))){
-                    $record = new stdClass();
+                $record = new stdClass();
+                $record->enable = 1;
+                $record->is_polo = $checked;
+                if ($id = $DB->get_field('saas_polos', 'id', array('groupname'=>$polo, 'course_offer_id'=>$course_id))){
+                    $record->id = $id;
+                    $DB->update_record('saas_polos', $record);
+                    unset($existing[$id]);
+                } else {
                     $record->groupname = $polo;
                     $record->course_offer_id = $course_id;
-                    $record->is_polo = $checked;
-                    $DB->insert_record('saas_polos', $record);
-                } else {
-                    $sql = "UPDATE {saas_polos} AS sp
-                               SET is_polo = $checked
-                             WHERE sp.course_offer_id = :course_id
-                               AND sp.groupname = :groupname";
-                    $params = array('course_id'=>$course_id, 'groupname'=>$polo);
-                    $DB->execute($sql, $params);
+                    $id = $DB->insert_record('saas_polos', $record);
                 }
+            }
+            foreach($existing AS $id=>$v) {
+                $DB->set_field('saas_polos', 'enable', 0, array('id'=>$id));
             }
         }
     }
@@ -280,7 +284,6 @@ class saas {
                     ON (u.id = ra.userid)
                   {$join_custom_fields}
                  WHERE oc.enable = 1";
-
         return array($sql, $params);
     }
 
@@ -288,8 +291,7 @@ class saas {
     function send_users() {
         global $DB;
 
-        $user_types = array('student', 'tutor', 'teacher');
-        foreach ($user_types as $user_type) {
+        foreach (saas::$role_names as $user_type) {
 
             list($sql, $params) = $this->get_users_sql($user_type);
             $params['contextlevel'] = CONTEXT_COURSE;
@@ -364,6 +366,7 @@ class saas {
                    AND oc.saas_id = :course_offer_id
                    AND p.groupname = :groupname
                    AND p.is_polo = 1
+                   AND p.enable = 1
               ORDER BY u.username";
 
         $user = $DB->get_records_sql($sql,$params);
@@ -425,10 +428,18 @@ class saas {
                 list($in_sql, $in_params) = $DB->get_in_or_equal($roleids, SQL_PARAMS_NAMED);
                 $in_params['context'] = CONTEXT_COURSE;
 
+                if($r == 'tutor_polo') {
+                   $join = "JOIN {saas_polos} p ON (p.course_offer_id = oc.id AND p.enable = 1 AND p.is_polo = 1)
+                            JOIN {groups} g ON (g.courseid = c.id AND g.name = p.groupname)
+                            JOIN {groups_members} gm ON (gm.groupid = g.id AND gm.userid = ra.userid)";
+                } else {
+                    $join = '';
+                }
+
                 $sql = "SELECT oc.saas_id AS oferta_curso, od.saas_id as oferta_disciplina, 
                                COUNT(DISTINCT ra.userid) as count
-                          FROM {saas_ofertas_cursos} AS oc
-                          JOIN {saas_ofertas_disciplinas} AS od
+                          FROM {saas_ofertas_cursos} oc
+                          JOIN {saas_ofertas_disciplinas} od
                             ON (od.saas_course_offer_id = oc.id AND
                                 od.enable = 1)
                           JOIN {course} c
@@ -438,6 +449,7 @@ class saas {
                                 ctx.instanceid = c.id)
                           JOIN {role_assignments} ra
                             ON (ra.contextid = ctx.id)
+                          {$join}
                          WHERE oc.enable = 1
                            AND ra.roleid {$in_sql}
                          GROUP BY oc.saas_id, od.saas_id";
@@ -467,7 +479,8 @@ class saas {
                   JOIN {saas_polos} p
                     ON (p.course_offer_id = oc.id)
                  WHERE oc.enable = 1
-                   AND p.is_polo = 1";
+                   AND p.is_polo = 1
+                   AND p.enable = 1";
         $offers_polo = $DB->get_records_sql($sql);
         foreach ($offers_polo as $offer_polo){
             //send students
