@@ -21,7 +21,7 @@ class saas {
 
     function __construct() {
         global $DB;
-	
+
         $this->config = get_config('saas_export');
         $this->config->cpf_tutor_polo_field = $this->config->cpf_tutor_field;
         $this->config->name_tutor_polo_field = $this->config->name_tutor_field;
@@ -42,7 +42,21 @@ class saas {
            } catch (Exception $e){}
        }
     }
-    
+
+    function serialize_role_names($str_roleids){
+        if(empty($str_roleids)) {
+            return '';
+        }
+        $context = context_system::instance();
+        $role_names = role_fix_names(get_all_roles($context), $context);
+        $roleids = explode(',', $str_roleids);
+        $names = array();
+        foreach ($roleids as $rid){
+            $names[] = $role_names[$rid]->localname;
+        }
+        return implode(', ', $names);
+    }
+
     function get_mapped_polos_by_name() {
         global $DB;
 
@@ -87,7 +101,7 @@ class saas {
         }
         return $offers;
     }
-    
+
     function save_courses($courses_offers){
         global $DB;
 
@@ -100,7 +114,7 @@ class saas {
             $record->period = $course_offer->periodo;
             $record->periodicity = $course_offer->periodicidade;
             $record->enable = 1;
-            
+
             if (isset($offers[$course_offer->uid])){
                 $record->id = $offers[$course_offer->uid]->id;
                 $DB->update_record('saas_ofertas_cursos', $record);
@@ -121,10 +135,10 @@ class saas {
 
         return $count;
     }
-    
+
     function save_classes($classes_offers){
         global $DB;
-        
+
         $offers = $DB->get_records('saas_ofertas_disciplinas', null, null ,'saas_id, id, saas_course_offer_id, enable');
         $count = 0;
         foreach ($classes_offers as $class_offer){
@@ -146,7 +160,7 @@ class saas {
                 $count++;
             }
         }
-        
+
         foreach ($offers AS $saas_id=>$rec) {
             if($rec->enable){
                 $DB->set_field('saas_ofertas_disciplinas', 'enable', 0, array('id'=>$rec->id));
@@ -235,6 +249,12 @@ class saas {
     function get_users_sql($user_type) {
         global $DB;
 
+        $config_role = "{$user_type}_role";
+        $str_roleids = $this->config->{$config_role};
+        if(empty($str_roleids)) {
+            return false;
+        }
+
         $config_cpf = $this->config->{"cpf_{$user_type}_field"};
 
         $join_custom_fields = '';
@@ -265,8 +285,7 @@ class saas {
                    u.email, {$from_name} as nome,
                    {$cpf_field}";
 
-        $config_role = "{$user_type}_role";
-        list($in_sql, $params) = $DB->get_in_or_equal(explode(',', ($this->config->{$config_role})), SQL_PARAMS_NAMED);
+        list($in_sql, $params) = $DB->get_in_or_equal(explode(',', $str_roleids), SQL_PARAMS_NAMED);
         $sql = "SELECT DISTINCT {$fields}
                   FROM {saas_ofertas_cursos} AS oc
                   JOIN {saas_ofertas_disciplinas} AS od
@@ -292,55 +311,64 @@ class saas {
         global $DB;
 
         foreach (saas::$role_names as $user_type) {
-
             list($sql, $params) = $this->get_users_sql($user_type);
-            $params['contextlevel'] = CONTEXT_COURSE;
-            $users = $DB->get_recordset_sql($sql, $params);
-            $users_to_send = array();
-            $count = 0;
+            if (!empty($sql)){
+                $params['contextlevel'] = CONTEXT_COURSE;
+                $users = $DB->get_recordset_sql($sql, $params);
+                $users_to_send = array();
+                $count = 0;
 
-            foreach ($users as $u) {
-                if ($count > 100) {
+                foreach ($users as $u) {
+                    if ($count > 100) {
+                        $this->post_ws('pessoa', $users_to_send);
+                        $users_to_send = array();
+                        $count = 0;
+                    }
+
+                    if(preg_match('/[^0-9]*([0-9]{6,11})[^0-9]*/', $u->cpf, $matches)) {
+                        $u->cpf = $matches[1];
+                    }
+                    $users_to_send[] = $u;
+                    $count++;
+                }
+                if ($count > 0) {
                     $this->post_ws('pessoa', $users_to_send);
-                    $users_to_send = array();
-                    $count = 0;
                 }
-
-                if(preg_match('/[^0-9]*([0-9]{6,11})[^0-9]*/', $u->cpf, $matches)) {
-                    $u->cpf = $matches[1];
-                }
-                $users_to_send[] = $u;
-                $count++;
-            }
-            if ($count > 0) {
-                $this->post_ws('pessoa', $users_to_send);
             }
         }
     }
 
-    function get_users_by_role($roleid, $courseid){
-       global $DB;
-       
-       $context = context_course::instance($courseid);
-       $users = get_role_users($roleid, $context, false, "u.id, u.{$this->config->user_id_field}", 'u.id');
-       $users_to_send = array();
-
-       foreach ($users as $u){
-           $users_to_send[] = $u->{$this->config->user_id_field};
-       }
-       return $users_to_send;
-    }
-
-    function get_users_at_polo($roles, $course_offer_id, $groupname){
+    function get_users_by_role($str_roleids, $courseid){
         global $DB;
 
-        list($in_sql, $in_params) = $DB->get_in_or_equal(explode(',', ($roles)), SQL_PARAMS_NAMED);
-        
+        if(empty($str_roleids)) {
+            return array();
+        }
+
+        $context = context_course::instance($courseid);
+        $users = get_role_users(explode(',', $str_roleids), $context, false, "u.id, u.{$this->config->user_id_field}", 'u.id');
+        $users_to_send = array();
+
+        foreach ($users as $u){
+            $users_to_send[] = $u->{$this->config->user_id_field};
+        }
+        return $users_to_send;
+    }
+
+    function get_users_at_polo($str_roleids, $course_offer_id, $groupname){
+        global $DB;
+
+        if(empty($str_roleids)) {
+            return array();
+        }
+
+        list($in_sql, $in_params) = $DB->get_in_or_equal(explode(',', $str_roleids), SQL_PARAMS_NAMED);
+
         $field = 'u.' . $this->config->user_id_field;
         $context = CONTEXT_COURSE;
         $query_params = array('context'=>$context, 'course_offer_id'=>$course_offer_id, 'groupname'=>$groupname);
         $params = array_merge($query_params, $in_params);
-        
+
         $sql = "SELECT DISTINCT {$field} AS userfield
                   FROM {saas_ofertas_cursos} oc
                   JOIN {saas_ofertas_disciplinas} od
@@ -381,23 +409,25 @@ class saas {
     function get_total_users_to_send(){
         global $DB;
 
-        $role_ids = array();
+        $roleids = array();
         foreach(saas::$role_names as $r) {
             $role_name = $r . '_role';
             if(isset($this->config->$role_name) && !empty($this->config->$role_name)) {
-                $role_ids = array_merge($role_ids, explode(',', $this->config->$role_name));
+                $roleids = array_merge($roleids, explode(',', $this->config->$role_name));
             }
         }
 
-        if(empty($role_ids)) {
+        if(empty($roleids)) {
             return 0;
         }  
-        
+
+        $roleids = array_unique($roleids);
+
         //pega o total de usuários;
 
-        list($in_sql, $in_params) = $DB->get_in_or_equal($role_ids, SQL_PARAMS_NAMED);
+        list($in_sql, $in_params) = $DB->get_in_or_equal($roleids, SQL_PARAMS_NAMED);
         $in_params['context'] = CONTEXT_COURSE;
-        
+
         $sql = "SELECT count(DISTINCT u.id) AS total
                   FROM {saas_ofertas_cursos} AS oc
                   JOIN {saas_ofertas_disciplinas} AS od
@@ -413,13 +443,13 @@ class saas {
                         ra.roleid {$in_sql})
                   JOIN {user} u
                     ON (u.id = ra.userid)
-                 WHERE oc.enable = 1"; 
-        return $DB->count_records_sql($sql, $in_params); 
+                 WHERE oc.enable = 1";
+        return $DB->count_records_sql($sql, $in_params);
     }
-    
+
     function get_count_users(){
         global $DB;
-        
+
         $counts = array();
         foreach(saas::$role_names as $r) {
             $role_name = $r . '_role';
@@ -436,7 +466,7 @@ class saas {
                     $join = '';
                 }
 
-                $sql = "SELECT oc.saas_id AS oferta_curso, od.saas_id as oferta_disciplina, 
+                $sql = "SELECT oc.saas_id AS oferta_curso, od.saas_id as oferta_disciplina,
                                COUNT(DISTINCT ra.userid) as count
                           FROM {saas_ofertas_cursos} oc
                           JOIN {saas_ofertas_disciplinas} od
@@ -506,8 +536,8 @@ class saas {
                        'tutor' =>$this->config->tutor_role);
 
         foreach ($mapped_classes as $saas_id => $courseid){
-            foreach ($roles as $papel => $roleid){
-                $this->post_ws('oferta/disciplina/'.$papel.'/'.$saas_id, $this->get_users_by_role($roleid, $courseid));
+            foreach ($roles as $papel => $str_roleids){
+                $this->post_ws('oferta/disciplina/'.$papel.'/' . $saas_id, $this->get_users_by_role($str_roleids, $courseid));
             }
         }
     }
