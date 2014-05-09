@@ -113,7 +113,6 @@ if (isset($CFG->gradebookroles)) {
         $roles_labels[$r->id] = $role_names[$r->id]->localname;
     }
 
-    $roles_labels[''] = get_string('none');
     $id_teacher = $DB->get_field('role', 'id', array('shortname'=>'editingteacher'));
     $id_student = $DB->get_field('role', 'id', array('shortname'=>'student'));
     
