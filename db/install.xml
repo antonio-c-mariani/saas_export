@@ -8,7 +8,7 @@
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" NEXT="saas_id"/>
         <FIELD NAME="saas_id" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="id" NEXT="categoryid"/>
-        <FIELD NAME="categoryid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" PREVIOUS="saas_id" NEXT="name"/>
+        <FIELD NAME="categoryid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" UNSIGNED="false" PREVIOUS="saas_id" NEXT="name"/>
         <FIELD NAME="name" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="categoryid" NEXT="year"/>
         <FIELD NAME="year" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="name" NEXT="period"/>
         <FIELD NAME="period" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="year" NEXT="periodicity"/>
@@ -24,8 +24,8 @@
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" NEXT="saas_id"/>
         <FIELD NAME="saas_id" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="id" NEXT="saas_course_offer_id"/>
-        <FIELD NAME="saas_course_offer_id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" PREVIOUS="saas_id" NEXT="courseid"/>
-        <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" PREVIOUS="saas_course_offer_id" NEXT="beginning"/>
+        <FIELD NAME="saas_course_offer_id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" UNSIGNED="false" PREVIOUS="saas_id" NEXT="courseid"/>
+        <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" UNSIGNED="false" PREVIOUS="saas_course_offer_id" NEXT="beginning"/>
         <FIELD NAME="beginning" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="courseid" NEXT="ending"/>
         <FIELD NAME="ending" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="beginning" NEXT="name"/>
         <FIELD NAME="name" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="ending" NEXT="year"/>
@@ -43,7 +43,7 @@
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" NEXT="groupname"/>
         <FIELD NAME="groupname" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="id" NEXT="course_offer_id"/>
-        <FIELD NAME="course_offer_id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" PREVIOUS="groupname" NEXT="enable"/>
+        <FIELD NAME="course_offer_id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" UNSIGNED="false" PREVIOUS="groupname" NEXT="enable"/>
         <FIELD NAME="enable" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" SEQUENCE="false" PREVIOUS="course_offer_id" NEXT="is_polo"/>
         <FIELD NAME="is_polo" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" SEQUENCE="false" PREVIOUS="enable"/>
       </FIELDS>

@@ -21,15 +21,32 @@
  */
 
 defined('MOODLE_INTERNAL') || die();
+require_once($CFG->libdir.'/environmentlib.php');
 
-$capabilities = array(
+$current_version = normalize_version(get_config('', 'release'));
 
-    'report/saas_export:view' => array(
-        'riskbitmask' => RISK_CONFIG,
-        'captype' => 'read',
-        'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes' => array(
-            'manager' => CAP_ALLOW
-        ),
-    )
-);
+if (version_compare($current_version, '2.0', '>=')) {
+    $capabilities = array(
+
+        'report/saas_export:view' => array(
+            'riskbitmask' => RISK_CONFIG,
+            'captype' => 'read',
+            'contextlevel' => CONTEXT_SYSTEM,
+            'archetypes' => array(
+                'manager' => CAP_ALLOW
+            ),
+        )
+    );
+} else {
+    $report_saas_export_capabilities = array(
+
+        'report/saas_export:view' => array(
+            'riskbitmask' => RISK_CONFIG,
+            'captype' => 'read',
+            'contextlevel' => CONTEXT_SYSTEM,
+            'legacy' => array(
+                'admin' => CAP_ALLOW
+            ),
+        )
+    );
+}

@@ -20,20 +20,36 @@
  * @subpackage saas_export
  */
 
-require('../../config.php');
-require_once($CFG->dirroot . '/report/saas_export/config_form.php');
-require_once($CFG->dirroot . '/report/saas_export/lib.php');
-require_once($CFG->libdir.'/adminlib.php');
+if (strpos(__FILE__, '/admin/report/') !== false) {
+    $pluginpath = '/admin/report/saas_export';
+    require('../../../config.php');
+} else {
+    $pluginpath = '/report/saas_export';
+    require('../../config.php');
+}
 
 require_login();
 
-require_capability('report/saas_export:view', context_system::instance());
+require_once($CFG->dirroot.$pluginpath.'/lib.php');
+require_once($CFG->libdir.'/adminlib.php');
+
+$pluginurl = $CFG->wwwroot.$pluginpath.'/index.php';
+
+$current_version = normalize_version(get_config('', 'release'));
+if (version_compare($current_version, '2.0', '>=')) {
+    $context_system = context_system::instance();
+} else {
+    $context_system = get_context_instance(CONTEXT_SYSTEM);
+}
+require_capability('report/saas_export:view', $context_system);
 
 $step = optional_param('step', 0 , PARAM_INT);
 $level = optional_param('level', -1 , PARAM_INT);
 $option = optional_param('option', '', PARAM_ALPHA);
 
-admin_externalpage_setup('report_saas_export', '', null, '', array('pagelayout'=>'report'));
+admin_externalpage_setup('report_saas_export', '', array(), '', array('pagelayout'=>'report'));
+
+require_once($CFG->dirroot.$pluginpath.'/config_form.php');
 
 $saas = new saas();
 
@@ -41,7 +57,7 @@ $mform = new saas_export_config_form(null, array('step'=>$step, 'saas' => $saas)
 
 if ($mform->is_cancelled()) {
 
-    redirect(new moodle_url('/report/saas_export/index.php', array('step'=>0)));
+    redirect($pluginurl.'?step=0');
 
 } else if ($data = $mform->get_data()) {
     switch ($step) {
@@ -49,41 +65,50 @@ if ($mform->is_cancelled()) {
             if (isset($data->map)) {
                 $saas->save_courses_offers_mapping($data);
             }
-            redirect(new moodle_url('/report/saas_export/index.php', array('step'=>0)));
+            redirect($pluginurl.'?step=0');
             break;
 
         case 2:
             if (isset($data->map)) {
                 $saas->save_classes_offers_mapping($data);
             }
-            redirect(new moodle_url('/report/saas_export/index.php', array('step'=>0)));
+            redirect($pluginurl.'?step=0');
             break;
 
         case 3:
             if (isset($data->map)) {
                 $saas->save_polos_mapping($data);
             }
-            redirect(new moodle_url('/report/saas_export/index.php', array('step'=>0)));
+            redirect($pluginurl.'?step=0');
             break;
 
         case 4:
             try {
                 $saas->send_data();
-                redirect(new moodle_url('/report/saas_export/index.php', array('step'=>5)));
+                redirect($pluginurl.'?step=5');
             } catch (Exception $e) {
-                print_error('ws_error', 'report_saas_export', new moodle_url('/report/saas_export/index.php'), $e->getMessage());
+                print_error('ws_error', 'report_saas_export', $pluginurl, $e->getMessage());
             }
             break;
 
         case 5:
-            redirect(new moodle_url('/report/saas_export/index.php', array('step'=>0)));
+            redirect($pluginurl.'?step=0');
             break;
     }
 }
 
-echo $OUTPUT->header();
-echo $OUTPUT->heading(get_string('title', 'report_saas_export'), 3);
-echo $OUTPUT->box_start('generalbox');
-$mform->display();
-echo $OUTPUT->box_end();
-echo $OUTPUT->footer();
+if (version_compare($current_version, '2.0', '>=')) {
+    echo $OUTPUT->header();
+    echo $OUTPUT->heading(get_string('title', 'report_saas_export'), 3);
+    echo $OUTPUT->box_start('generalbox');
+    $mform->display();
+    echo $OUTPUT->box_end();
+    echo $OUTPUT->footer();
+} else {
+    admin_externalpage_print_header();
+    print_heading(get_string('title', 'report_saas_export'));
+    print_simple_box_start('center');
+    $mform->display();
+    print_simple_box_end();
+    print_footer();
+}

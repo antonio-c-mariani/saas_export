@@ -21,12 +21,18 @@
  * @subpackage saas-export
  * @copyright  2014 Caio Doneda and Daniel Neis
  */
-require_once($CFG->dirroot . '/report/saas_export/lib.php');
+require_once($CFG->libdir.'/environmentlib.php');
 
-global $DB;
+$current_version = normalize_version(get_config('', 'release'));
 
-$ADMIN->add('reports', new admin_externalpage('report_saas_export', get_string('pluginname', 'report_saas_export'), "$CFG->wwwroot/report/saas_export/index.php",'report/saas_export:view'));
-
+if (version_compare($current_version, '2.0', '>=')) {
+    require_once($CFG->dirroot . '/report/saas_export/lib.php');
+    $ADMIN->add('reports', new admin_externalpage('report_saas_export', get_string('pluginname', 'report_saas_export'), "$CFG->wwwroot/report/saas_export/index.php",'report/saas_export:view'));
+} else {
+    require_once($CFG->dirroot . '/admin/report/saas_export/lib.php');
+    $ADMIN->add('reports', new admin_externalpage('report_saas_export', get_string('pluginname', 'report_saas_export'), "$CFG->wwwroot/admin/report/saas_export/index.php",'report/saas_export:view'));
+    $settings = new admin_settingpage('saas_export_settings', get_string('settings', 'report_saas_export'));
+}
 $settings->add(new admin_setting_configtext('saas_export/ws_url',
                                             get_string('ws_url', 'report_saas_export'),
                                             get_string('desc_ws_url', 'report_saas_export'),
@@ -85,37 +91,68 @@ $settings->add(new admin_setting_configselect('saas_export/cpf_student_field',
                                             get_string('desc_cpf_field', 'report_saas_export', 'alunos'),
                                             'idnumber', $cpf_options));
 
-$context = context_system::instance();
+if (version_compare($current_version, '2.0', '>=')) {
+    $context = context_system::instance();
+} else {
+    $context = get_context_instance(CONTEXT_SYSTEM);
+}
 if (isset($CFG->gradebookroles)) {
     
-    $role_names = role_fix_names(get_all_roles($context), $context);    
+    if (version_compare($current_version, '2.0', '>=')) {
+        $roles = get_all_roles($context);
+    } else {
+        $roles = get_records_menu('role', null, 'name', 'id, name');
+    }
+    $role_names = role_fix_names($roles, $context);    
     
     $student_roles = $CFG->gradebookroles;
-    $sql_students = "SELECT *
-                       FROM {role}
-                      WHERE id IN ($student_roles)";
-    $roles_st = $DB->get_records_sql($sql_students);
-
     $student_roles_choices = array();
     $student_roles_labels = array();
-    foreach ($roles_st as $r) {
-        $student_roles_labels[$r->id] = $role_names[$r->id]->localname;
-    }
-
     $roles_to_hide = $student_roles .',1,6,7,8';//admin, guest ids.
-    $sql = "SELECT *
-              FROM {role}
-             WHERE id NOT IN ($roles_to_hide)";
-    $roles = $DB->get_records_sql($sql);
-
     $roles_labels = array();
-    foreach ($roles as $r) {
-        $roles_labels[$r->id] = $role_names[$r->id]->localname;
+    if (version_compare($current_version, '2.0', '>=')) {
+        $sql_students = "SELECT *
+                           FROM {role}
+                          WHERE id IN ({$student_roles})";
+        $roles_st = $DB->get_records_sql($sql_students);
+        foreach ($roles_st as $r) {
+            $student_roles_labels[$r->id] = $role_names[$r->id]->localname;
+        }
+
+        $sql = "SELECT *
+                  FROM {role}
+                 WHERE id NOT IN ({$roles_to_hide})";
+        $roles = $DB->get_records_sql($sql);
+
+        foreach ($roles as $r) {
+            $roles_labels[$r->id] = $role_names[$r->id]->localname;
+        }
+
+        $id_teacher = $DB->get_field('role', 'id', array('shortname'=>'editingteacher'));
+        $id_student = $DB->get_field('role', 'id', array('shortname'=>'student'));
+
+    } else {
+        $sql_students = "SELECT *
+                           FROM {$CFG->prefix}role
+                          WHERE id IN ({$student_roles})";
+        $roles_st = get_records_sql($sql_students);
+        foreach ($roles_st as $r) {
+            $student_roles_labels[$r->id] = $role_names[$r->id];
+        }
+
+        $sql = "SELECT *
+                  FROM {$CFG->prefix}role
+                 WHERE id NOT IN ({$roles_to_hide})";
+        $roles = get_records_sql($sql);
+
+        foreach ($roles as $r) {
+            $roles_labels[$r->id] = $role_names[$r->id];
+        }
+
+        $id_teacher = get_field('role', 'id', 'shortname', 'editingteacher');
+        $id_student = get_field('role', 'id', 'shortname', 'student');
     }
 
-    $id_teacher = $DB->get_field('role', 'id', array('shortname'=>'editingteacher'));
-    $id_student = $DB->get_field('role', 'id', array('shortname'=>'student'));
-    
     $settings->add(new admin_setting_configmultiselect('saas_export/teacher_role',
                                                 get_string('user_role', 'report_saas_export', 'professores'),
                                                 get_string('desc_user_role', 'report_saas_export', 'professores'),
@@ -136,4 +173,7 @@ if (isset($CFG->gradebookroles)) {
                                                 get_string('desc_user_role', 'report_saas_export', 'alunos'),
                                                 array($id_student), $student_roles_labels));
 
+}
+if (version_compare($current_version, '2.0', '<')) {
+    $ADMIN->add('reports', $settings, 0);
 }
