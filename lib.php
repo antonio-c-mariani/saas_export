@@ -325,8 +325,11 @@ class saas {
                         $count = 0;
                     }
 
-                    if(preg_match('/[^0-9]*([0-9]{6,11})[^0-9]*/', $u->cpf, $matches)) {
-                        $u->cpf = $matches[1];
+                    if(!empty($u->cpf) && preg_match('/^[^0-9]*([0-9]{3})[^0-9]?([0-9]{3})[^0-9]?([0-9]{3})[^0-9]?([0-9]{2})[^0-9]*$/', $u->cpf, $matches)) {
+                        unset($matches[0]);
+                        $u->cpf = implode('', $matches);
+                    }else {
+                        $u->cpf = '';
                     }
                     $users_to_send[] = $u;
                     $count++;
