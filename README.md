@@ -9,23 +9,44 @@ Os dados exportados incluem:
 - Relacionamento de professores, estudantes e tutores a distância com ofertas de disciplinas;
 - Relacionamento de estudantes e tutores presenciais com polos.
 
+DOWNLOAD
+========
+
+O plugin está disponível no seguinte endereço:
+    
+    https://github.com/saasexport/saas_export
+
+Para o download na forma de um .zip, basta clicar no Botão "Download ZIP" no canto inferior direito.
+
 INSTALAÇÃO
 ==========
-O relatório export_saas segue o procedimento padrão de instalação do Moodle:
 
-1. Crie uma pasta (diretório) de nome  <path to your moodle dir>/report/saas_export
-2. Extraia os arquivos deste plugin na pasta criada no passo 1
-3. Como administrador, visite a página "Administração do site ► Avisos" da caixa de "Administração" de forma a completar a instalação.
+O relatório saas_export segue o procedimento padrão de instalação do Moodle:
+
+Caso o método escolhido seja o download na forma de um .zip, é necessário que o arquivo seja descompactado dentro da pasta 'report' 
+da sua instalação do Moodle. 
+
+A pasta 'report' encontra-se no primeiro nível dentro da raiz do Moodle e pode ser encontrada da seguinte maneira:
+
+"caminho para o seu moodle/report"
+
+Após, a pasta deve ser renomeada de "saas_export-master" para "saas_export".
+
+
+Caso queira clonar o repositório via GIT, execute um dos seguintes comando dentro da pasta 'report' da sua instalação do Moodle. 
+Escolha entre https ou ssh.
+
+        https: 
+            git clone https://github.com/saasexport/saas.git saas_export
+        SSH:
+            git clone git@github.com:saasexport/saas_export.git saas_export
+
+
+Após extrair os arquivos ou clonar o repositório, Como administrador, 
+visite a página "Administração do site ► Avisos" da caixa de "Administração" de forma a completar a instalação.
 
 Para configurar o plugin, acesse a página "Plugins" ► "Relatórios" ► "Relatório SAAS" da caixa de "Administração".
 A "URL SAAS" e a "Chave da Instituição" devem ser obtidas com os administradores do SAAS (saas@etec.ufsc.br).
-
-O plugin também está disponível no GitHub:
-        https: https://github.com/saasexport/saas.git
-        SSH:   git@github.com:saasexport/saas.git
-
-Para clonar o repositório, execute o seguinte comando:
-        git clone https://github.com/saasexport/saas.git saas_export
 
 ACESSO
 ======
