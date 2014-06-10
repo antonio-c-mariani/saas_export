@@ -383,7 +383,7 @@ class saas {
                   JOIN {groups_members} gm
                     ON (gm.groupid = g.id)
                   JOIN {user} u
-                    ON (u.id = gm.userid)
+                    ON (u.id = gm.userid AND u.deleted = 0)
                   JOIN {context} ctx
                     ON (ctx.contextlevel = :context AND
                         ctx.instanceid = od.courseid)
@@ -398,6 +398,7 @@ class saas {
                    AND p.groupname = :groupname
                    AND p.is_polo = 1
                    AND p.enable = 1
+                   AND od.enable = 1
               ORDER BY u.username";
 
         $user = $DB->get_records_sql($sql,$params);
@@ -507,10 +508,12 @@ class saas {
     function send_users_by_polo() {
         global $DB;
 
-        $sql = "SELECT p.id, oc.saas_id, p.groupname
+        $sql = "SELECT DISTINCT p.id, oc.saas_id, p.groupname
                   FROM {saas_ofertas_cursos} oc
                   JOIN {saas_polos} p
                     ON (p.course_offer_id = oc.id)
+                  JOIN {saas_ofertas_disciplinas} od
+                    ON (od.saas_course_offer_id = oc.id AND od.courseid > 0)
                  WHERE oc.enable = 1
                    AND p.is_polo = 1
                    AND p.enable = 1";
