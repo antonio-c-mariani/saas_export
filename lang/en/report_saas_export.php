@@ -1,6 +1,38 @@
 <?php
 
-$string['pluginname'] = 'Relatório SAAS';
+$string['pluginname'] = 'Exportar dados SAAS';
+
+$string['guidelines'] = 'Orientações';
+$string['settings'] = 'Configurações';
+$string['saas_data'] = 'Dados SAAS';
+$string['overview'] = 'Visão geral';
+$string['export'] = 'Exportação';
+
+$string['polos_title'] = 'Polos definidos no SAAS';
+$string['ofertas_title'] = 'Ofertas de cursos e disciplinas definidos no SAAS';
+
+$string['saas_settings'] = 'Configurações do SAAS';
+$string['course_settings'] = 'Configurações de cursos Moodle';
+$string['user_settings'] = 'Configurações de usuários';
+$string['cpf_settings'] = 'Configurações de CPF (opcional)';
+$string['role_settings'] = 'Configurações de papeis/funções';
+
+$string['duplicated_role'] = 'Há papeis selecionados em outro perfil de usuário';
+$string['no_course_mapping'] = 'Não há cursos Moodle mapeados para ofertas de disciplinas do SAAS';
+$string['no_no_ofertas_disciplinas'] = 'Não há ofertas de disciplinas ativas registradas no SAAS';
+
+$string['course_mapping'] = 'Mapeamento de disciplinas';
+$string['course_mapping_help'] = 'Indica a forma como os cursos do Moodle são mapeados para disciplinas do SAAS';
+$string['one_to_one'] = 'Cada curso Moodle corresponde a uma e somente uma oferta de disciplina do SAAS';
+$string['one_to_many'] = 'Um curso Moodle contém conteúdo de mais de uma oferta de disciplina do SAAS';
+$string['many_to_one'] = 'O conteúdo de uma oferta de disciplina do SAAS está distribuído em mais de um curso Moodle';
+
+$string['polo_mapping'] = 'Mapeamento de polos';
+$string['polo_mapping_help'] = 'Indica a forma como os polos são mapeados na estrutura de cursos do Moodle';
+$string['no_polo'] = 'Não há no Moodle forma de agrupar estudantes por polo';
+$string['group_to_polo'] = 'São utilizados grupos nos cursos Moodle para obter estudantes por polo';
+//------------------------------------------------------------------
+
 $string['student'] = 'Aluno';
 $string['teacher'] = 'Professor';
 $string['tutor'] = 'Tutor a distância';
@@ -11,41 +43,67 @@ $string['config'] = 'Configurações';
 $string['no_groups_found'] = 'Não foram encontrados grupos no Moodle para relacionar como polos.';
 $string['no_data_to_export'] = 'Não há dados a serem exportados.';
 
-$string['name_field'] = 'Nome de {$a}';
-$string['desc_name_field'] = 'Campo(s) do perfil do usuário que define o nome completo no caso de {$a}.';
+$string['name_field_teacher'] = 'Nome de professores';
+$string['name_field_teacher_help'] = 'Campo(s) do perfil de professores que define(m) seu nome completo.';
+$string['name_field_student'] = 'Nome de estudantes';
+$string['name_field_student_help'] = 'Campo(s) do perfil de estudantes que define(m) seu nome completo.';
+$string['name_field_tutor_polo'] = 'Nome de tutores polo';
+$string['name_field_tutor_polo_help'] = 'Campo(s) do perfil de tutores polo que define(m) seu nome completo.';
+$string['name_field_tutor_inst'] = 'Nome de tutores instituição';
+$string['name_field_tutor_inst_help'] = 'Campo(s) do perfil de tutores da instituição (a distância) que define(m) seu nome completo.';
+
+$string['name_regexp'] = 'Filtro para Nome';
+$string['name_regexp_help'] = 'Expressão regular aplicada sobre o nome do usuário que possibilita filtrar o valor';
+
+$string['cpf_field_teacher'] = 'CPF de professores';
+$string['cpf_field_teacher_help'] = 'Campo do perfil de professores que contém seu CPF.';
+$string['cpf_field_student'] = 'CPF de estudantes';
+$string['cpf_field_student_help'] = 'Campo do perfil de estudantes que contém seu CPF.';
+$string['cpf_field_tutor_polo'] = 'CPF de tutores polo';
+$string['cpf_field_tutor_polo_help'] = 'Campo do perfil de tutores polo que contém seu CPF.';
+$string['cpf_field_tutor_inst'] = 'CPF de tutores instituição';
+$string['cpf_field_tutor_inst_help'] = 'Campo do perfil de tutores da institução (a distância) que contém seu CPF.';
+
+$string['cpf_regexp'] = 'Filtro para CPF';
+$string['cpf_regexp_help'] = 'Expressão regular aplicada sobre o valor de CPF que possibilita filtrar o valor';
+
+$string['roles_teacher'] = 'Papeis de professores';
+$string['roles_teacher_help'] = 'Papeis com os quais professores são inscritos nos cursos Moodle correspondentes às ofertas de disciplinas. <BR>
+                            Utilize <ctrl\> + click para selecionar múltiplos papeis ou para desmarcar uma opção.';
+$string['roles_student'] = 'Papeis de estudantes';
+$string['roles_student_help'] = 'Papeis com os quais estudantes são inscritos nos cursos Moodle correspondentes às ofertas de disciplinas. <BR>
+                            Utilize <ctrl\> + click para selecionar múltiplos papeis ou para desmarcar uma opção.';
+$string['roles_tutor_polo'] = 'Papeis de tutores polo';
+$string['roles_tutor_polo_help'] = 'Papeis com os quais tutores de polo (presenciais) são inscritos nos cursos Moodle correspondentes às ofertas de disciplinas. <BR>
+                            Utilize <ctrl\> + click para selecionar múltiplos papeis ou para desmarcar uma opção.';
+$string['roles_tutor_inst'] = 'Papeis de tutores instituição';
+$string['roles_tutor_inst_help'] = 'Papeis com os quais tutores da instituição (a distância) são inscritos nos cursos Moodle correspondentes às ofertas de disciplinas. <BR>
+                            Utilize <ctrl\> + click para selecionar múltiplos papeis ou para desmarcar uma opção.';
+
+
 $string['profile_field_name'] = 'Nome:';
 $string['profile_field_name_help'] = 'Campo(s) do perfil do usuário que define o nome completo para este papel.';
 $string['saas_export:view'] = 'Exportar dados para o SAAS.';
 
 $string['ws_url'] = 'URL SAAS';
-$string['desc_ws_url'] = 'URL do servidor do SAAS para onde os dados serão transferidos.';
 $string['ws_url_help'] = 'URL do servidor do SAAS para onde os dados serão transferidos.';
 
 $string['api_key'] = 'Chave da Instituição';
-$string['desc_api_key'] = 'Chave de identificação da instituição definida no SAAS. Entre em contato com a administração do SAAS para solicitar a chave.'; 
+$string['api_key_help'] = 'Chave de identificação da instituição definida no SAAS. Entre em contato com a administração do SAAS para solicitar a chave.'; 
 
-$string['course_name_default'] = 'Nome do Curso Moodle';
-$string['desc_course_name_default'] = 'Campo do curso Moodle correspondente ao nome da oferta de disciplina.';
+$string['course_name_default'] = 'Nome de cursos';
 $string['course_name_default_help'] = 'Campo do curso Moodle correspondente ao nome da oferta de disciplina.';
 
-$string['user_id_field'] = 'Identificador do usuário';
-$string['desc_user_id_field'] = 'Campo do perfil do usuário a ser usado como identificador único do usuário no SAAS.';
-$string['user_id_field_help'] = 'Campo do perfil do usuário a ser usado como identificador único do usuário no SAAS.';
+$string['userid_field'] = 'Identificador de usuários';
+$string['userid_field_help'] = 'Campo do perfil do usuário a ser usado como identificador único do usuário no SAAS.';
 
-$string['cpf_field'] = 'CPF de {$a}';
-$string['desc_cpf_field'] = 'Campo do perfil do usuário que contém o CPF para o caso de {$a}.';
 $string['cpf'] = 'CPF';
 $string['cpf_help'] = 'Campo do perfil do usuário que contém o CPF.';
 
-$string['user_role'] = 'Papéis de {$a}';
 $string['desc_user_role'] = 'Papéis com os quais {$a} são inscritos nos cursos Moodle correspondentes às ofertas de disciplinas. <BR>
                             Utilize <ctrl\> + click para selecionar múltiplos papeis ou para desmarcar uma opção.';
 $string['roles'] = 'Papéis';
 $string['roles_help'] = 'Papéis com os quais estes usuários são inscritos nos cursos Moodle correspondentes às ofertas de disciplinas.';
-
-$string['firstname'] = 'Nome';
-$string['lastname'] = 'Sobrenome';
-$string['firstnamelastname'] = 'Nome + Sobrenome';
 
 $string['home_title'] = 'Sincronização de dados com o SAAS';
 $string['no_course_offer_from_ws'] = 'Não foi localizada nenhuma oferta (edição) de curso cadastrada no SAAS. 

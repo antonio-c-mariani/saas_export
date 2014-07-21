@@ -21,69 +21,94 @@
  */
 
 require('../../config.php');
-require_once($CFG->dirroot . '/report/saas_export/config_form.php');
-require_once($CFG->dirroot . '/report/saas_export/lib.php');
-require_once($CFG->libdir.'/adminlib.php');
+require_once($CFG->libdir . '/adminlib.php');
 
 require_login();
-
 require_capability('report/saas_export:view', context_system::instance());
-
-$step = optional_param('step', 0 , PARAM_INT);
-$level = optional_param('level', -1 , PARAM_INT);
-$option = optional_param('option', '', PARAM_ALPHA);
-
 admin_externalpage_setup('report_saas_export', '', null, '', array('pagelayout'=>'report'));
 
-$saas = new saas();
+$baseurl = new moodle_url('/report/saas_export/index.php');
+$api_key = get_config('report_saas_export', 'api_key');
 
-$mform = new saas_export_config_form(null, array('step'=>$step, 'saas' => $saas));
+$tab_items = array('guidelines'=>true, 'settings'=>true, 'saas_data'=>false, 'course_mapping'=>false, 'polo_mapping'=>false, 'overview'=>false, 'export'=>false);
 
-if ($mform->is_cancelled()) {
-
-    redirect(new moodle_url('/report/saas_export/index.php', array('step'=>0)));
-
-} else if ($data = $mform->get_data()) {
-    switch ($step) {
-        case 1:
-            if (isset($data->map)) {
-                $saas->save_courses_offers_mapping($data);
-            }
-            redirect(new moodle_url('/report/saas_export/index.php', array('step'=>0)));
-            break;
-
-        case 2:
-            if (isset($data->map)) {
-                $saas->save_classes_offers_mapping($data);
-            }
-            redirect(new moodle_url('/report/saas_export/index.php', array('step'=>0)));
-            break;
-
-        case 3:
-            if (isset($data->map)) {
-                $saas->save_polos_mapping($data);
-            }
-            redirect(new moodle_url('/report/saas_export/index.php', array('step'=>0)));
-            break;
-
-        case 4:
-            try {
-                $saas->send_data();
-                redirect(new moodle_url('/report/saas_export/index.php', array('step'=>5)));
-            } catch (Exception $e) {
-                print_error('ws_error', 'report_saas_export', new moodle_url('/report/saas_export/index.php'), $e->getMessage());
-            }
-            break;
-
-        case 5:
-            redirect(new moodle_url('/report/saas_export/index.php', array('step'=>0)));
-            break;
+$tabs = array();
+foreach($tab_items AS $act=>$always) {
+    if($always || !empty($api_key)) {
+        $tabs[$act] = new tabobject($act, new moodle_url('/report/saas_export/index.php', array('action'=>$act)), get_string($act, 'report_saas_export'));
     }
 }
 
-echo $OUTPUT->header();
-echo $OUTPUT->heading(get_string('title', 'report_saas_export'), 3);
-echo $OUTPUT->box_start('generalbox');
-$mform->display();
-echo $OUTPUT->box_end();
-echo $OUTPUT->footer();
+$action = optional_param('action', 'guidelines' , PARAM_TEXT);
+$action = isset($tabs[$action]) ? $action : 'guidelines';
+
+$saas = new saas();
+
+switch ($action) {
+    case 'guidelines':
+        echo $OUTPUT->header();
+        print_tabs(array($tabs), $action);
+        print get_string('saas_presentation', 'report_saas_export');
+        echo $OUTPUT->footer();
+        break;
+    case 'settings':
+        require_once($CFG->dirroot . '/report/saas_export/settings_form.php');
+        $baseurl->param('action', 'settings');
+        $mform = new saas_export_settings_form($baseurl);
+
+        if ($mform->is_cancelled()) {
+            redirect($baseurl);
+        } else if ($data = $mform->get_data()) {
+            saas::save_settings($data);
+            redirect($baseurl);
+        }
+
+        echo $OUTPUT->header();
+        print_tabs(array($tabs), $action);
+        $mform->display();
+        echo $OUTPUT->footer();
+        break;
+    case 'saas_data':
+        echo $OUTPUT->header();
+        print_tabs(array($tabs), $action);
+
+        $saas->load_saas_data(true);
+        $saas->show_table_ofertas_curso_disciplinas();
+        $saas->show_table_polos();
+
+        echo $OUTPUT->footer();
+        break;
+    case 'course_mapping':
+        echo $OUTPUT->header();
+        print_tabs(array($tabs), $action);
+
+        switch ($saas->get_config('course_mapping')) {
+            case 'one_to_one':
+                include('course_mapping_one_to_one.php');
+                break;
+            case 'one_to_many':
+            case 'many_to_one':
+                print $OUTPUT->box_start('generalbox boxwidthnormal');
+                print $OUTPUT->heading('Ainda estamos trabalhando. Mapeamento disponível em breve ...');
+                print $OUTPUT->heading(get_string($saas->get_config('course_mapping'), 'report_saas_export'));
+                print $OUTPUT->box_end();
+                break;
+        }
+
+        echo $OUTPUT->footer();
+        break;
+    case 'polo_mapping':
+        echo $OUTPUT->header();
+        print_tabs(array($tabs), $action);
+
+        include('polo_mapping.php');
+        echo $OUTPUT->footer();
+        break;
+    default:
+        echo $OUTPUT->header();
+        print_tabs(array($tabs), $action);
+        print $OUTPUT->box_start('generalbox boxwidthnormal');
+        print $OUTPUT->heading('Ainda estamos trabalhando. Disponível em breve ...');
+        print $OUTPUT->box_end();
+        echo $OUTPUT->footer();
+}

@@ -1,47 +1,201 @@
 <?php
 
 require_once(dirname(__FILE__) . '/../../config.php');
-
-function saas_export_get_user_custom_fields() {
-    global $DB;
-
-    $userfields = array();
-    if ($user_info_fields = $DB->get_records('user_info_field')) {
-        foreach ($user_info_fields as $field) {
-            $userfields[$field->shortname] = $field->name;
-        }
-    }
-    return  $userfields;
-}
-
+require_once('lib_teste.php');
 
 class saas {
 
-    public static $role_names = array('teacher', 'student', 'tutor', 'tutor_polo');
+    public static $role_names = array('teacher', 'student', 'tutor_polo', 'tutor_inst');
 
     function __construct() {
-        global $DB;
-
-        $this->config = get_config('saas_export');
-        $this->config->cpf_tutor_polo_field = $this->config->cpf_tutor_field;
-        $this->config->name_tutor_polo_field = $this->config->name_tutor_field;
+        $this->config = get_config('report_saas_export');
     }
 
-    function update_offers() {
+    function get_config($name) {
+        if(isset($this->config->{$name})) {
+            return $this->config->{$name};
+        } else {
+            return false;
+        }
+    }
+
+    function load_saas_data($force_reload=false) {
        if(!$lastupdated = get_config('report_saas_export', 'lastupdated')) {
            $lastupdated = 0;
        }
        $now = time();
        $hourdiff = round(($now - $lastupdated)/3600, 1);
-       if ($hourdiff > 1) {
+       if ($hourdiff > 1 || $force_reload) {
            try {
-               $count_course = $this->save_courses($this->get_courses_offers());
-               $count_class = $this->save_classes($this->get_classes_offers());
+               $this->load_ofertas_cursos_saas();
+               $this->load_ofertas_disciplinas_saas();
+               $this->load_polos_saas();
                set_config('lastupdated', $now, 'report_saas_export');
-               return array($count_course, $count_class);
-           } catch (Exception $e){}
+           } catch (Exception $e){
+               print_error($e->getMessage());
+           }
        }
     }
+
+    function load_ofertas_cursos_saas(){
+        global $DB;
+
+        $local = $DB->get_records('saas_ofertas_cursos', null, null ,'uid, id, enable');
+
+        //$ofertas_cursos_saas = $this->get_ws('get/oferta/curso');
+        $ofertas_cursos_saas = teste_get_ofertas_cursos();
+        foreach ($ofertas_cursos_saas as $oc){
+            $record = new stdClass();
+            $record->name = $oc->nome;
+            $record->year = $oc->ano;
+            $record->period = $oc->periodo;
+            $record->enable = 1;
+
+            if (isset($local[$oc->uid])){
+                $record->id = $local[$oc->uid]->id;
+                $DB->update_record('saas_ofertas_cursos', $record);
+                unset($local[$oc->uid]);
+            } else {
+                $record->uid = $oc->uid;
+                $DB->insert_record('saas_ofertas_cursos', $record);
+            }
+        }
+
+        foreach($local AS $uid=>$rec) {
+            if($rec->enable){
+                $DB->set_field('saas_ofertas_cursos', 'enable', 0, array('id'=>$rec->id));
+            }
+        }
+    }
+
+    function load_ofertas_disciplinas_saas(){
+        global $DB;
+
+        $local = $DB->get_records('saas_ofertas_disciplinas', null, null ,'uid, id, enable');
+
+        // $ofertas_disciplinas_saas = $this->get_ws('get/oferta/disciplina');
+        $ofertas_disciplinas_saas = teste_get_ofertas_disciplinas();
+        foreach ($ofertas_disciplinas_saas as $od){
+            $record = new stdClass();
+            $record->oferta_curso_uid = $od->oferta_curso_uid;
+            $record->beginning = $od->inicio;
+            $record->ending = $od->fim;
+            $record->name = $od->disciplina_nome;
+            $record->year = $od->ano;
+            $record->enable = 1;
+            if (isset($local[$od->uid])){
+                $record->id = $local[$od->uid]->id;
+                $DB->update_record('saas_ofertas_disciplinas', $record);
+                unset($local[$od->uid]);
+            } else {
+                $record->uid = $od->uid;
+                $DB->insert_record('saas_ofertas_disciplinas', $record);
+            }
+        }
+
+        foreach ($local AS $uid=>$rec) {
+            if($rec->enable){
+                $DB->set_field('saas_ofertas_disciplinas', 'enable', 0, array('id'=>$rec->id));
+            }
+        }
+    }
+
+    function load_polos_saas(){
+        global $DB;
+
+        $local = $DB->get_records('saas_polos', null, '' ,'uid, id, enable');
+
+        // $polos_saas = $this->get_ws('get/oferta/disciplina');
+        $polos_saas = teste_get_polos();
+        foreach ($polos_saas as $pl){
+            $record = new stdClass();
+            $record->name = $pl->nome;
+            $record->enable = 1;
+            if (isset($local[$pl->uid])){
+                $record->id = $local[$pl->uid]->id;
+                $DB->update_record('saas_polos', $record);
+                unset($local[$pl->uid]);
+            } else {
+                $record->uid = $pl->uid;
+                $DB->insert_record('saas_polos', $record);
+            }
+        }
+
+        foreach ($local AS $uid=>$rec) {
+            if($rec->enable){
+                $DB->set_field('saas_polos', 'enable', 0, array('id'=>$rec->id));
+            }
+        }
+    }
+
+    // -----------------------------------------------------------------
+
+    function show_table_polos() {
+        global $DB, $OUTPUT;
+
+        $polos = $DB->get_records('saas_polos', array('enable'=>1), 'name');
+
+        print html_writer::start_tag('DIV', array('align'=>'center'));
+        print $OUTPUT->box_start('generalbox');
+        print $OUTPUT->heading(get_string('polos_title', 'report_saas_export'));
+
+        $table = new html_table();
+        $table->head = array('Ident.', 'Nome do Polo');
+        $table->data = array();
+        foreach($polos as $pl) {
+            $table->data[] = array($pl->uid, $pl->name);
+        }
+        print html_writer::table($table);
+
+        print $OUTPUT->box_end();
+        print html_writer::end_tag('DIV');
+    }
+
+    function show_table_ofertas_curso_disciplinas() {
+        global $DB, $OUTPUT;
+
+        $sql = "SELECT oc.uid AS oc_uid, oc.name AS oc_name, oc.year AS oc_year, oc.period AS oc_period,
+                       od.uid AS od_uid, od.name AS od_name, od.beginning AS od_beginning, od.ending AS od_ending, od.year AS od_year
+                  FROM {saas_ofertas_cursos} oc
+             LEFT JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1)
+                 WHERE oc.enable = 1
+              ORDER BY oc.name, oc.year, oc.period, od.name";
+        $ofertas = $DB->get_recordset_sql($sql);
+
+        print html_writer::start_tag('DIV', array('align'=>'center'));
+        print $OUTPUT->box_start('generalbox');
+        print $OUTPUT->heading(get_string('ofertas_title', 'report_saas_export'));
+
+        $oc_data = array();
+        $od_data = array();
+        foreach($ofertas as $of) {
+            if(!isset($oc_data[$of->oc_uid])) {
+                $oc_data[$of->oc_uid] = array($of->oc_uid, $of->oc_name, $of->oc_year. '/'.$of->oc_period);
+                $od_data[$of->oc_uid] = array();
+            }
+            if(!empty($of->od_uid)) {
+                $od_data[$of->oc_uid][] = array($of->od_uid, $of->od_name, $of->od_year, $of->od_beginning, $of->od_ending);
+            }
+        }
+
+        $table = new html_table();
+        $table->head = array('Ident.', 'Nome da Oferta de Curso', 'Período');
+        $table->data = array();
+        foreach($oc_data AS $oc_uid=>$oc_rec) {
+            $table->data[] = $oc_rec;
+            if(!empty($od_data[$oc_uid])) {
+                $od_table = new html_table();
+                $od_table->data = $od_data[$oc_uid];
+                $table->data[] = array('', html_writer::table($od_table));
+            }
+        }
+        print html_writer::table($table);
+        print $OUTPUT->box_end();
+        print html_writer::end_tag('DIV');
+    }
+
+    // -----------------------------------------------------------------
+
 
     function serialize_role_names($str_roleids){
         if(empty($str_roleids)) {
@@ -74,7 +228,7 @@ class saas {
         return $DB->get_records_menu('saas_ofertas_cursos', array('enable'=>1), null, 'saas_id, categoryid');
     }
 
-    function get_courses_offers_info() {
+    function get_ofertas_cursos_info() {
         global $DB;
 
         $offers = array();
@@ -85,97 +239,29 @@ class saas {
         return $offers;
     }
 
-    function get_mapped_classes(){
+    function get_mapped_ofertas_disciplinas(){
         global $DB;
 
         return $DB->get_records_menu('saas_ofertas_disciplinas', array('enable'=>1), null, 'saas_id, courseid');
     }
 
-    function get_classes_offers_info() {
+    function get_ofertas_disciplinas_offers_info() {
         global $DB;
 
         $offers = array();
-        $classes_offer =  $DB->get_records('saas_ofertas_disciplinas', array('enable'=>1));
-        foreach ($classes_offer as $c){
+        $ofertas_disciplinas_offer =  $DB->get_records('saas_ofertas_disciplinas', array('enable'=>1));
+        foreach ($ofertas_disciplinas_offer as $c){
             $offers[$c->saas_id] = $c;
         }
         return $offers;
     }
 
-    function save_courses($courses_offers){
+    function save_ofertas_cursos_mapping($formdata){
         global $DB;
 
-        $offers = $DB->get_records('saas_ofertas_cursos', null, null ,'saas_id, id, enable');
-        $count = 0;
-        foreach ($courses_offers as $course_offer){
-            $record = new stdClass();
-            $record->name = $course_offer->nome;
-            $record->year = $course_offer->ano;
-            $record->period = $course_offer->periodo;
-            $record->periodicity = $course_offer->periodicidade;
-            $record->enable = 1;
-
-            if (isset($offers[$course_offer->uid])){
-                $record->id = $offers[$course_offer->uid]->id;
-                $DB->update_record('saas_ofertas_cursos', $record);
-                unset($offers[$course_offer->uid]);
-            } else {
-                $record->saas_id = $course_offer->uid;
-                $record->categoryid = -1;
-                $DB->insert_record('saas_ofertas_cursos', $record);
-                $count++;
-            }
-        }
-
-        foreach($offers AS $saas_id=>$rec) {
-            if($rec->enable){
-                $DB->set_field('saas_ofertas_cursos', 'enable', 0, array('id'=>$rec->id));
-            }
-        }
-
-        return $count;
-    }
-
-    function save_classes($classes_offers){
-        global $DB;
-
-        $offers = $DB->get_records('saas_ofertas_disciplinas', null, null ,'saas_id, id, saas_course_offer_id, enable');
-        $count = 0;
-        foreach ($classes_offers as $class_offer){
-            $record = new stdClass();
-            $record->beginning = $class_offer->inicio;
-            $record->ending = $class_offer->fim;
-            $record->name = $class_offer->disciplina_nome;
-            $record->year = $class_offer->ano;
-            $record->enable = 1;
-            if (isset($offers[$class_offer->uid])){
-                $record->id = $offers[$class_offer->uid]->id;
-                $DB->update_record('saas_ofertas_disciplinas', $record);
-                unset($offers[$class_offer->uid]);
-            } else {
-                $record->saas_id = $class_offer->uid;
-                $record->saas_course_offer_id = $DB->get_field('saas_ofertas_cursos', 'id', array('saas_id' => $class_offer->oferta_curso_uid));
-                $record->courseid = -1;
-                $DB->insert_record('saas_ofertas_disciplinas', $record);
-                $count++;
-            }
-        }
-
-        foreach ($offers AS $saas_id=>$rec) {
-            if($rec->enable){
-                $DB->set_field('saas_ofertas_disciplinas', 'enable', 0, array('id'=>$rec->id));
-            }
-        }
-
-        return $count;
-    }
-
-    function save_courses_offers_mapping($formdata){
-        global $DB;
-
-        $courses_offers = $formdata->map;
-        foreach ($courses_offers as $saas_id => $categoryid){
-            $sql = "UPDATE {saas_ofertas_cursos}
+        $ofertas_cursos = $formdata->map;
+        foreach ($ofertas_cursos as $saas_id => $categoryid){
+            $sql = "UPDATE {ofertas_cursos_saas}
                        SET categoryid = ?
                      WHERE saas_id = ?";
             $params = array('categoryid'=>$categoryid, 'saas_id'=>$saas_id);
@@ -183,13 +269,13 @@ class saas {
         }
     }
 
-    function save_classes_offers_mapping($formdata){
+    function save_ofertas_disciplinas_offers_mapping($formdata){
         global $DB;
 
-        $courses_offers = $formdata->map;
-        foreach ($courses_offers as $saas_course_id => $classes_offers) {
-            foreach($classes_offers as $saas_class_offer_id => $courseid) {
-                $sql = "UPDATE {saas_ofertas_disciplinas}
+        $ofertas_cursos = $formdata->map;
+        foreach ($ofertas_cursos as $saas_course_id => $ofertas_disciplinas_offers) {
+            foreach($ofertas_disciplinas_offers as $saas_class_offer_id => $courseid) {
+                $sql = "UPDATE {ofertas_disciplinas_saas}
                            SET courseid = :courseid
                          WHERE saas_id = :saas_class_id";
                 $params = array('courseid'=>$courseid, 'saas_class_id'=>$saas_class_offer_id);
@@ -201,8 +287,8 @@ class saas {
     function save_polos_mapping($formdata){
         global $DB;
 
-        $courses_offers_polos = $formdata->map;
-        foreach ($courses_offers_polos as $course_id => $polos) {
+        $ofertas_cursos_polos = $formdata->map;
+        foreach ($ofertas_cursos_polos as $course_id => $polos) {
             $existing = $DB->get_records_menu('saas_polos', array('course_offer_id'=>$course_id), null, 'id, 1');
             foreach ($polos as $polo => $checked) {
                 $record = new stdClass();
@@ -222,14 +308,6 @@ class saas {
                 $DB->set_field('saas_polos', 'enable', 0, array('id'=>$id));
             }
         }
-    }
-
-    function get_courses_offers() {
-        return $this->get_ws('get/oferta/curso');
-    }
-
-    function get_classes_offers() {
-        return $this->get_ws('get/oferta/disciplina');
     }
 
     function get_courses_from_category($catid){
@@ -287,8 +365,8 @@ class saas {
 
         list($in_sql, $params) = $DB->get_in_or_equal(explode(',', $str_roleids), SQL_PARAMS_NAMED);
         $sql = "SELECT DISTINCT {$fields}
-                  FROM {saas_ofertas_cursos} AS oc
-                  JOIN {saas_ofertas_disciplinas} AS od
+                  FROM {ofertas_cursos_saas} AS oc
+                  JOIN {ofertas_disciplinas_saas} AS od
                     ON (od.saas_course_offer_id = oc.id AND
                         od.enable = 1)
                   JOIN {course} c
@@ -373,8 +451,8 @@ class saas {
         $params = array_merge($query_params, $in_params);
 
         $sql = "SELECT DISTINCT {$field} AS userfield
-                  FROM {saas_ofertas_cursos} oc
-                  JOIN {saas_ofertas_disciplinas} od
+                  FROM {ofertas_cursos_saas} oc
+                  JOIN {ofertas_disciplinas_saas} od
                     ON (od.saas_course_offer_id = oc.id)
                   JOIN {saas_polos} p
                     ON (p.course_offer_id = oc.id)
@@ -433,8 +511,8 @@ class saas {
         $in_params['context'] = CONTEXT_COURSE;
 
         $sql = "SELECT count(DISTINCT u.id) AS total
-                  FROM {saas_ofertas_cursos} AS oc
-                  JOIN {saas_ofertas_disciplinas} AS od
+                  FROM {ofertas_cursos_saas} AS oc
+                  JOIN {ofertas_disciplinas_saas} AS od
                     ON (od.saas_course_offer_id = oc.id AND
                         od.enable = 1)
                   JOIN {course} c
@@ -472,8 +550,8 @@ class saas {
 
                 $sql = "SELECT oc.saas_id AS oferta_curso, od.saas_id as oferta_disciplina,
                                COUNT(DISTINCT ra.userid) as count
-                          FROM {saas_ofertas_cursos} oc
-                          JOIN {saas_ofertas_disciplinas} od
+                          FROM {ofertas_cursos_saas} oc
+                          JOIN {ofertas_disciplinas_saas} od
                             ON (od.saas_course_offer_id = oc.id AND
                                 od.enable = 1)
                           JOIN {course} c
@@ -509,10 +587,10 @@ class saas {
         global $DB;
 
         $sql = "SELECT DISTINCT p.id, oc.saas_id, p.groupname
-                  FROM {saas_ofertas_cursos} oc
+                  FROM {ofertas_cursos_saas} oc
                   JOIN {saas_polos} p
                     ON (p.course_offer_id = oc.id)
-                  JOIN {saas_ofertas_disciplinas} od
+                  JOIN {ofertas_disciplinas_saas} od
                     ON (od.saas_course_offer_id = oc.id AND od.courseid > 0)
                  WHERE oc.enable = 1
                    AND p.is_polo = 1
@@ -533,15 +611,15 @@ class saas {
         global $DB;
 
         $sql = "SELECT saas_id, courseid
-                  FROM {saas_ofertas_disciplinas} od
+                  FROM {ofertas_disciplinas_saas} od
                  WHERE od.enable = 1
                    AND od.courseid <> -1";
-        $mapped_classes = $DB->get_records_sql_menu($sql);
+        $mapped_ofertas_disciplinas = $DB->get_records_sql_menu($sql);
         $roles = array('aluno' => $this->config->student_role,
                        'professor' => $this->config->teacher_role,
                        'tutor' =>$this->config->tutor_role);
 
-        foreach ($mapped_classes as $saas_id => $courseid){
+        foreach ($mapped_ofertas_disciplinas as $saas_id => $courseid){
             foreach ($roles as $papel => $str_roleids){
                 $this->post_ws('oferta/disciplina/'.$papel.'/' . $saas_id, $this->get_users_by_role($str_roleids, $courseid));
             }
@@ -553,12 +631,16 @@ class saas {
     }
 
     function get_ws($functionname) {
-        $curl = new curl;
+        $curl = new curl();
         $resp = $curl->get($this->make_ws_url($functionname));
 
-        if ($curl->errno > 0) {
-            throw new Exception($curl->error, $curl->errno);
+        if(is_array($curl->info) && isset($curl->info['http_code']) && $curl->info['http_code'] != '200') {
+            throw new Exception('Erro de acesso ao SAAS: ' . $curl->info['http_code']);
         }
+        if (!empty($curl->error)) {
+            throw new Exception($curl->error);
+        }
+
         return json_decode($resp);
     }
 
@@ -567,9 +649,85 @@ class saas {
         $curl->setHeader('Content-Type: application/json');
         $curl->post($this->make_ws_url($functionname), json_encode($data));
 
-        if ($curl->errno > 0) {
-            throw new Exception($curl->error, $curl->errno);
+        if(is_array($curl->info) && isset($curl->info['http_code']) && $curl->info['http_code'] != '200') {
+            throw new Exception('Erro de acesso ao SAAS: ' . $curl->info['http_code']);
         }
+        if (!empty($curl->error)) {
+            throw new Exception($curl->error, $curl->info);
+        }
+
         return true;
     }
+
+    // ----------------------------------------------------------------
+    // Métodos estáticos
+
+    static function save_settings($data) {
+        foreach($data AS $key=>$value) {
+            if($key != 'submitbutton') {
+                if(is_array($value)) {
+                    $val = implode(',', $value);
+                } else {
+                    $val = $value;
+                }
+                set_config($key, $val, 'report_saas_export');
+            }
+        }
+    }
+
+    static function get_student_roles_menu() {
+        global $DB, $CFG;
+
+        $context = context_system::instance();
+        $role_names = role_fix_names(get_all_roles($context), $context);
+
+        if(isset($CFG->gradebookroles) && !empty($CFG->gradebookroles)) {
+            $roleids = $CFG->gradebookroles;
+        } else {
+            $roleids = $DB->get_field('role', 'id', array('shortname' => 'student'));
+        }
+        $roles_menu = array();
+        foreach (explode(',', $roleids) as $roleid) {
+            $roles_menu[$roleid] = $role_names[$roleid]->localname;
+        }
+        return $roles_menu;
+    }
+
+    static function get_other_roles_menu() {
+        global $DB, $CFG;
+
+        $context = context_system::instance();
+        $role_names = role_fix_names(get_all_roles($context), $context);
+
+        if(isset($CFG->gradebookroles) && !empty($CFG->gradebookroles)) {
+            $roleids = $CFG->gradebookroles;
+        } else {
+            $roleids = $DB->get_field('role', 'id', array('shortname' => 'student'));
+        }
+
+        $sql = "SELECT *
+                  FROM {role}
+                 WHERE id NOT IN ($roleids)
+                   AND shortname NOT IN ('manager', 'guest', 'user', 'frontpage')";
+        $roles = $DB->get_records_sql($sql);
+
+        $roles_menu = array();
+        foreach ($roles as $r) {
+            $roles_menu[$r->id] = $role_names[$r->id]->localname;
+        }
+        return $roles_menu;
+    }
+
+    static function get_user_info_fields() {
+        global $DB;
+
+        $userfields = array();
+        if ($user_info_fields = $DB->get_records('user_info_field')) {
+            foreach ($user_info_fields as $field) {
+                $userfields[$field->shortname] = $field->name;
+            }
+        }
+        return  $userfields;
+    }
+
 }
