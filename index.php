@@ -84,7 +84,7 @@ switch ($action) {
 
         switch ($saas->get_config('course_mapping')) {
             case 'one_to_one':
-                include('course_mapping_one_to_one.php');
+                include('course_mapping_one_to_one.html');
                 break;
             case 'one_to_many':
             case 'many_to_one':
