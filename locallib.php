@@ -107,7 +107,8 @@ function show_categories($catids, $categories){
           echo html_writer::tag('html', $c->fullname);
         echo html_writer::end_tag('span');
           
-        echo html_writer::tag('button', 'Selecionar', array('type'=>'button', 'id'=>$c->fullname.'/'.$c->id, 'class'=>'select_moodle_course btn btn-link'));
+        echo html_writer::tag('button', 'Selecionar', array('type'=>'button', 'id'=>$c->fullname.'/'.$c->id, 
+                              'class'=>'select_moodle_course btn btn-link'));
                 
       echo html_writer::end_tag('li');
     }
