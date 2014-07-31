@@ -5,14 +5,14 @@ $(document).ready(function(){
 
     $('.moodle_bt').click(function(uid) {
     	$('.select_moodle_course').click(function(id) {
-	   		$.post("teste.php",
+	   		$.post("save_mapping.php",
 		    {
 		      uid:uid.target.getAttribute('id'),
 		      id:id.target.getAttribute('id'),
 		      mapping_type:'one_to_one'
 		    },
 		    function(data,status){
-		      alert("Data: " + data + "\nStatus: " + status);
+		      window.location.reload();
 		    });
    		});
 

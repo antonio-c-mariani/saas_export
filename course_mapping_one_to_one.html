@@ -1,6 +1,6 @@
 <?php
   defined('MOODLE_INTERNAL') || die();
-
+  require_once($CFG->dirroot . '/report/saas_export/locallib.php');
 /*
 
 $of_cursos = $DB->get_records('saas_ofertas_cursos', array('enable'=>1), 'name', 'uid, id, name, year, period');
@@ -37,23 +37,25 @@ print html_writer::end_tag('DIV');
 <th>SAAS</th>
 <th>MOODLE</th>
 
-<tr>
-  <td>Disciplina2 SAAS</td>
-  <td>
-    <ul>
-    </ul>
-    <button type="button" id="111" class="btn btn-default btn-xs moodle_bt">Mapear</button>
-  </td>
-</tr>
-
-<tr>
-  <td>Disciplina2 SAAS</td>
-  <td>
-    <ul>
-    </ul>
-    <button type="button" id="222" class="btn btn-default btn-xs moodle_bt">Mapear</button>
-  </td>
-</tr>
+<?php
+  $ofertas = get_ofertas_disciplinas();
+  $ofertas_mapeadas = get_ofertas_disciplinas_mapeadas();
+  $courses = $DB->get_records_menu('course', null, null, 'id, shortname');
+  
+  foreach ($ofertas as $oferta) {
+    echo '<tr>';
+      echo '<td>' . $oferta->name . '</td>';
+      echo '<td>';
+        echo '<div>';
+          if (array_key_exists($oferta->uid, $ofertas_mapeadas)) {
+            echo '<div>' . $courses[$ofertas_mapeadas[$oferta->uid]] . '</div>';
+          }
+        echo '</div>';
+        echo '<div> <button type="button" id=' . $oferta->uid . ' class="btn btn-default btn-xs moodle_bt">Mapear</button> </div>'; 
+      echo '</td>';
+    echo '</tr>';
+  }  
+?>
 
 </table>
 

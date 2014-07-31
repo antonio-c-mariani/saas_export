@@ -107,7 +107,7 @@ function show_categories($catids, $categories){
           echo html_writer::tag('html', $c->fullname);
         echo html_writer::end_tag('span');
           
-        echo html_writer::tag('button', 'Selecionar', array('type'=>'button', 'id'=>$c->fullname.'/'.$c->id, 
+        echo html_writer::tag('button', 'Selecionar', array('type'=>'button', 'id'=>$c->id, 
                               'class'=>'select_moodle_course btn btn-link'));
                 
       echo html_writer::end_tag('li');
@@ -121,6 +121,18 @@ function show_categories($catids, $categories){
     echo html_writer::end_tag('ul');
     echo html_writer::end_tag('li');
   }
+}
+
+function get_ofertas_disciplinas() {
+  global $DB;
+
+  return $DB->get_records('saas_ofertas_disciplinas', array('enable'=>1));
+}
+
+function get_ofertas_disciplinas_mapeadas() {
+  global $DB;
+
+  return $DB->get_records_menu('saas_course_mapping', null, null, 'oferta_disciplina_id, courseid');
 }
 
 ?>
