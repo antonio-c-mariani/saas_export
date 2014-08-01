@@ -123,7 +123,7 @@ function show_categories($catids, $categories){
   }
 }
 
-function get_ofertas_disciplinas() {
+function get_ofertas_disciplinas_salvas() {
   global $DB;
 
   return $DB->get_records('saas_ofertas_disciplinas', array('enable'=>1));

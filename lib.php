@@ -42,7 +42,8 @@ class saas {
 
         $local = $DB->get_records('saas_ofertas_cursos', null, null ,'uid, id, enable');
 
-        //$ofertas_cursos_saas = $this->get_ws('get/oferta/curso');
+        $ofertas_cursos_saas = $this->get_ws('disciplinas');
+        
         $ofertas_cursos_saas = teste_get_ofertas_cursos();
         foreach ($ofertas_cursos_saas as $oc){
             $record = new stdClass();
@@ -627,7 +628,7 @@ class saas {
     }
 
     function make_ws_url($functionname) {
-        return $this->config->ws_url . '/'. $functionname. '/'. $this->config->api_key;
+        return $this->config->ws_url . '/' . $this->config->api_key . '/' . $functionname;
     }
 
     function get_ws($functionname) {

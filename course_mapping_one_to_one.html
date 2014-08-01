@@ -1,6 +1,7 @@
 <?php
   defined('MOODLE_INTERNAL') || die();
   require_once($CFG->dirroot . '/report/saas_export/locallib.php');
+  require_once($CFG->dirroot . '/report/saas_export/lib.php');
 /*
 
 $of_cursos = $DB->get_records('saas_ofertas_cursos', array('enable'=>1), 'name', 'uid, id, name, year, period');
@@ -38,22 +39,33 @@ print html_writer::end_tag('DIV');
 <th>MOODLE</th>
 
 <?php
-  $ofertas = get_ofertas_disciplinas();
+  $ofertas = get_ofertas_disciplinas_salvas();
   $ofertas_mapeadas = get_ofertas_disciplinas_mapeadas();
   $courses = $DB->get_records_menu('course', null, null, 'id, shortname');
   
   foreach ($ofertas as $oferta) {
-    echo '<tr>';
-      echo '<td>' . $oferta->name . '</td>';
-      echo '<td>';
-        echo '<div>';
-          if (array_key_exists($oferta->uid, $ofertas_mapeadas)) {
-            echo '<div>' . $courses[$ofertas_mapeadas[$oferta->uid]] . '</div>';
-          }
-        echo '</div>';
-        echo '<div> <button type="button" id=' . $oferta->uid . ' class="btn btn-default btn-xs moodle_bt">Mapear</button> </div>'; 
-      echo '</td>';
-    echo '</tr>';
+    echo html_writer::start_tag('tr');
+      echo html_writer::tag('td', $oferta->name);
+      echo html_writer::start_tag('td');
+        
+        echo html_writer::start_tag('div');
+            if (array_key_exists($oferta->uid, $ofertas_mapeadas)) {
+              echo html_writer::start_tag('div', array('style'=>'float:left; margin-right:5px;'));
+                echo html_writer::tag('div', $courses[$ofertas_mapeadas[$oferta->uid]]);
+              echo html_writer::end_tag('div');
+
+              echo html_writer::start_tag('div');
+                echo html_writer::tag('button', 'Alterar', array('type'=>'button', 'id'=>$oferta->uid, 'class'=>'btn btn-default btn-xs moodle_bt'));
+              echo html_writer::end_tag('div');
+            } else {
+              echo html_writer::start_tag('div');
+                echo html_writer::tag('button', 'Mapear', array('type'=>'button', 'id'=>$oferta->uid, 'class'=>'btn btn-default btn-xs moodle_bt'));
+              echo html_writer::end_tag('div');    
+            }
+        echo html_writer::end_tag('div');
+      
+      echo html_writer::end_tag('td');
+    echo html_writer::end_tag('tr');
   }  
 ?>
 
