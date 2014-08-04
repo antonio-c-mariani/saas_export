@@ -123,16 +123,4 @@ function show_categories($catids, $categories){
   }
 }
 
-function get_ofertas_disciplinas_salvas() {
-  global $DB;
-
-  return $DB->get_records('saas_ofertas_disciplinas', array('enable'=>1));
-}
-
-function get_ofertas_disciplinas_mapeadas() {
-  global $DB;
-
-  return $DB->get_records_menu('saas_course_mapping', null, null, 'oferta_disciplina_id, courseid');
-}
-
 ?>

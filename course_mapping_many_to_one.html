@@ -43,30 +43,42 @@ print html_writer::end_tag('DIV');
 
   $ofertas = $saas->get_ofertas_disciplinas_salvas();
   $ofertas_mapeadas = $saas->get_ofertas_disciplinas_mapeadas();
+  
+  $ofertas_mapeadas_com_cursos = array();
+
+  foreach ($ofertas_mapeadas as $key => $oferta_id) {
+    $ofertas_mapeadas_com_cursos[$oferta_id] = $DB->get_records('saas_course_mapping', 
+                           array('oferta_disciplina_id'=>$oferta_id), null, 'courseid');
+  }
+  
   $courses = $DB->get_records_menu('course', null, null, 'id, shortname');
   
   foreach ($ofertas as $oferta) {
     echo html_writer::start_tag('tr');
+      
       echo html_writer::tag('td', $oferta->name);
+      
       echo html_writer::start_tag('td');
-        
         echo html_writer::start_tag('div');
-            if (array_key_exists($oferta->uid, $ofertas_mapeadas)) {
-              echo html_writer::start_tag('div', array('style'=>'float:left; margin-right:5px;'));
-                echo html_writer::tag('div', $courses[$ofertas_mapeadas[$oferta->uid]]);
-              echo html_writer::end_tag('div');
-
+            if (array_key_exists($oferta->uid, $ofertas_mapeadas_com_cursos)) {
+              foreach ($ofertas_mapeadas_com_cursos[$oferta->uid] as $courseid => $object) {
+                echo html_writer::start_tag('div', array('style'=>'float:left; margin-right:5px;'));
+                  echo html_writer::tag('div', $courses[$courseid]);
+                echo html_writer::end_tag('div');  
+              }
+              
               echo html_writer::start_tag('div');
-                echo html_writer::tag('button', 'Alterar', array('type'=>'button', 'id'=>$oferta->uid, 'class'=>'btn btn-default btn-xs moodle_map_one_to_one_bt'));
+                echo html_writer::tag('button', 'Adicionar', array('type'=>'button', 'id'=>$oferta->uid, 'class'=>'btn btn-default btn-xs moodle_map_many_to_one_bt'));
               echo html_writer::end_tag('div');
+            
             } else {
               echo html_writer::start_tag('div');
-                echo html_writer::tag('button', 'Mapear', array('type'=>'button', 'id'=>$oferta->uid, 'class'=>'btn btn-default btn-xs moodle_map_one_to_one_bt'));
+                echo html_writer::tag('button', 'Mapear', array('type'=>'button', 'id'=>$oferta->uid, 'class'=>'btn btn-default btn-xs moodle_map_many_to_one_bt'));
               echo html_writer::end_tag('div');    
             }
         echo html_writer::end_tag('div');
-      
       echo html_writer::end_tag('td');
+
     echo html_writer::end_tag('tr');
   }  
 ?>

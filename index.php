@@ -87,11 +87,10 @@ switch ($action) {
                 include('course_mapping_one_to_one.html');
                 break;
             case 'one_to_many':
+                include('course_mapping_one_to_many.html');
+                break;
             case 'many_to_one':
-                print $OUTPUT->box_start('generalbox boxwidthnormal');
-                print $OUTPUT->heading('Ainda estamos trabalhando. Mapeamento disponível em breve ...');
-                print $OUTPUT->heading(get_string($saas->get_config('course_mapping'), 'report_saas_export'));
-                print $OUTPUT->box_end();
+                include('course_mapping_many_to_one.html');
                 break;
         }
 

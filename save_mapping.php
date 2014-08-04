@@ -19,5 +19,11 @@
     		}
 
     		break;
+    	case 'many_to_one':
+		   $record = new stdClass();
+		   $record->courseid = $id;
+		   $record->oferta_disciplina_id = $uid;
+		   $DB->insert_record('saas_course_mapping', $record);
+    	   break;
     }
 ?>
