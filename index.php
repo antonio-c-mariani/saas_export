@@ -82,18 +82,8 @@ switch ($action) {
         echo $OUTPUT->header();
         print_tabs(array($tabs), $action);
 
-        switch ($saas->get_config('course_mapping')) {
-            case 'one_to_one':
-                include('course_mapping_one_to_one.html');
-                break;
-            case 'one_to_many':
-                include('course_mapping_one_to_many.html');
-                break;
-            case 'many_to_one':
-                include('course_mapping_many_to_one.html');
-                break;
-        }
-
+        include('mapping.html');
+        
         echo $OUTPUT->footer();
         break;
     case 'polo_mapping':

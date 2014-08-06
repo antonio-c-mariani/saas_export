@@ -1,10 +1,14 @@
 <?php
     define('AJAX_SCRIPT', true);
     require_once '../../config.php';
+    require_once($CFG->dirroot . '/report/saas_export/lib.php');
 
     $uid = required_param('uid', PARAM_INT);
     $id = required_param('id', PARAM_INT);
-    $mapping_type = required_param('mapping_type', PARAM_TEXT);
+    
+    
+    $saas = new saas();
+    $mapping_type = $saas->config->course_mapping;
     
     switch ($mapping_type) {
       	case 'one_to_one':

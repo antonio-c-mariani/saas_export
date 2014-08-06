@@ -36,7 +36,7 @@
         <FIELD NAME="nome" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="uid" NEXT="inicio"/>
         <FIELD NAME="inicio" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="nome" NEXT="fim"/>
         <FIELD NAME="fim" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="inicio" NEXT="oferta_curso_uid"/>
-        <FIELD NAME="oferta_curso_uid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" PREVIOUS="fim" NEXT="enable"/>
+        <FIELD NAME="oferta_curso_uid" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="fim" NEXT="enable"/>
         <FIELD NAME="enable" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" SEQUENCE="false" PREVIOUS="oferta_curso_uid"/>
       </FIELDS>
       <KEYS>

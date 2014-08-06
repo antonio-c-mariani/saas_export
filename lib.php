@@ -134,7 +134,6 @@ class saas {
             }    
         }
         
-
         foreach ($local AS $uid=>$rec) {
             if($rec->enable){
                 $DB->set_field('saas_polos', 'enable', 0, array('id'=>$rec->id));
@@ -158,18 +157,10 @@ class saas {
         return $DB->get_records('saas_ofertas_disciplinas', array('enable'=>1));
     }
 
-    function get_ofertas_disciplinas_mapeadas() {
+    function get_mapeamento_cursos() {
         global $DB;
 
-        if ($this->config->course_mapping == 'one_to_one') {
-            return $DB->get_records_menu('saas_course_mapping', null, null, 'oferta_disciplina_id, courseid');
-        }
-        if ($this->config->course_mapping == 'many_to_one') {
-            return $DB->get_records_menu('saas_course_mapping', null, null, 'id, oferta_disciplina_id');
-        }
-        if ($this->config->course_mapping == 'one_to_many') {
-            #TODO
-        }
+        return $DB->get_records('saas_course_mapping');
     }
 
     function get_mapped_polos_by_name() {

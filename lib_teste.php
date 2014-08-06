@@ -17,14 +17,14 @@ function teste_get_ofertas_cursos() {
 
 function teste_get_ofertas_disciplinas($oferta_curso_uid) {
     $nome_oferta = new stdClass(); 
-
     $obj1 = new stdClass();
     $obj1->uid = 'od1';
     $nome_oferta->nome = 'Grafos';
     $obj1->disciplina = $nome_oferta;
     $obj1->inicio = '12/03/2014';
     $obj1->fim = '12/05/2014';
-    
+
+    $nome_oferta = new stdClass();    
     $obj2 = new stdClass();
     $obj2->uid = 'od2';
     $nome_oferta->nome = 'POO';
@@ -32,6 +32,7 @@ function teste_get_ofertas_disciplinas($oferta_curso_uid) {
     $obj2->inicio = '13/03/2014';
     $obj2->fim = '13/05/2014';
 
+    $nome_oferta = new stdClass();
     $obj3 = new stdClass();
     $obj3->uid = 'od3';
     $nome_oferta->nome = 'Redes';
@@ -39,6 +40,7 @@ function teste_get_ofertas_disciplinas($oferta_curso_uid) {
     $obj3->inicio = '14/03/2014';
     $obj3->fim = '14/05/2014';
 
+    $nome_oferta = new stdClass();
     $obj4 = new stdClass();
     $obj4->uid = 'od4';
     $nome_oferta->nome = 'Redes';
@@ -46,6 +48,7 @@ function teste_get_ofertas_disciplinas($oferta_curso_uid) {
     $obj4->inicio = '15/03/2014';
     $obj4->fim = '15/05/2014';
 
+    $nome_oferta = new stdClass();
     $obj5 = new stdClass();
     $obj5->uid = 'od5';
     $nome_oferta->nome = 'Matemática Discreta';
@@ -53,6 +56,7 @@ function teste_get_ofertas_disciplinas($oferta_curso_uid) {
     $obj5->inicio = '16/03/2014';
     $obj5->fim = '16/05/2014';
     
+    $nome_oferta = new stdClass();
     $obj6 = new stdClass();
     $obj6->uid = 'od6';
     $nome_oferta->nome = 'Teoria da Computação';
@@ -60,6 +64,7 @@ function teste_get_ofertas_disciplinas($oferta_curso_uid) {
     $obj6->inicio = '17/03/2014';
     $obj6->fim = '17/05/2014';
     
+    $nome_oferta = new stdClass();
     $obj7 = new stdClass();
     $obj7->uid = 'od7';
     $nome_oferta->nome = 'POO2';
