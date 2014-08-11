@@ -1,7 +1,7 @@
 <?php
 require_once(dirname(__FILE__) . '/../../config.php');
 
-function build_tree_categories() {
+function build_tree_categories($repeat_allowed = true) {
  	$categories = get_moodle_categories();    
 
   foreach($categories as $cat){
@@ -18,7 +18,7 @@ function build_tree_categories() {
     }
   }
   
-  get_courses_from_categories($categories);
+  get_courses_from_categories($categories, $repeat_allowed);
 
   echo html_writer::start_tag('div', array('class'=>'tree well'));
     echo html_writer::start_tag('ul');
@@ -57,8 +57,17 @@ function get_moodle_categories(){
   return $categories;
 }
   
-function get_courses_from_categories(&$categories) {
+function get_courses_from_categories(&$categories, $repeat_allowed = true) {
   global $DB;
+
+  if ($repeat_allowed) {
+      $sql_repeat = "";
+      $sql_and = "";
+  } else {
+      $sql_repeat = " LEFT JOIN {saas_course_mapping} scm ON (scm.courseid = c.id) ";
+      $sql_and = " AND scm.courseid IS NULL";
+                                           
+  }
 
   foreach($categories AS $idcat=>$cat) {
     $categories[$idcat]->courses = array();
@@ -66,9 +75,10 @@ function get_courses_from_categories(&$categories) {
 
   $str_ids = implode(', ', array_keys($categories));
 
-  $sql = "SELECT id, shortname, fullname, category, visible 
+  $sql = "SELECT c.id, c.shortname, c.fullname, c.category, c.visible 
             FROM {course} c
-           WHERE c.category IN({$str_ids})";
+            {$sql_repeat}      
+           WHERE c.category IN({$str_ids}) {$sql_and}";
 
   foreach($DB->get_records_sql($sql) AS $id=>$c) {
     $categories[$c->category]->courses[] = $c;

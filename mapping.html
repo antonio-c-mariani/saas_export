@@ -82,7 +82,13 @@
         <h4 class="modal-title" id="myModalLabel">Cursos Moodle</h4>
       </div>
         <?php require_once('locallib.php');
-          build_tree_categories();
+          $repeat_allowed = true;
+          
+          if ($saas->config->course_mapping == 'one_to_one') {
+            $repeat_allowed = false;
+          }
+          
+          build_tree_categories($repeat_allowed);            
         ?>
       <div class="modal-footer">
         <button type="button" class="btn btn-default saas-bt-close" data-dismiss="modal">Fechar</button>
