@@ -1,5 +1,6 @@
 <?php
 require_once(dirname(__FILE__) . '/../../config.php');
+require_once($CFG->dirroot . '/report/saas_export/lib.php');
 
 function build_tree_categories($repeat_allowed = true) {
  	$categories = get_moodle_categories();    
@@ -131,6 +132,46 @@ function show_categories($catids, $categories){
     echo html_writer::end_tag('ul');
     echo html_writer::end_tag('li');
   }
+}
+
+function build_saas_tree_offers() {
+  $saas = new saas();
+  
+  $ofertas_curso = $saas->get_ofertas_curso_salvas();
+  $ofertas_disciplina = $saas->get_ofertas_disciplinas_salvas();
+
+  echo html_writer::start_tag('div', array('class'=>'tree well'));
+    echo html_writer::start_tag('ul');
+      
+      foreach ($ofertas_curso as $oferta_curso) {
+        echo html_writer::start_tag('li');
+          echo html_writer::start_tag('span');
+            echo $oferta_curso->nome;
+          echo html_writer::end_tag('span');
+    
+          echo html_writer::start_tag('ul');
+    
+            foreach ($ofertas_disciplina as $oferta_disciplina) {
+              if ($oferta_disciplina->oferta_curso_uid == $oferta_curso->uid) {
+                echo html_writer::start_tag('li');
+                  
+                  echo html_writer::start_tag('span', array('style'=>'background-color:#BDBDBD'));
+                    echo html_writer::tag('html', $oferta_disciplina->nome);
+                  echo html_writer::end_tag('span');
+                    
+                  echo html_writer::tag('button', 'Selecionar', array('type'=>'button', 'id'=>$oferta_disciplina->uid, 
+                                        'class'=>'select_saas_offer btn btn-link'));
+                          
+                echo html_writer::end_tag('li');  
+              }
+            }
+  
+          echo html_writer::end_tag('ul');
+        echo html_writer::end_tag('li');    
+      }
+
+    echo html_writer::end_tag('ul');
+  echo html_writer::end_tag('div'); 
 }
 
 ?>

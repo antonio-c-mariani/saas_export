@@ -18,23 +18,56 @@
 
 <?php
   $saas = new saas();
-
-  $ofertas = $saas->get_ofertas_disciplinas_salvas();
   $mapeamentos = $saas->get_mapeamento_cursos();
-  
-  $ofertas_mapeadas_com_cursos = array();
-
-  foreach ($mapeamentos as $key => $map) {
-      $ofertas_mapeadas_com_cursos[$map->oferta_disciplina_id] = $DB->get_records('saas_course_mapping', 
-                                            array('oferta_disciplina_id'=>$map->oferta_disciplina_id), null, 'courseid');
-  }
-
   $courses = $DB->get_records_menu('course', null, null, 'id, fullname'); 
-
   
   if ($saas->config->course_mapping == 'one_to_many') {
+    $ofertas = $DB->get_records_menu('saas_ofertas_disciplinas', null, null, 'id, nome'); 
+    $cursos_moodle_com_ofertas = array(); 
+    
+    foreach ($mapeamentos as $key => $map) {
+        $cursos_moodle_com_ofertas[$map->courseid] = $DB->get_records('saas_course_mapping', 
+                                   array('courseid'=>$map->courseid), null, 'oferta_disciplina_id');
+    }
 
+    foreach ($cursos_moodle_com_ofertas as $courseid => $ofertas_ids) {
+       echo html_writer::start_tag('tr');  
+        
+        echo html_writer::start_tag('td');
+          foreach ($ofertas_ids as $ofertaid) {
+            echo html_writer::tag('div', $ofertas[$ofertaid->oferta_disciplina_id], 
+                                  array('id' => $ofertaid->oferta_disciplina_id));
+          }
+        echo html_writer::end_tag('td');
+        
+        echo html_writer::tag('td', $courses[$courseid]);   
+
+       echo html_writer::end_tag('tr');
+    }
+
+    echo html_writer::start_tag('tr');  
+      echo html_writer::start_tag('td');
+        echo html_writer::tag('button', 'Adicionar', array('type'=>'button', 'id'=>'TESTE', 'class'=>
+                              'btn btn-default btn-xs saas_map_bt', 'style'=>'margin-top:5px;'));
+      echo html_writer::end_tag('td');
+
+      echo html_writer::start_tag('td');
+        echo html_writer::tag('button', 'Adicionar', array('type'=>'button', 'id'=>'TESTE2', 'class'=>
+                              'btn btn-default btn-xs moodle_map_bt', 'style'=>'margin-top:5px;'));
+      echo html_writer::end_tag('td');
+    echo html_writer::end_tag('tr');
+
+
+  
   } else {
+    $ofertas = $saas->get_ofertas_disciplinas_salvas();
+    $ofertas_mapeadas_com_cursos = array();
+
+    foreach ($mapeamentos as $key => $map) {
+        $ofertas_mapeadas_com_cursos[$map->oferta_disciplina_id] = $DB->get_records('saas_course_mapping', 
+                                     array('oferta_disciplina_id'=>$map->oferta_disciplina_id), null, 'courseid');
+    }
+
     foreach ($ofertas as $ofertaid => $oferta) {
       echo html_writer::start_tag('tr');
         
@@ -54,7 +87,7 @@
               
               if ($saas->config->course_mapping == 'many_to_one') {
                       echo html_writer::start_tag('div');
-                        echo html_writer::tag('button', 'Adicionar', array('type'=>'button', 'id'=>$oferta->id, 'class'=>'                     btn btn-default btn-xs moodle_map_bt', 'style'=>'margin-top:5px;'));
+                        echo html_writer::tag('button', 'Adicionar', array('type'=>'button', 'id'=>$oferta->id, 'class'=>                    'btn btn-default btn-xs moodle_map_bt', 'style'=>'margin-top:5px;'));
                       echo html_writer::end_tag('div');
               }
 
@@ -81,7 +114,7 @@
         <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
         <h4 class="modal-title" id="myModalLabel">Cursos Moodle</h4>
       </div>
-        <?php require_once('locallib.php');
+        <?php
           $repeat_allowed = true;
           
           if ($saas->config->course_mapping == 'one_to_one') {
@@ -105,8 +138,8 @@
         <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
         <h4 class="modal-title" id="myModalLabel">Ofertas SAAS</h4>
       </div>
-        <?php require_once('locallib.php');
-          //build_saas_tree_categories();
+        <?php
+          build_saas_tree_offers();
         ?>
       <div class="modal-footer">
         <button type="button" class="btn btn-default saas-bt-close" data-dismiss="modal">Fechar</button>
