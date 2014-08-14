@@ -221,12 +221,12 @@ class saas {
     function show_table_ofertas_curso_disciplinas() {
         global $DB, $OUTPUT;
 
-        $sql = "SELECT oc.uid AS oc_uid, oc.name AS oc_name, oc.year AS oc_year, oc.period AS oc_period,
-                       od.uid AS od_uid, od.name AS od_name, od.beginning AS od_beginning, od.ending AS od_ending, od.year AS od_year
+        $sql = "SELECT oc.uid AS oc_uid, oc.nome AS oc_nome, oc.ano AS oc_ano, oc.periodo AS oc_periodo,
+                       od.uid AS od_uid, od.nome AS od_nome, od.inicio AS od_inicio, od.fim AS od_fim
                   FROM {saas_ofertas_cursos} oc
              LEFT JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1)
                  WHERE oc.enable = 1
-              ORDER BY oc.name, oc.year, oc.period, od.name";
+              ORDER BY oc.nome, oc.ano, oc.periodo, od.nome";
         $ofertas = $DB->get_recordset_sql($sql);
 
         print html_writer::start_tag('DIV', array('align'=>'center'));
@@ -237,11 +237,11 @@ class saas {
         $od_data = array();
         foreach($ofertas as $of) {
             if(!isset($oc_data[$of->oc_uid])) {
-                $oc_data[$of->oc_uid] = array($of->oc_uid, $of->oc_name, $of->oc_year. '/'.$of->oc_period);
-                $od_data[$of->oc_uid] = array();
+                $oc_data[$of->oc_uid] = array($of->oc_uid, $of->oc_nome, $of->oc_ano. '/'.$of->oc_periodo);
+                $od_data[$of->od_uid] = array();
             }
             if(!empty($of->od_uid)) {
-                $od_data[$of->oc_uid][] = array($of->od_uid, $of->od_name, $of->od_year, $of->od_beginning, $of->od_ending);
+                $od_data[$of->oc_uid][] = array($of->od_uid, $of->od_nome, $of->od_inicio, $of->od_fim);
             }
         }
 

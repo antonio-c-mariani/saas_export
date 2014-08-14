@@ -21,7 +21,9 @@
   $mapeamentos = $saas->get_mapeamento_cursos();
   $courses = $DB->get_records_menu('course', null, null, 'id, fullname'); 
   
+  //Mapeamento de um curso moodle para uma ou mais ofertas do SAAS.
   if ($saas->config->course_mapping == 'one_to_many') {
+
     $ofertas = $DB->get_records_menu('saas_ofertas_disciplinas', null, null, 'id, nome'); 
     $cursos_moodle_com_ofertas = array(); 
     
@@ -39,10 +41,9 @@
                                   array('id' => $ofertaid->oferta_disciplina_id));
           }
         echo html_writer::end_tag('td');
-        
-        echo html_writer::tag('td', $courses[$courseid]);   
 
-       echo html_writer::end_tag('tr');
+        echo html_writer::tag('td', $courses[$courseid]);     
+      echo html_writer::end_tag('tr');
     }
 
     echo html_writer::start_tag('tr');  
@@ -56,8 +57,6 @@
                               'btn btn-default btn-xs moodle_map_bt', 'style'=>'margin-top:5px;'));
       echo html_writer::end_tag('td');
     echo html_writer::end_tag('tr');
-
-
   
   } else {
     $ofertas = $saas->get_ofertas_disciplinas_salvas();

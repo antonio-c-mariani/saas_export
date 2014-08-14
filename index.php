@@ -73,7 +73,7 @@ switch ($action) {
         print_tabs(array($tabs), $action);
 
         $saas->load_saas_data(true);
-        //$saas->show_table_ofertas_curso_disciplinas();
+        $saas->show_table_ofertas_curso_disciplinas();
         //$saas->show_table_polos();
 
         echo $OUTPUT->footer();

@@ -11,8 +11,18 @@ $(document).ready(function(){
 			id:element.target.getAttribute('id')
 		})
         .done(function() {
+			window.location.reload();
+			//Por enquanto está redirecionando a página.	
+        	/*
 			var div_to_delete = '#' + element.target.getAttribute('id') + '-' + element.target.getAttribute('uid');
+			var parent_div = $(div_to_delete).parent().parent();
+			
 			$('div').remove(div_to_delete);
+			
+			if (parent_div.children().is(':empty')) {
+				parent_div.children().html('<div><button id="2" type="button" class="btn btn-default btn-xs moodle_map_bt">Adicionar</button></div>');
+			}
+			*/ 
 		});
     });
     

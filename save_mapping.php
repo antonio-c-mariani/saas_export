@@ -5,8 +5,7 @@
 
     $uid = required_param('uid', PARAM_INT);
     $id = required_param('id', PARAM_INT);
-    
-    
+        
     $saas = new saas();
     $mapping_type = $saas->config->course_mapping;
     
@@ -29,5 +28,11 @@
 		   $record->oferta_disciplina_id = $uid;
 		   $DB->insert_record('saas_course_mapping', $record);
     	   break;
+        case 'one_to_many':
+           $record = new stdClass();
+           $record->courseid = $id;
+           $record->oferta_disciplina_id = $uid;
+           $DB->insert_record('saas_course_mapping', $record);
+           break;
     }
 ?>
