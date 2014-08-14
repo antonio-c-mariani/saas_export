@@ -34,7 +34,6 @@ class saas {
                //$this->load_polos_saas();
                set_config('lastupdated', $now, 'report_saas_export');
            } catch (Exception $e){
-            var_dump($e);
                print_error($e->getMessage());
            }
        }
@@ -60,7 +59,7 @@ class saas {
             foreach ($ofertas_cursos_saas as $oferta_curso) {
                 if ($curso->uid == $oferta_curso->curso->uid) {
                     $record = new stdClass();
-                    $record->nome = $curso->nome .'('. $oferta_curso->ano .'/'. $oferta_curso->periodo .')';
+                    $record->nome = $curso->nome; //Nome do curso
                     $record->ano = $oferta_curso->ano;
                     $record->periodo = $oferta_curso->periodo;
                     $record->enable = 1;
@@ -76,40 +75,38 @@ class saas {
                 }
             }
         }
-        //$ofertas_cursos_saas = json_decode(teste_get_ofertas_cursos());
+        
         foreach($local AS $uid=>$rec) {
             if($rec->enable){
                 $DB->set_field('saas_ofertas_cursos', 'enable', 0, array('id'=>$rec->id));
             }
         }
-        exit;
     }
 
     function load_ofertas_disciplinas_saas(){
         global $DB;
 
-        $ofertas_curso = $this->get_ofertas_curso_salvas();
         $local = $DB->get_records('saas_ofertas_disciplinas', null, null ,'uid, id, enable');
 
-        foreach ($ofertas_curso as $of) {
-            $ofertas_disciplina = $this->get_ws('ofertas/curso/'.$of->uid.'/ofertas/disciplinas');
-            //$ofertas_disciplina = json_decode(teste_get_ofertas_disciplinas($of->uid));
+        $disciplinas_saas = $this->load_disciplinas_saas();
+        $ofertas_disciplinas_saas = $this->get_ws('ofertas/disciplinas');
 
-            if (!empty($ofertas_disciplina)) {
-                foreach ($ofertas_disciplina as $od){
+        foreach ($disciplinas_saas as $disciplina) {
+            foreach ($ofertas_disciplinas_saas as $oferta_disciplina){
+                if ($disciplina->uid == $oferta_disciplina->disciplina->uid) {
                     $record = new stdClass();
-                    $record->inicio = $od->inicio;
-                    $record->fim = $od->fim;
-                    $record->nome = $od->disciplina->nome;
-                    $record->oferta_curso_uid = $of->uid;
+                    $record->nome = $disciplina->nome;
+                    $record->inicio = $oferta_disciplina->inicio;
+                    $record->fim = $oferta_disciplina->fim;
+                    $record->oferta_curso_uid = $oferta_disciplina->ofertaCurso->uid;
                     $record->enable = 1;
 
-                    if (isset($local[$od->uid])){
-                        $record->id = $local[$od->uid]->id;
+                    if (isset($local[$oferta_disciplina->uid])){
+                        $record->id = $local[$oferta_disciplina->uid]->id;
                         $DB->update_record('saas_ofertas_disciplinas', $record);
-                        unset($local[$od->uid]);
+                        unset($local[$oferta_disciplina->uid]);
                     } else {
-                        $record->uid = $od->uid;
+                        $record->uid = $oferta_disciplina->uid;
                         $DB->insert_record('saas_ofertas_disciplinas', $record);
                     }
                 }
