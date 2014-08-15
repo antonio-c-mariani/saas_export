@@ -8,7 +8,8 @@ $(document).ready(function(){
 	   	$.post("delete_mapping.php",
 		{
 			uid:element.target.getAttribute('uid'),
-			id:element.target.getAttribute('id')
+			id:element.target.getAttribute('id'),
+			action:'delete_one'
 		})
         .done(function() {
 			window.location.reload();
@@ -25,6 +26,19 @@ $(document).ready(function(){
 			*/ 
 		});
     });
+
+    $('.delete_many_offers_bt').click(function(element) {	
+	   	$.post("delete_mapping.php",
+		{
+			id:element.target.getAttribute('id'),
+			action:'delete_many_offers'
+		})
+        .done(function() {
+			window.location.reload();
+		});
+    });
+
+
     
     $('.moodle_map_bt').click(function(saas) {
     	$('.select_moodle_course').click(function(moodle) {

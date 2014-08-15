@@ -54,7 +54,15 @@
         
         echo html_writer::end_tag('td');
                
-        echo html_writer::tag('td', $courses[$courseid]);  
+        echo html_writer::start_tag('div', array('id'=>$courseid . '-' . $ofertaid->oferta_disciplina_id));
+          echo html_writer::start_tag('td');
+          echo $courses[$courseid];
+          echo html_writer::tag('input', '', array('class'=>'delete_many_offers_bt', 'type'=>'image', 
+                                'src' =>'img/delete.png', 'alt'=>'Apagar mapeamento', 'height'=>'15', 
+                                'width'=>'15', 'id'=>$courseid, 'style'=>'margin-left:2px;'));
+          echo html_writer::end_tag('td');
+        echo html_writer::end_tag('div');
+
         }
 
       echo html_writer::end_tag('tr');

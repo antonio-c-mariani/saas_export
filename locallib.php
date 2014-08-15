@@ -146,7 +146,7 @@ function build_saas_tree_offers() {
       foreach ($ofertas_curso as $oferta_curso) {
         echo html_writer::start_tag('li');
           echo html_writer::start_tag('span');
-            echo $oferta_curso->nome;
+            echo $oferta_curso->nome . ' (' . $oferta_curso->ano . '-' . $oferta_curso->periodo . ')';
           echo html_writer::end_tag('span');
     
           echo html_writer::start_tag('ul');

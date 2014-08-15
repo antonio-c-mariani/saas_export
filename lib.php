@@ -638,7 +638,7 @@ class saas {
     }
 
     function make_ws_url($functionname) {
-        return $this->config->ws_url . '/' . $this->config->api_key . '/' . $functionname;
+        return $this->config->ws_url . '/instituicoes/' . $this->config->api_key  . '/' . $functionname;
     }
 
     function get_ws($functionname) {
