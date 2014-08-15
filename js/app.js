@@ -28,10 +28,21 @@ $(document).ready(function(){
     
     $('.moodle_map_bt').click(function(saas) {
     	$('.select_moodle_course').click(function(moodle) {
+	   		var uid_saas = saas.target.getAttribute('id');
+	   		var id_moodle = moodle.target.getAttribute('id');
+	   		
+	   		if (!uid_saas) {
+	   			uid_saas = -1;
+	   		}
+	   		
+	   		if (!id_moodle) {
+	   			id_moodle = -1;
+	   		}
+
 	   		$.post("save_mapping.php",
 		    {
-		      uid:saas.target.getAttribute('id'),
-		      id:moodle.target.getAttribute('id')
+		      uid:uid_saas,
+		      id:id_moodle
 		    },
 		    function(data,status){
 		      window.location.reload();
@@ -54,12 +65,23 @@ $(document).ready(function(){
         });  
     });
 
-    $('.saas_map_bt').click(function(saas) {
-    	$('.select_saas_offer').click(function(moodle) {
+    $('.saas_map_bt').click(function(moodle) {
+    	$('.select_saas_offer').click(function(saas) {
+	   		var uid_saas = saas.target.getAttribute('id');
+	   		var id_moodle = moodle.target.getAttribute('id');
+	   		
+	   		if (!uid_saas) {
+	   			uid_saas = -1;
+	   		}
+	   		
+	   		if (!id_moodle) {
+	   			id_moodle = -1;
+	   		}
+
 	   		$.post("save_mapping.php",
 		    {
-		      uid:saas.target.getAttribute('id'),
-		      id:moodle.target.getAttribute('id')
+		      uid:uid_saas,
+		      id:id_moodle
 		    },
 		    function(data,status){
 		      window.location.reload();

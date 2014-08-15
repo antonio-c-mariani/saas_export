@@ -159,7 +159,7 @@ function build_saas_tree_offers() {
                     echo html_writer::tag('html', $oferta_disciplina->nome);
                   echo html_writer::end_tag('span');
                     
-                  echo html_writer::tag('button', 'Selecionar', array('type'=>'button', 'id'=>$oferta_disciplina->uid, 
+                  echo html_writer::tag('button', 'Selecionar', array('type'=>'button', 'id'=>$oferta_disciplina->id, 
                                         'class'=>'select_saas_offer btn btn-link'));
                           
                 echo html_writer::end_tag('li');  

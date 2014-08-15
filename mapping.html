@@ -33,23 +33,36 @@
     }
 
     foreach ($cursos_moodle_com_ofertas as $courseid => $ofertas_ids) {
-       echo html_writer::start_tag('tr');  
+      echo html_writer::start_tag('tr');  
         
         echo html_writer::start_tag('td');
+          
           foreach ($ofertas_ids as $ofertaid) {
-            echo html_writer::tag('div', $ofertas[$ofertaid->oferta_disciplina_id], 
-                                  array('id' => $ofertaid->oferta_disciplina_id));
+              if ($ofertaid->oferta_disciplina_id != -1) {
+                  echo html_writer::start_tag('div', array('id'=>$courseid . '-' . $ofertaid->oferta_disciplina_id));
+                    echo html_writer::tag('div', $ofertas[$ofertaid->oferta_disciplina_id], 
+                                    array('id' => $ofertaid->oferta_disciplina_id, 'style' => 'float:left;'));
+                    echo html_writer::tag('input', '', array('class'=>'delete_bt', 'type'=>'image', 'src' =>'img/delete.png', 'alt'=>'Apagar mapeamento', 'height'=>'15', 'width'=>'15', 'uid'=>$ofertaid->oferta_disciplina_id, 'id'=>$courseid, 
+                    'style'=>'margin-left:2px;'));
+                  echo html_writer::end_tag('div');
+                  
+              }
           }
+        
+        echo html_writer::tag('button', 'Adicionar', array('type'=>'button', 'id' =>$courseid,
+                              'class'=>'btn btn-default btn-xs saas_map_bt', 'style'=>'margin-top:5px;'));  
+        
         echo html_writer::end_tag('td');
+               
+        echo html_writer::tag('td', $courses[$courseid]);  
+        }
 
-        echo html_writer::tag('td', $courses[$courseid]);     
       echo html_writer::end_tag('tr');
-    }
-
+    
     echo html_writer::start_tag('tr');  
       echo html_writer::start_tag('td');
         echo html_writer::tag('button', 'Adicionar', array('type'=>'button', 'class'=>
-                              'btn btn-default btn-xs saas_map_bt', 'style'=>'margin-top:5px;'));
+                              'btn btn-default btn-xs saas_map_bt', 'style'=>'margin-top:5px;', 'disabled'=>'true'));
       echo html_writer::end_tag('td');
 
       echo html_writer::start_tag('td');
@@ -58,6 +71,7 @@
       echo html_writer::end_tag('td');
     echo html_writer::end_tag('tr');
   
+  //Mapeamento de uma oferta do SAAS para 1 ou mais cursos Moodle.
   } else {
     $ofertas = $saas->get_ofertas_disciplinas_salvas();
     $ofertas_mapeadas_com_cursos = array();
@@ -114,10 +128,10 @@
         <h4 class="modal-title" id="myModalLabel">Cursos Moodle</h4>
       </div>
         <?php
-          $repeat_allowed = true;
+          $repeat_allowed = false;
           
-          if ($saas->config->course_mapping == 'one_to_one') {
-            $repeat_allowed = false;
+          if ($saas->config->course_mapping == 'many_to_one') {
+            $repeat_allowed = true;
           }
           
           build_tree_categories($repeat_allowed);            
