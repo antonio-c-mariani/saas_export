@@ -156,7 +156,9 @@ function build_saas_tree_offers() {
                 echo html_writer::start_tag('li');
                   
                   echo html_writer::start_tag('span', array('style'=>'background-color:#BDBDBD'));
-                    echo html_writer::tag('html', $oferta_disciplina->nome);
+                    echo html_writer::tag('html', $oferta_disciplina->nome.'('.
+                                          date("d-m-Y", $oferta_disciplina->inicio).'/'.
+                                          date("d-m-Y", $oferta_disciplina->fim).')');
                   echo html_writer::end_tag('span');
                     
                   echo html_writer::tag('button', 'Selecionar', array('type'=>'button', 'id'=>$oferta_disciplina->id, 

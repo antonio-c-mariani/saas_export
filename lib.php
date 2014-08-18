@@ -237,21 +237,22 @@ class saas {
         $od_data = array();
         foreach($ofertas as $of) {
             if(!isset($oc_data[$of->oc_uid])) {
-                $oc_data[$of->oc_uid] = array($of->oc_uid, $of->oc_nome, $of->oc_ano. '/'.$of->oc_periodo);
+                $oc_data[$of->oc_uid] = array($of->oc_nome, $of->oc_ano. '/'.$of->oc_periodo);
                 $od_data[$of->od_uid] = array();
             }
             if(!empty($of->od_uid)) {
-                $od_data[$of->oc_uid][] = array($of->od_uid, $of->od_nome, $of->od_inicio, $of->od_fim);
+                $od_data[$of->oc_uid][] = array($of->od_nome, date('m/d/y', $of->od_inicio), date('m/d/y', $of->od_fim));
             }
         }
 
         $table = new html_table();
-        $table->head = array('Ident.', 'Nome da Oferta de Curso', 'Período');
+        $table->head = array('Nome da Oferta de Curso', 'Período');
         $table->data = array();
         foreach($oc_data AS $oc_uid=>$oc_rec) {
             $table->data[] = $oc_rec;
             if(!empty($od_data[$oc_uid])) {
                 $od_table = new html_table();
+                $od_table->head = array('Nome da Oferta de disciplina', 'Início', 'Fim');
                 $od_table->data = $od_data[$oc_uid];
                 $table->data[] = array('', html_writer::table($od_table));
             }

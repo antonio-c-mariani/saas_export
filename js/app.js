@@ -31,6 +31,7 @@ $(document).ready(function(){
 	   	$.post("delete_mapping.php",
 		{
 			id:element.target.getAttribute('id'),
+			uid:-1,
 			action:'delete_many_offers'
 		})
         .done(function() {

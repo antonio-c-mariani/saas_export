@@ -92,7 +92,9 @@
     foreach ($ofertas as $ofertaid => $oferta) {
       echo html_writer::start_tag('tr');
         
-        echo html_writer::tag('td', $oferta->nome, array('id' => $ofertaid));
+        echo html_writer::tag('td', $oferta->nome .' ('. date("d-m-Y", $oferta->inicio).'/'. 
+                                                         date("d-m-Y", $oferta->fim) .')', 
+                                                         array('id' => $ofertaid));
         
         echo html_writer::start_tag('td');
           echo html_writer::start_tag('div');
