@@ -265,34 +265,6 @@ class saas {
     // Funções para salvar os mapeamentos
     // -----------------------------------------------------------------
 
-    function save_ofertas_cursos_mapping($formdata){
-        global $DB;
-
-        $ofertas_cursos = $formdata->map;
-        foreach ($ofertas_cursos as $saas_id => $categoryid){
-            $sql = "UPDATE {ofertas_cursos_saas}
-                       SET categoryid = ?
-                     WHERE saas_id = ?";
-            $params = array('categoryid'=>$categoryid, 'saas_id'=>$saas_id);
-            $DB->execute($sql, $params);
-        }
-    }
-
-    function save_ofertas_disciplinas_offers_mapping($formdata){
-        global $DB;
-
-        $ofertas_cursos = $formdata->map;
-        foreach ($ofertas_cursos as $saas_course_id => $ofertas_disciplinas_offers) {
-            foreach($ofertas_disciplinas_offers as $saas_class_offer_id => $courseid) {
-                $sql = "UPDATE {ofertas_disciplinas_saas}
-                           SET courseid = :courseid
-                         WHERE saas_id = :saas_class_id";
-                $params = array('courseid'=>$courseid, 'saas_class_id'=>$saas_class_offer_id);
-                $DB->execute($sql, $params);
-            }
-        }
-    }
-
     function save_polos_mapping($formdata){
         global $DB;
 
@@ -339,96 +311,66 @@ class saas {
 
     function get_users_sql($user_type) {
         global $DB;
+        
+        $config_role = "roles_{$user_type}";
+        
+        //Verifica se o papel foi definido
+        if (isset($this->config->{$config_role})) {
 
-        $config_role = "{$user_type}_role";
-        $str_roleids = $this->config->{$config_role};
-        if(empty($str_roleids)) {
-            return false;
-        }
+            $str_roleids = $this->config->{$config_role};
+            if(empty($str_roleids)) {
+                return false;
+            }
 
-        $config_cpf = $this->config->{"cpf_{$user_type}_field"};
+            $config_cpf = $this->config->{"cpf_field_{$user_type}"};
 
-        $join_custom_fields = '';
-        if($config_cpf == 'none') {
-            $cpf_field = "'' AS cpf";
-        } else {
-            $custom_fields = saas_export_get_user_custom_fields();
-            if(isset($custom_fields[$config_cpf])) {
-                $join_custom_fields = "LEFT JOIN {user_info_field} uf ON (uf.shortname = '{$config_cpf}')
-                                       LEFT JOIN {user_info_data} ud ON (ud.fieldid = uf.id AND ud.userid = u.id)";
-                $cpf_field = "ud.data AS cpf";
+            $join_custom_fields = '';
+            if($config_cpf == 'none') {
+                $cpf_field = "'' AS cpf";
             } else {
-                $cpf_field = "u.{$config_cpf} AS cpf";
-            }
-        }
-
-        $config_name = $this->config->{"name_{$user_type}_field"};
-        switch ($config_name){
-            case 'firstname': 
-            case 'lastname': 
-                $from_name = $config_name;
-                break;
-            case 'firstnamelastname': 
-                $from_name = "CONCAT(u.firstname, ' ', u.lastname)";
-                break;
-        }
-        $fields = "u.{$this->config->user_id_field} AS uid,
-                   u.email, {$from_name} as nome,
-                   {$cpf_field}";
-
-        list($in_sql, $params) = $DB->get_in_or_equal(explode(',', $str_roleids), SQL_PARAMS_NAMED);
-        $sql = "SELECT DISTINCT {$fields}
-                  FROM {ofertas_cursos_saas} AS oc
-                  JOIN {ofertas_disciplinas_saas} AS od
-                    ON (od.saas_course_offer_id = oc.id AND
-                        od.enable = 1)
-                  JOIN {course} c
-                    ON (c.id = od.courseid)
-                  JOIN {context} ctx
-                    ON (ctx.contextlevel = :contextlevel AND
-                        ctx.instanceid = c.id)
-                  JOIN {role_assignments} ra
-                    ON (ra.contextid = ctx.id AND
-                        ra.roleid {$in_sql})
-                  JOIN {user} u
-                    ON (u.id = ra.userid)
-                  {$join_custom_fields}
-                 WHERE oc.enable = 1";
-        return array($sql, $params);
-    }
-
-    //envia todos os usuários das ofertas de disciplina já mapeadas.
-    function send_users() {
-        global $DB;
-
-        foreach (saas::$role_names as $user_type) {
-            list($sql, $params) = $this->get_users_sql($user_type);
-            if (!empty($sql)){
-                $params['contextlevel'] = CONTEXT_COURSE;
-                $users = $DB->get_recordset_sql($sql, $params);
-                $users_to_send = array();
-                $count = 0;
-
-                foreach ($users as $u) {
-                    if ($count > 100) {
-                        $this->post_ws('pessoa', $users_to_send);
-                        $users_to_send = array();
-                        $count = 0;
-                    }
-
-                    if(!empty($u->cpf) && preg_match('/^[^0-9]*([0-9]{3})[^0-9]?([0-9]{3})[^0-9]?([0-9]{3})[^0-9]?([0-9]{2})[^0-9]*$/', $u->cpf, $matches)) {
-                        unset($matches[0]);
-                        $u->cpf = implode('', $matches);
-                    }else {
-                        $u->cpf = '';
-                    }
-                    $users_to_send[] = $u;
-                    $count++;
-                }
-                if ($count > 0) {
-                    $this->post_ws('pessoa', $users_to_send);
+                $custom_fields = saas_export_get_user_custom_fields();
+                if(isset($custom_fields[$config_cpf])) {
+                    $join_custom_fields = "LEFT JOIN {user_info_field} uf ON (uf.shortname = '{$config_cpf}')
+                                           LEFT JOIN {user_info_data} ud ON (ud.fieldid = uf.id AND ud.userid = u.id)";
+                    $cpf_field = "ud.data AS cpf";
+                } else {
+                    $cpf_field = "u.{$config_cpf} AS cpf";
                 }
             }
+
+            $config_name = $this->config->{"name_field_{$user_type}"};
+            switch ($config_name){
+                case 'firstname': 
+                case 'lastname': 
+                    $from_name = $config_name;
+                    break;
+                case 'firstnamelastname': 
+                    $from_name = "CONCAT(u.firstname, ' ', u.lastname)";
+                    break;
+            }
+            $fields = "u.{$this->config->userid_field} AS uid,
+                       u.email, {$from_name} as nome,
+                       {$cpf_field}";
+
+            list($in_sql, $params) = $DB->get_in_or_equal(explode(',', $str_roleids), SQL_PARAMS_NAMED);
+            $sql = "SELECT DISTINCT {$fields}
+                       FROM {saas_course_mapping} AS cm
+                       JOIN {saas_ofertas_disciplinas} od ON (cm.oferta_disciplina_id = od.id) 
+                       JOIN {course} c ON (c.id = cm.courseid) 
+                      JOIN {context} ctx
+                        ON (ctx.contextlevel = :contextlevel AND
+                            ctx.instanceid = c.id)
+                      JOIN {role_assignments} ra
+                        ON (ra.contextid = ctx.id AND
+                            ra.roleid {$in_sql})
+                      JOIN {user} u
+                        ON (u.id = ra.userid)
+                      {$join_custom_fields}
+                     WHERE od.enable = 1";
+            
+            return array($sql, $params);
+        } else {
+            return null;
         }
     }
 
@@ -590,9 +532,46 @@ class saas {
     //Envia todos os dados, tanto pessoas, como pessoas com os papéis e as pessoas por pólos.
     function send_data(){
         $this->send_users();
-        $this->send_users_by_role();
-        $this->send_users_by_polo();
+        //$this->send_users_by_role();
+        //$this->send_users_by_polo();
     }
+
+    //envia todos os usuários das ofertas de disciplina já mapeadas.
+    function send_users() {
+        global $DB;
+
+        foreach (saas::$role_names as $user_type) {
+            list($sql, $params) = $this->get_users_sql($user_type);
+            if (!empty($sql)){
+                $params['contextlevel'] = CONTEXT_COURSE;
+                $users = $DB->get_recordset_sql($sql, $params);
+                $users_to_send = array();
+                $count = 0;
+
+                foreach ($users as $u) {
+                    if ($count > 100) {
+                        $this->post_ws('pessoa', $users_to_send);
+                        $users_to_send = array();
+                        $count = 0;
+                    }
+
+                    if(!empty($u->cpf) && preg_match('/^[^0-9]*([0-9]{3})[^0-9]?([0-9]{3})[^0-9]?([0-9]{3})[^0-9]?([0-9]{2})[^0-9]*$/', $u->cpf, $matches)) {
+                        unset($matches[0]);
+                        $u->cpf = implode('', $matches);
+                    }else {
+                        $u->cpf = '';
+                    }
+                    $users_to_send[] = $u;
+                    $count++;
+                }
+                
+                if ($count > 0) {
+                    $this->put_ws('pessoas', $users_to_send);
+                }
+            }
+        }
+    }
+
 
     //envia os usuários com seus devidos papéis nos pólos.
     function send_users_by_polo() {
@@ -638,6 +617,7 @@ class saas {
         }
     }
 
+    //Métodos para acesso ao webservice.
     function make_ws_url($functionname) {
         return $this->config->ws_url . '/instituicoes/' . $this->config->api_key  . '/' . $functionname;
     }
@@ -658,14 +638,16 @@ class saas {
         return json_decode($resp);
     }
 
-    function post_ws($functionname, $data = array()) {
+    function put_ws($functionname, $data = array()) {
         $curl = new curl();
         $curl->count = 0;        
         $curl->setHeader('Content-Type: application/json');
         
-        $curl->post($this->make_ws_url($functionname), json_encode($data));
+        $path = saas::create_file_to_send($data);
 
-        if(is_array($curl->info) && isset($curl->info['http_code']) && $curl->info['http_code'] != '200') {
+        $curl->put($this->make_ws_url($functionname), array('file'=>$path));
+        
+        if(is_array($curl->info) && isset($curl->info['http_code']) && $curl->info['http_code'] != '204') {
             throw new Exception('Erro de acesso ao SAAS: ' . $curl->info['http_code']);
         }
         if (!empty($curl->error)) {
@@ -677,6 +659,18 @@ class saas {
 
     // ----------------------------------------------------------------
     // Métodos estáticos
+
+    static function create_file_to_send($data) {
+        global $CFG;
+        
+        $path = $CFG->dataroot. '/temp/saas_data.txt';
+        $file = fopen($path, "w");
+        
+        fwrite($file, json_encode($data));
+        fclose($file);
+
+        return $path;
+    }
 
     static function save_settings($data) {
         foreach($data AS $key=>$value) {
