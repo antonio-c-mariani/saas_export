@@ -65,6 +65,7 @@ $(document).ready(function(){
    		});
 
     	$('#cursos_moodle_modal').modal('show');
+    	$('<h4> Oferta: ' +saas.target.getAttribute('oferta')+ '</h4>').insertAfter('.modal_cursos_moodle_title');
 		
 		$('.tree li:has(ul)').addClass('parent_li').find(' > span').attr('title', 'Collapse this branch');
 		$('.tree li.parent_li > span').on('click', function (e) {

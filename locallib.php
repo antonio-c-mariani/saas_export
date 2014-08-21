@@ -95,16 +95,16 @@ function show_categories($catids, $categories){
     $has_sub_categories = empty($categories[$catid]->sub_ids);
 
     $class = "";
-    if($has_courses || $has_sub_categories){
-      $class = "icon-minus-sign";
-    } else {
+    if($has_courses && $has_sub_categories){
       $class = "icon-leaf";
+    } else {
+      $class = "icon-minus-sign";
     }
 
     echo html_writer::start_tag('li');
       echo html_writer::start_tag('span');
-        echo $categories[$catid]->name;
         echo html_writer::tag('i', '', array('class'=>$class));
+        echo $categories[$catid]->name;
       echo html_writer::end_tag('span');
 
     echo html_writer::start_tag('ul');
@@ -114,7 +114,7 @@ function show_categories($catids, $categories){
       echo html_writer::start_tag('li');
 
         echo html_writer::start_tag('span', array('style'=>'background-color:#BDBDBD'));
-          echo html_writer::tag('i', '', array('class'=>$class));
+          echo $OUTPUT->pix_icon("i/course", '', 'moodle', array('class' => 'icon smallicon'));
           echo html_writer::tag('html', $c->fullname);
         echo html_writer::end_tag('span');
 
