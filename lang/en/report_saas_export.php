@@ -137,11 +137,6 @@ $string['menu_map_class_offer'] = '2 - Mapear ofertas de disciplinas.';
 $string['menu_map_polo'] = '3 - Mapear polos.';
 $string['menu_send_data'] = '4 - Exportar dados para o SAAS.';
 
-$string['title_passo1'] = 'Relacionamento de ofertas (edições) de cursos do SAAS com as categorias do Moodle';    
-$string['title_passo2'] = 'Relacionamento de ofertas de disciplinas do SAAS com os cursos do Moodle';    
-$string['title_passo3'] = 'Seleção de grupos de cursos do Moodle que representam polos da Instituição';    
-$string['title_passo4'] = 'Exportação de dados para o SAAS';    
-
 $string['mark_groups'] = 'Marque os grupos abaixo que representam polos da Instituição';
 $string['mark_new_groups'] = 'Marque os novos grupos abaixo que representam polos da Instituição';
 $string['total_users_to_send'] = 'Total de usuários: ';
@@ -160,3 +155,8 @@ $string['obs_passo3'] = '<p>Neste passo, são indicados quais grupos de cursos M
     Este passo, objetiva definir o relacionamento de estudantes e tutores de polo (presencial) por polo. Este relacionamento é exportado para o SAAS.</p>
     <p>Marque os grupos abaixo que representam polos da Instituição.</p>';
 $string['obs_passo4'] = '<p>Abaixo é apresentado um quadro resumo com os dados que serão exportados para o SAAS.</p>';
+
+$string['saved'] = 'Os dados foram salvos';
+$string['no_changes'] = 'Os dados não foram salvos pois não houve alteração';
+$string['moodle_group'] = 'Grupo Moodle';
+$string['polo_saas'] = 'Polo SAAS';

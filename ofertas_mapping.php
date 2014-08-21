@@ -13,8 +13,8 @@
 
 <table class="table table-hover">
 
-<th>SAAS</th>
-<th>MOODLE</th>
+<th>Ofertas de Disciplinas SAAS</th>
+<th>Cursos Moodle</th>
 
 <?php
   $saas = new saas();

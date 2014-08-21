@@ -105,7 +105,37 @@ switch ($action) {
         echo $OUTPUT->header();
         print_tabs(array($tabs), $action);
 
-        include('polos_mapping.php');
+        $polo_mapping_type = $saas->get_config('polo_mapping');
+        switch ($polo_mapping_type) {
+            case 'group_to_polo':
+                include('groups_polos_mapping.php');
+                break;
+            default:
+                print $OUTPUT->heading('Mapeamento ainda não implementado: ' . $polo_mapping_type);
+        }
+
+        echo $OUTPUT->footer();
+        break;
+    case 'overview':
+        echo $OUTPUT->header();
+        print_tabs(array($tabs), $action);
+
+        $saas_data_tab_items = array('ofertas', 'polos');
+        $saas_data_tabs = array();
+        foreach($saas_data_tab_items AS $act) {
+            $saas_data_tabs[$act] = new tabobject($act, new moodle_url('/report/saas_export/index.php',
+                            array('action'=>$action, 'data'=>$act)), get_string($act, 'report_saas_export'));
+        }
+        $saas_data_action = optional_param('data', 'ofertas' , PARAM_TEXT);
+        $saas_data_action = isset($saas_data_tabs[$saas_data_action]) ? $saas_data_action : 'ofertas';
+        print_tabs(array($saas_data_tabs), $saas_data_action);
+
+        if($saas_data_action == 'ofertas') {
+            $saas->show_overview_ofertas_curso_disciplinas();
+        } else {
+            $saas->show_overview_polos();
+        }
+
         echo $OUTPUT->footer();
         break;
     default:

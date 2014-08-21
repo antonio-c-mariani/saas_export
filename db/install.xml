@@ -4,7 +4,7 @@
     xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
 >
   <TABLES>
-    <TABLE NAME="saas_course_mapping" COMMENT="" NEXT="saas_ofertas_cursos">
+    <TABLE NAME="saas_course_mapping" COMMENT="" NEXT="saas_polos_mapping">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" NEXT="courseid"/>
         <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" PREVIOUS="id" NEXT="oferta_disciplina_id"/>
@@ -13,6 +13,17 @@
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id" NEXT="saas_course_mapping_unique"/>
         <KEY NAME="saas_course_mapping_unique" TYPE="unique" FIELDS="courseid, oferta_disciplina_id" COMMENT="saas_id must be unique" PREVIOUS="primary"/>
+      </KEYS>
+    </TABLE>
+    <TABLE NAME="saas_polos_mapping" COMMENT="" NEXT="saas_ofertas_cursos">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" NEXT="groupname"/>
+        <FIELD NAME="groupname" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" PREVIOUS="id" NEXT="polo_id"/>
+        <FIELD NAME="polo_id" TYPE="char" LENGTH="254" NOTNULL="true" SEQUENCE="false" PREVIOUS="groupname"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id" NEXT="saas_polos_mapping_unique"/>
+        <KEY NAME="saas_polos_mapping_unique" TYPE="unique" FIELDS="groupname" PREVIOUS="primary"/>
       </KEYS>
     </TABLE>
     <TABLE NAME="saas_ofertas_cursos" COMMENT="Table that will save the relation between moodle courses offers and saas courses offers" PREVIOUS="saas_course_mapping" NEXT="saas_ofertas_disciplinas">
