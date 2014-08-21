@@ -91,8 +91,8 @@
 
     foreach ($ofertas as $ofertaid => $oferta) {
       echo html_writer::start_tag('tr');
-
-        echo html_writer::tag('td', $oferta->nome .' ('. saas::format_date($oferta->inicio, $oferta->fim) . ')', array('id' => $ofertaid));
+        $nome_formatado = $oferta->nome .' ('. saas::format_date($oferta->inicio, $oferta->fim) . ')';
+        echo html_writer::tag('td', $nome_formatado, array('id' => $ofertaid));
 
         echo html_writer::start_tag('td');
           echo html_writer::start_tag('div');
@@ -108,7 +108,9 @@
 
               if ($saas->config->course_mapping == 'many_to_one') {
                       echo html_writer::start_tag('div');
-                        echo html_writer::tag('button', 'Adicionar', array('type'=>'button', 'id'=>$oferta->id, 'class'=>                    'btn btn-default btn-xs moodle_map_bt', 'style'=>'margin-top:5px;'));
+                        echo html_writer::tag('button', 'Adicionar', array('type'=>'button', 'id'=>$oferta->id, 
+                                              'class'=>'btn btn-default btn-xs moodle_map_bt', 
+                                              'style'=>'margin-top:5px;', 'oferta'=>$nome_formatado));
                       echo html_writer::end_tag('div');
               }
 
@@ -133,7 +135,7 @@
     <div class="modal-content">
       <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-        <h4 class="modal-title" id="myModalLabel">Cursos Moodle</h4>
+        <h2 class="modal_cursos_moodle_title">Cursos Moodle</h2>
       </div>
         <?php
           $repeat_allowed = false;
@@ -157,7 +159,7 @@
     <div class="modal-content">
       <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-        <h4 class="modal-title" id="myModalLabel">Ofertas SAAS</h4>
+        <h4 class="modal_ofertas_saas_title">Ofertas SAAS</h4>
       </div>
         <?php
           build_saas_tree_offers();
