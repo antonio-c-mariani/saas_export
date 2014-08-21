@@ -22,6 +22,7 @@
 
 require('../../config.php');
 require_once($CFG->libdir . '/adminlib.php');
+require_once($CFG->dirroot . '/report/saas_export/classes/saas.php');
 
 require_login();
 require_capability('report/saas_export:view', context_system::instance());
@@ -73,8 +74,22 @@ switch ($action) {
         print_tabs(array($tabs), $action);
 
         $saas->load_saas_data(true);
-        $saas->show_table_ofertas_curso_disciplinas();
-        //$saas->show_table_polos();
+
+        $saas_data_tab_items = array('ofertas', 'polos');
+        $saas_data_tabs = array();
+        foreach($saas_data_tab_items AS $act) {
+            $saas_data_tabs[$act] = new tabobject($act, new moodle_url('/report/saas_export/index.php',
+                            array('action'=>$action, 'data'=>$act)), get_string($act, 'report_saas_export'));
+        }
+        $saas_data_action = optional_param('data', 'ofertas' , PARAM_TEXT);
+        $saas_data_action = isset($saas_data_tabs[$saas_data_action]) ? $saas_data_action : 'ofertas';
+        print_tabs(array($saas_data_tabs), $saas_data_action);
+
+        if($saas_data_action == 'ofertas') {
+            $saas->show_table_ofertas_curso_disciplinas();
+        } else {
+            $saas->show_table_polos();
+        }
 
         echo $OUTPUT->footer();
         break;
@@ -82,15 +97,15 @@ switch ($action) {
         echo $OUTPUT->header();
         print_tabs(array($tabs), $action);
 
-        include('mapping.html');
-        
+        include('ofertas_mapping.php');
+
         echo $OUTPUT->footer();
         break;
     case 'polo_mapping':
         echo $OUTPUT->header();
         print_tabs(array($tabs), $action);
 
-        include('polo_mapping.php');
+        include('polos_mapping.php');
         echo $OUTPUT->footer();
         break;
     default:

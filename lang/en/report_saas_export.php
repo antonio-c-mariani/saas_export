@@ -8,7 +8,9 @@ $string['saas_data'] = 'Dados SAAS';
 $string['overview'] = 'Visão geral';
 $string['export'] = 'Exportação';
 
+$string['polos'] = 'Polos';
 $string['polos_title'] = 'Polos definidos no SAAS';
+$string['ofertas'] = 'Ofertas de cursos e disciplinas';
 $string['ofertas_title'] = 'Ofertas de cursos e disciplinas definidos no SAAS';
 
 $string['saas_settings'] = 'Configurações do SAAS';

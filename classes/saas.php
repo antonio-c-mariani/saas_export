@@ -1,11 +1,17 @@
 <?php
 
-require_once(dirname(__FILE__) . '/../../config.php');
-require_once('lib_teste.php');
-
 class saas {
 
     public static $role_names = array('teacher', 'student', 'tutor_polo', 'tutor_inst');
+
+    public static function format_date($saas_timestamp_inicio, $saas_timestamp_fim=false, $separador=' / ') {
+        $result = date("d-m-Y", substr($saas_timestamp_inicio, 0, 10));
+        if($saas_timestamp_fim) {
+            $result .= $separador;
+            $result .= date("d-m-Y", substr($saas_timestamp_fim, 0, 10));
+        }
+        return $result;
+    }
 
     function __construct() {
         $this->config = get_config('report_saas_export');
@@ -31,7 +37,7 @@ class saas {
            try {
                $this->load_ofertas_cursos_saas();
                $this->load_ofertas_disciplinas_saas();
-               //$this->load_polos_saas();
+               $this->load_polos_saas();
                set_config('lastupdated', $now, 'report_saas_export');
            } catch (Exception $e){
                print_error($e->getMessage());
@@ -54,7 +60,7 @@ class saas {
 
         $cursos_saas = $this->load_cursos_saas();
         $ofertas_cursos_saas = $this->get_ws('ofertas/cursos');
-        
+
         foreach ($cursos_saas as $curso) {
             foreach ($ofertas_cursos_saas as $oferta_curso) {
                 if ($curso->uid == $oferta_curso->curso->uid) {
@@ -71,11 +77,11 @@ class saas {
                     } else {
                         $record->uid = $oferta_curso->uid;
                         $DB->insert_record('saas_ofertas_cursos', $record);
-                    }           
+                    }
                 }
             }
         }
-        
+
         foreach($local AS $uid=>$rec) {
             if($rec->enable){
                 $DB->set_field('saas_ofertas_cursos', 'enable', 0, array('id'=>$rec->id));
@@ -112,7 +118,7 @@ class saas {
                 }
             }
         }
-        
+
         foreach ($local AS $uid=>$rec) {
             if($rec->enable){
                 $DB->set_field('saas_ofertas_disciplinas', 'enable', 0, array('id'=>$rec->id));
@@ -126,11 +132,13 @@ class saas {
         $local = $DB->get_records('saas_polos', null, '' ,'uid, id, enable');
 
         $polos_saas = $this->get_ws('polos');
-        
+
         if (!empty($polos_saas)) {
             foreach ($polos_saas as $pl){
                 $record = new stdClass();
-                $record->name = $pl->nome;
+                $record->nome = $pl->nome;
+                $record->cidade = $pl->cidade;
+                $record->estado = $pl->estado;
                 $record->enable = 1;
                 if (isset($local[$pl->uid])){
                     $record->id = $local[$pl->uid]->id;
@@ -140,9 +148,9 @@ class saas {
                     $record->uid = $pl->uid;
                     $DB->insert_record('saas_polos', $record);
                 }
-            }    
+            }
         }
-        
+
         foreach ($local AS $uid=>$rec) {
             if($rec->enable){
                 $DB->set_field('saas_polos', 'enable', 0, array('id'=>$rec->id));
@@ -159,7 +167,7 @@ class saas {
 
         return $DB->get_records('saas_ofertas_cursos', array('enable'=>1));
     }
-    
+
     function get_ofertas_disciplinas_salvas() {
         global $DB;
 
@@ -195,26 +203,23 @@ class saas {
     }
 
     // Criação de tabelas para visualização dos dados.
-    //---------------------------------------------------------------------------------------------------    
-    
+    //---------------------------------------------------------------------------------------------------
+
     function show_table_polos() {
         global $DB, $OUTPUT;
 
-        $polos = $DB->get_records('saas_polos', array('enable'=>1), 'name');
+        $polos = $DB->get_records('saas_polos', array('enable'=>1), 'nome');
 
         print html_writer::start_tag('DIV', array('align'=>'center'));
-        print $OUTPUT->box_start('generalbox');
-        print $OUTPUT->heading(get_string('polos_title', 'report_saas_export'));
 
         $table = new html_table();
-        $table->head = array('Ident.', 'Nome do Polo');
+        $table->head = array('Nome do Polo', 'Cidade', 'UF');
         $table->data = array();
         foreach($polos as $pl) {
-            $table->data[] = array($pl->uid, $pl->name);
+            $table->data[] = array($pl->nome, $pl->cidade, $pl->estado);
         }
         print html_writer::table($table);
 
-        print $OUTPUT->box_end();
         print html_writer::end_tag('DIV');
     }
 
@@ -230,8 +235,6 @@ class saas {
         $ofertas = $DB->get_recordset_sql($sql);
 
         print html_writer::start_tag('DIV', array('align'=>'center'));
-        print $OUTPUT->box_start('generalbox');
-        print $OUTPUT->heading(get_string('ofertas_title', 'report_saas_export'));
 
         $oc_data = array();
         $od_data = array();
@@ -258,7 +261,6 @@ class saas {
             }
         }
         print html_writer::table($table);
-        print $OUTPUT->box_end();
         print html_writer::end_tag('DIV');
     }
 
@@ -311,9 +313,9 @@ class saas {
 
     function get_users_sql($user_type) {
         global $DB;
-        
+
         $config_role = "roles_{$user_type}";
-        
+
         //Verifica se o papel foi definido
         if (isset($this->config->{$config_role})) {
 
@@ -340,11 +342,11 @@ class saas {
 
             $config_name = $this->config->{"name_field_{$user_type}"};
             switch ($config_name){
-                case 'firstname': 
-                case 'lastname': 
+                case 'firstname':
+                case 'lastname':
                     $from_name = $config_name;
                     break;
-                case 'firstnamelastname': 
+                case 'firstnamelastname':
                     $from_name = "CONCAT(u.firstname, ' ', u.lastname)";
                     break;
             }
@@ -355,8 +357,8 @@ class saas {
             list($in_sql, $params) = $DB->get_in_or_equal(explode(',', $str_roleids), SQL_PARAMS_NAMED);
             $sql = "SELECT DISTINCT {$fields}
                        FROM {saas_course_mapping} AS cm
-                       JOIN {saas_ofertas_disciplinas} od ON (cm.oferta_disciplina_id = od.id) 
-                       JOIN {course} c ON (c.id = cm.courseid) 
+                       JOIN {saas_ofertas_disciplinas} od ON (cm.oferta_disciplina_id = od.id)
+                       JOIN {course} c ON (c.id = cm.courseid)
                       JOIN {context} ctx
                         ON (ctx.contextlevel = :contextlevel AND
                             ctx.instanceid = c.id)
@@ -367,7 +369,6 @@ class saas {
                         ON (u.id = ra.userid)
                       {$join_custom_fields}
                      WHERE od.enable = 1";
-            
             return array($sql, $params);
         } else {
             return null;
@@ -456,7 +457,7 @@ class saas {
 
         if(empty($roleids)) {
             return 0;
-        }  
+        }
 
         $roleids = array_unique($roleids);
 
@@ -564,7 +565,7 @@ class saas {
                     $users_to_send[] = $u;
                     $count++;
                 }
-                
+
                 if ($count > 0) {
                     $this->put_ws('pessoas', $users_to_send);
                 }
@@ -634,19 +635,19 @@ class saas {
         if (!empty($curl->error)) {
             throw new Exception($curl->error);
         }
-        
+
         return json_decode($resp);
     }
 
     function put_ws($functionname, $data = array()) {
         $curl = new curl();
-        $curl->count = 0;        
+        $curl->count = 0;
         $curl->setHeader('Content-Type: application/json');
-        
+
         $path = saas::create_file_to_send($data);
 
         $curl->put($this->make_ws_url($functionname), array('file'=>$path));
-        
+
         if(is_array($curl->info) && isset($curl->info['http_code']) && $curl->info['http_code'] != '204') {
             throw new Exception('Erro de acesso ao SAAS: ' . $curl->info['http_code']);
         }
@@ -662,10 +663,10 @@ class saas {
 
     static function create_file_to_send($data) {
         global $CFG;
-        
+
         $path = $CFG->dataroot. '/temp/saas_data.txt';
         $file = fopen($path, "w");
-        
+
         fwrite($file, json_encode($data));
         fclose($file);
 
