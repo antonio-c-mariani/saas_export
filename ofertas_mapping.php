@@ -3,6 +3,7 @@
   require_once($CFG->dirroot . '/report/saas_export/locallib.php');
   require_once($CFG->dirroot . '/report/saas_export/classes/saas.php');
 ?>
+<div class="saas-styles">
 
 <link rel="stylesheet" href="css/bootstrap.css" type="text/css">
 
@@ -166,4 +167,6 @@
       </div>
     </div>
   </div>
+</div>
+
 </div>
