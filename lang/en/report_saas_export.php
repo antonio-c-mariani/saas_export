@@ -37,7 +37,7 @@ $string['group_to_polo'] = 'São utilizados grupos nos cursos Moodle para obter 
 
 $string['student'] = 'Aluno';
 $string['teacher'] = 'Professor';
-$string['tutor'] = 'Tutor a distância';
+$string['tutor_inst'] = 'Tutor a distância';
 $string['tutor_polo'] = 'Tutor presencial (polo)';
 $string['title'] = 'Exportação de dados para o SAAS';
 $string['success'] = 'Todos os dados foram enviados com sucesso.';

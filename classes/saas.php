@@ -3,6 +3,7 @@
 class saas {
 
     public static $role_names = array('teacher', 'student', 'tutor_polo', 'tutor_inst');
+    public static $role_names_disciplinas = array('teacher', 'student', 'tutor_inst');
 
     public static function format_date($saas_timestamp_inicio, $saas_timestamp_fim=false, $separador=' / ') {
         $result = date("d-m-Y", substr($saas_timestamp_inicio, 0, 10));
@@ -223,136 +224,163 @@ class saas {
         print html_writer::end_tag('DIV');
     }
 
-    function show_table_ofertas_curso_disciplinas() {
-        global $DB, $OUTPUT;
+    function get_ofertas() {
+        global $DB;
 
-        $sql = "SELECT oc.uid AS oc_uid, oc.nome AS oc_nome, oc.ano AS oc_ano, oc.periodo AS oc_periodo,
-                       od.uid AS od_uid, od.nome AS od_nome, od.inicio AS od_inicio, od.fim AS od_fim
+        $ofertas = $DB->get_records('saas_ofertas_cursos', array('enable'=>1), 'nome, ano, periodo');
+
+        $sql = "SELECT od.*, oc.id as oc_id
                   FROM {saas_ofertas_cursos} oc
              LEFT JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1)
                  WHERE oc.enable = 1
-              ORDER BY oc.nome, oc.ano, oc.periodo, od.nome";
-        $ofertas = $DB->get_recordset_sql($sql);
-
-        print html_writer::start_tag('DIV', array('align'=>'center'));
-
-        $data = array();
-        $ocuid = '';
-        foreach($ofertas as $of) {
-            if($of->oc_uid != $ocuid) {
-                $line = array($of->oc_nome, $of->oc_ano. '/'.$of->oc_periodo);
-                $ocuid = $of->oc_uid;
-            } else {
-                $line = array('', '');
-            }
-
-            if(empty($of->od_nome)) {
-                $line[] = '';
-                $line[] = '';
-                $line[] = '';
-            } else {
-                $line[] = $of->od_nome;
-                $line[] = self::format_date($of->od_inicio);
-                $line[] = self::format_date($of->od_fim);
-            }
-            $data[] = $line;
+              ORDER BY od.nome";
+        $recs = $DB->get_recordset_sql($sql);
+        foreach($recs as $rec) {
+            $ofertas[$rec->oc_id]->ofertas_disciplinas[$rec->id] = $rec;
         }
-
-        $table = new html_table();
-        $table->head = array('Oferta de Curso', 'Período', 'Oferta de disciplina', 'Início', 'Fim');
-        $table->data = $data;
-        print html_writer::table($table);
-        print html_writer::end_tag('DIV');
+        return $ofertas;
     }
 
-    function show_overview_ofertas_curso_disciplinas() {
-        global $DB, $OUTPUT;
+    function get_ofertas_count() {
+        global $DB;
 
-        $roleids = array('teacher'=>array(), 'tutor_inst'=>array(), 'student'=>array());
-
-        $members = array();
+        $obj = new stdClass();
+        $roleids = array();
         $all_roleids = array();
-        foreach($roleids AS $r=>$n) {
+        foreach(self::$role_names_disciplinas AS $r) {
             $cfg_role = 'roles_' . $r;
             if(isset($this->config->$cfg_role) && !empty($this->config->$cfg_role)) {
                 $roleids[$r] = explode(',', $this->config->$cfg_role);
                 $all_roleids = array_merge($all_roleids, $roleids[$r]);
+            } else {
+                $roleids[$r] = array();
             }
+
+            $obj->$r = 0;
         }
         $all_roleids = array_unique($all_roleids);
 
         $now = time();
         list($in_sql, $params) = $DB->get_in_or_equal($all_roleids, SQL_PARAMS_NAMED);
-        $sql = "SELECT od.id as od_id, cm.courseid, ra.roleid, count(*) AS count
-                FROM {saas_ofertas_cursos} oc
-                JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1)
-                JOIN {saas_course_mapping} cm ON (cm.oferta_disciplina_id = od.id)
-                JOIN {course} c ON (c.id = cm.courseid)
-                JOIN {enrol} e ON (e.courseid = cm.courseid AND e.status = :enable)
-                JOIN {user_enrolments} ue ON (ue.enrolid = e.id AND ue.status = :active AND
+        $sql = "SELECT e.courseid, ra.roleid, COUNT(DISTINCT ra.userid) as count
+                  FROM {course} c
+                  JOIN (SELECT DISTINCT courseid
+                          FROM {saas_ofertas_cursos} oc
+                          JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1)
+                          JOIN {saas_course_mapping} cm ON (cm.oferta_disciplina_id = od.id)
+                         WHERE oc.enable = 1) jc
+                    ON (jc.courseid = c.id)
+                 JOIN {enrol} e ON (e.courseid = c.id AND e.status = :enable)
+                 JOIN {user_enrolments} ue ON (ue.enrolid = e.id AND ue.status = :active AND
                                                (ue.timeend = 0 OR (ue.timestart <= {$now} AND ue.timeend >= {$now})))
-                JOIN {context} ctx ON (ctx.instanceid = cm.courseid AND ctx.contextlevel = :contextcourse)
-                JOIN {role_assignments} ra ON (ra.contextid = ctx.id AND ra.userid = ue.userid AND ra.roleid {$in_sql} AND
+                 JOIN {context} ctx ON (ctx.instanceid = c.id AND ctx.contextlevel = :contextcourse)
+                 JOIN {role_assignments} ra ON (ra.contextid = ctx.id AND ra.userid = ue.userid AND ra.roleid {$in_sql} AND
                                                 ((ra.component = '' AND e.enrol = 'manual') OR
                                                  (ra.component = CONCAT('enrol_',e.enrol) AND ra.itemid = ue.id)))
-                WHERE oc.enable = 1
-                GROUP BY od.id, cm.courseid, ra.roleid";
+             GROUP BY e.courseid, ra.roleid";
         $params['contextcourse'] = CONTEXT_COURSE;
         $params['enable'] = ENROL_INSTANCE_ENABLED;
         $params['active'] = ENROL_USER_ACTIVE;
 
-        $recs = $DB->get_recordset_sql($sql, $params);
-        $course_mappings = array();
-        foreach($recs AS $rec) {
-            $course_mappings[$rec->od_id][$rec->courseid][$rec->roleid] = $rec->count;
+        $course_counts = array();
+        foreach($DB->get_recordset_sql($sql, $params) AS $rec) {
+            $course_counts[$rec->courseid][$rec->roleid] = $rec->count;
         }
 
-        $sql = "SELECT DISTINCT oc.uid AS oc_uid, oc.nome AS oc_nome, oc.ano AS oc_ano, oc.periodo AS oc_periodo,
-                       od.id AS od_id, od.uid AS od_uid, od.nome AS od_nome, od.inicio AS od_inicio, od.fim AS od_fim
+        $sql = "SELECT oc.id as oc_id, od.id as od_id, cm.courseid
                   FROM {saas_ofertas_cursos} oc
                   JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1)
                   JOIN {saas_course_mapping} cm ON (cm.oferta_disciplina_id = od.id)
-                  JOIN {course} c ON (c.id = cm.courseid)
                  WHERE oc.enable = 1
-              ORDER BY oc.nome, oc.ano, oc.periodo, od.nome";
-        $ofertas = $DB->get_recordset_sql($sql);
-
-        print html_writer::start_tag('DIV', array('align'=>'center'));
-
-        $data = array();
-        $ocuid = '';
-        foreach($ofertas as $of) {
-            if($of->oc_uid != $ocuid) {
-                $line = array($of->oc_nome, $of->oc_ano. '/'.$of->oc_periodo);
-                $ocuid = $of->oc_uid;
-            } else {
-                $line = array('', '');
+              ORDER BY od.nome";
+        $ofertas = array();
+        foreach($DB->get_recordset_sql($sql) as $rec) {
+            if(!isset($ofertas[$rec->oc_id][$rec->od_id])) {
+                $ofertas[$rec->oc_id][$rec->od_id] = clone($obj);
             }
-
-            $line[] = $of->od_nome;
-            $line[] = self::format_date($of->od_inicio);
-            $line[] = self::format_date($of->od_fim);
-
-            foreach($roleids AS $r=>$rids) {
-                $sum = 0;
-                if(isset($course_mappings[$of->od_id])) {
-                    foreach($course_mappings[$of->od_id] AS $courseid=>$rolecounts) {
-                        foreach($rids AS $rid) {
-                            if(isset($rolecounts[$rid])) {
-                                $sum += $rolecounts[$rid];
-                            }
-                        }
+            foreach(self::$role_names_disciplinas AS $r) {
+                foreach($roleids[$r] AS $roleid) {
+                    if(isset($course_counts[$rec->courseid][$roleid])) {
+                        $ofertas[$rec->oc_id][$rec->od_id]->$r += $course_counts[$rec->courseid][$roleid];
                     }
                 }
-                $line[] = $sum;
             }
-
-            $data[] = $line;
         }
 
+        return $ofertas;
+    }
+
+    function show_table_ofertas_curso_disciplinas($show_counts=false) {
+        $data = array();
+        $color = '#E0E0E0';
+
+        if($show_counts) {
+            $counts = $this->get_ofertas_count();
+        }
+
+        foreach($this->get_ofertas() AS $oc_id=>$oc) {
+            $color = $color == '#C0C0C0' ? '#E0E0E0 ' : '#C0C0C0';
+            $count = isset($oc->ofertas_disciplinas) ? count($oc->ofertas_disciplinas) : 1;
+            $row = new html_table_row();
+
+            $cell = new html_table_cell();
+            $cell->text = $oc->nome;
+            $cell->rowspan = $count;
+            $cell->style = "vertical-align: middle; background-color: {$color};";
+            $row->cells[] = $cell;
+
+            $cell = new html_table_cell();
+            $cell->text = $oc->ano. '/'.$oc->periodo;
+            $cell->rowspan = $count;
+            $cell->style = "vertical-align: middle; background-color: {$color};";
+            $row->cells[] = $cell;
+
+            if(isset($oc->ofertas_disciplinas)) {
+                foreach($oc->ofertas_disciplinas AS $od_id=>$od) {
+                    $cell = new html_table_cell();
+                    $cell->text = $od->nome;
+                    $cell->style = "background-color: {$color};";
+                    $row->cells[] = $cell;
+
+                    $cell = new html_table_cell();
+                    $cell->text = self::format_date($od->inicio);
+                    $cell->style = "background-color: {$color};";
+                    $row->cells[] = $cell;
+
+                    $cell = new html_table_cell();
+                    $cell->text = self::format_date($od->fim);
+                    $cell->style = "background-color: {$color};";
+                    $row->cells[] = $cell;
+
+                    if($show_counts) {
+                        foreach(self::$role_names_disciplinas AS $r) {
+                            $cell = new html_table_cell();
+                            if(isset($counts[$oc_id][$od_id]->$r)) {
+                                $cell->text = $counts[$oc_id][$od_id]->$r;
+                            } else {
+                                $cell->text = '-';
+                            }
+                            $cell->style = "text-align: right; background-color: {$color};";
+                            $row->cells[] = $cell;
+                        }
+                    }
+
+                    $data[] = $row;
+                    $row = new html_table_row();
+                }
+            } else {
+                $data[] = $row;
+            }
+        }
+
+        print html_writer::start_tag('DIV', array('align'=>'center'));
         $table = new html_table();
-        $table->head = array('Oferta de Curso', 'Período', 'Oferta de disciplina', 'Início', 'Fim', 'Professores', 'Tutores', 'Estudantes');
-        $table->align = array(null, null, null, null, null, 'right', 'right', 'right');
+        $table->head = array('Oferta de Curso', 'Período', 'Oferta de disciplina', 'Início', 'Fim');
+        if($show_counts) {
+            foreach(self::$role_names_disciplinas AS $r) {
+                $table->head[] = get_string($r, 'report_saas_export');
+            }
+        }
         $table->data = $data;
         print html_writer::table($table);
         print html_writer::end_tag('DIV');

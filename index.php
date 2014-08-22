@@ -86,7 +86,7 @@ switch ($action) {
         print_tabs(array($saas_data_tabs), $saas_data_action);
 
         if($saas_data_action == 'ofertas') {
-            $saas->show_table_ofertas_curso_disciplinas();
+            $saas->show_table_ofertas_curso_disciplinas(false);
         } else {
             $saas->show_table_polos();
         }
@@ -131,7 +131,7 @@ switch ($action) {
         print_tabs(array($saas_data_tabs), $saas_data_action);
 
         if($saas_data_action == 'ofertas') {
-            $saas->show_overview_ofertas_curso_disciplinas();
+            $saas->show_table_ofertas_curso_disciplinas(true);
         } else {
             $saas->show_overview_polos();
         }
