@@ -116,7 +116,9 @@
 
             } else {
               echo html_writer::start_tag('div');
-                echo html_writer::tag('button', 'Adicionar', array('type'=>'button', 'id'=>$oferta->id, 'class'=>'btn btn-default btn-xs moodle_map_bt'));
+                echo html_writer::tag('button', 'Adicionar', array('type'=>'button', 
+                                      'id'=>$oferta->id, 'class'=>'btn btn-default btn-xs moodle_map_bt', 
+                                      'oferta'=>$nome_formatado));
               echo html_writer::end_tag('div');
             }
           echo html_writer::end_tag('div');
@@ -134,7 +136,7 @@
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+        <button type="button" class="saas-bt-close close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
         <h2 class="modal_cursos_moodle_title">Cursos Moodle</h2>
       </div>
         <?php
@@ -158,8 +160,8 @@
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-        <h4 class="modal_ofertas_saas_title">Ofertas SAAS</h4>
+        <button type="button" class="saas-bt-close close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+        <h2 class="modal_ofertas_saas_title">Ofertas SAAS</h2>
       </div>
         <?php
           build_saas_tree_offers();

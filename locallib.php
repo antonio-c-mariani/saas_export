@@ -23,7 +23,7 @@ function build_tree_categories($repeat_allowed = true) {
 
   echo html_writer::start_tag('div', array('class'=>'tree well'));
     echo html_writer::start_tag('ul');
-      show_categories($topo, $categories);
+      show_categories($topo, $categories, true);
     echo html_writer::end_tag('ul');
   echo html_writer::end_tag('div');
 }
@@ -87,7 +87,7 @@ function get_courses_from_categories(&$categories, $repeat_allowed = true) {
 
 }
 
-function show_categories($catids, $categories){
+function show_categories($catids, $categories, $is_topo = false){
   global $OUTPUT;
 
   foreach ($catids as $catid){
@@ -95,13 +95,21 @@ function show_categories($catids, $categories){
     $has_sub_categories = empty($categories[$catid]->sub_ids);
 
     $class = "";
+    $style = "";
     if($has_courses && $has_sub_categories){
       $class = "icon-leaf";
     } else {
-      $class = "icon-minus-sign";
+      if ($is_topo) {
+        $style = '';  
+        $class = "icon-plus-sign";
+      } else {
+        $style = 'display: none;';
+        $class = "icon-plus-sign";
+      }
+      
     }
 
-    echo html_writer::start_tag('li');
+    echo html_writer::start_tag('li', array('style'=>$style));
       echo html_writer::start_tag('span');
         echo html_writer::tag('i', '', array('class'=>$class));
         echo $categories[$catid]->name;
@@ -111,7 +119,7 @@ function show_categories($catids, $categories){
 
 
     foreach ($categories[$catid]->courses as $c){
-      echo html_writer::start_tag('li');
+      echo html_writer::start_tag('li', array('style'=>'display: none;'));
 
         echo html_writer::start_tag('span', array('style'=>'background-color:#BDBDBD'));
           echo $OUTPUT->pix_icon("i/course", '', 'moodle', array('class' => 'icon smallicon'));
@@ -135,6 +143,8 @@ function show_categories($catids, $categories){
 }
 
 function build_saas_tree_offers() {
+  global $OUTPUT;
+
   $saas = new saas();
 
   $ofertas_curso = $saas->get_ofertas_curso_salvas();
@@ -146,6 +156,7 @@ function build_saas_tree_offers() {
       foreach ($ofertas_curso as $oferta_curso) {
         echo html_writer::start_tag('li');
           echo html_writer::start_tag('span');
+            echo html_writer::tag('i', '', array('class'=>'icon-plus-sign'));
             echo $oferta_curso->nome . ' (' . $oferta_curso->ano . '-' . $oferta_curso->periodo . ')';
           echo html_writer::end_tag('span');
 
@@ -153,12 +164,13 @@ function build_saas_tree_offers() {
 
             foreach ($ofertas_disciplina as $oferta_disciplina) {
               if ($oferta_disciplina->oferta_curso_uid == $oferta_curso->uid) {
-                echo html_writer::start_tag('li');
+                echo html_writer::start_tag('li', array('style'=>'display: none;'));
 
                   echo html_writer::start_tag('span', array('style'=>'background-color:#BDBDBD'));
+                    echo $OUTPUT->pix_icon("i/course", '', 'moodle', array('class' => 'icon smallicon'));
                     echo html_writer::tag('html', $oferta_disciplina->nome.'('.
-                                          date("d-m-Y", $oferta_disciplina->inicio).'/'.
-                                          date("d-m-Y", $oferta_disciplina->fim).')');
+                                          $saas::format_date($oferta_disciplina->inicio).'/'.
+                                          $saas::format_date($oferta_disciplina->fim).')');
                   echo html_writer::end_tag('span');
 
                   echo html_writer::tag('button', 'Selecionar', array('type'=>'button', 'id'=>$oferta_disciplina->id,
