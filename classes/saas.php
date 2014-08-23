@@ -127,7 +127,15 @@ class saas {
         }
     }
 
-    function load_polos_saas(){
+    function get_disciplinas_saas() {
+        $disciplinas = array();
+        foreach($this->get_ws('disciplinas') AS $d) {
+            $disciplinas[$d->uid] = $d->nome;
+        }
+        return $disciplinas;
+    }
+
+    function load_polos_saas() {
         global $DB;
 
         $local = $DB->get_records('saas_polos', null, '' ,'uid, id, enable');
@@ -166,7 +174,7 @@ class saas {
     function get_ofertas_curso_salvas() {
         global $DB;
 
-        return $DB->get_records('saas_ofertas_cursos', array('enable'=>1));
+        return $DB->get_records('saas_ofertas_cursos', array('enable'=>1), 'nome, ano, periodo');
     }
 
     function get_ofertas_disciplinas_salvas() {
@@ -214,7 +222,9 @@ class saas {
         print html_writer::start_tag('DIV', array('align'=>'center'));
 
         $table = new html_table();
-        $table->head = array('Nome do Polo', 'Cidade', 'UF');
+        $table->head = array(get_string('nome_polo', 'report_saas_export'),
+                             get_string('cidade', 'report_saas_export'),
+                             get_string('estado', 'report_saas_export'));
         $table->data = array();
         foreach($polos as $pl) {
             $table->data[] = array($pl->nome, $pl->cidade, $pl->estado);
@@ -277,6 +287,7 @@ class saas {
                  JOIN {role_assignments} ra ON (ra.contextid = ctx.id AND ra.userid = ue.userid AND ra.roleid {$in_sql} AND
                                                 ((ra.component = '' AND e.enrol = 'manual') OR
                                                  (ra.component = CONCAT('enrol_',e.enrol) AND ra.itemid = ue.id)))
+                 JOIN {user} u ON (u.id = ue.userid AND u.suspended = 0)
              GROUP BY e.courseid, ra.roleid";
         $params['contextcourse'] = CONTEXT_COURSE;
         $params['enable'] = ENROL_INSTANCE_ENABLED;
@@ -316,6 +327,8 @@ class saas {
 
         if($show_counts) {
             $counts = $this->get_ofertas_count();
+
+            var_dump($counts); exit;
         }
 
         foreach($this->get_ofertas() AS $oc_id=>$oc) {
@@ -796,6 +809,7 @@ class saas {
     }
 
     static function save_settings($data) {
+        var_dump($data); exit;
         foreach($data AS $key=>$value) {
             if($key != 'submitbutton') {
                 if(is_array($value)) {

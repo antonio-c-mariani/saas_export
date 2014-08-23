@@ -23,6 +23,8 @@
 require('../../config.php');
 require_once($CFG->libdir . '/adminlib.php');
 require_once($CFG->dirroot . '/report/saas_export/classes/saas.php');
+require_once($CFG->dirroot . '/report/saas_export/polo_form.php');
+require_once($CFG->dirroot . '/report/saas_export/oferta_form.php');
 
 require_login();
 require_capability('report/saas_export:view', context_system::instance());
@@ -70,25 +72,62 @@ switch ($action) {
         echo $OUTPUT->footer();
         break;
     case 'saas_data':
-        echo $OUTPUT->header();
-        print_tabs(array($tabs), $action);
-
         $saas->load_saas_data(true);
 
         $saas_data_tab_items = array('ofertas', 'polos');
         $saas_data_tabs = array();
         foreach($saas_data_tab_items AS $act) {
-            $saas_data_tabs[$act] = new tabobject($act, new moodle_url('/report/saas_export/index.php',
-                            array('action'=>$action, 'data'=>$act)), get_string($act, 'report_saas_export'));
+            $url = clone($baseurl);
+            $url->param('action', $action);
+            $url->param('data', $act);
+            $saas_data_tabs[$act] = new tabobject($act, $url, get_string($act, 'report_saas_export'));
         }
         $saas_data_action = optional_param('data', 'ofertas' , PARAM_TEXT);
         $saas_data_action = isset($saas_data_tabs[$saas_data_action]) ? $saas_data_action : 'ofertas';
+
+        $url = clone($baseurl);
+        $url->param('action', $action);
+        $url->param('data', $saas_data_action);
+
+        if($saas_data_action == 'ofertas') {
+            $oferta_form = new oferta_form($url, array('saas'=>$saas));
+            if ($oferta_form->is_cancelled()) {
+                redirect($url);
+            } else if ($oferta = $oferta_form->get_data()) {
+                // todo: Cadastrar oferta no SAAS
+                $saas->load_ofertas_disciplinas_saas();
+                redirect($url);
+            }
+        } else {
+            $polo_form = new polo_form($url);
+            if ($polo_form->is_cancelled()) {
+                redirect($url);
+            } else if ($polo = $polo_form->get_data()) {
+                // todo: Cadastrar polo no SAAS
+                $saas->load_polos_saas();
+                redirect($url);
+            }
+        }
+
+        echo $OUTPUT->header();
+
+        print_tabs(array($tabs), $action);
         print_tabs(array($saas_data_tabs), $saas_data_action);
 
         if($saas_data_action == 'ofertas') {
             $saas->show_table_ofertas_curso_disciplinas(false);
+            print html_writer::start_tag('DIV', array('align'=>'center'));
+            print $OUTPUT->box_start('generalbox boxwidthnormal');
+            $oferta_form->display();
+            print $OUTPUT->box_end();
+            print html_writer::end_tag('DIV');
         } else {
             $saas->show_table_polos();
+            print html_writer::start_tag('DIV', array('align'=>'center'));
+            print $OUTPUT->box_start('generalbox boxwidthnormal');
+            $polo_form->display();
+            print $OUTPUT->box_end();
+            print html_writer::end_tag('DIV');
         }
 
         echo $OUTPUT->footer();
@@ -123,8 +162,10 @@ switch ($action) {
         $saas_data_tab_items = array('ofertas', 'polos');
         $saas_data_tabs = array();
         foreach($saas_data_tab_items AS $act) {
-            $saas_data_tabs[$act] = new tabobject($act, new moodle_url('/report/saas_export/index.php',
-                            array('action'=>$action, 'data'=>$act)), get_string($act, 'report_saas_export'));
+            $url = clone($baseurl);
+            $url->param('action', $action);
+            $url->param('data', $act);
+            $saas_data_tabs[$act] = new tabobject($act, $url, get_string($act, 'report_saas_export'));
         }
         $saas_data_action = optional_param('data', 'ofertas' , PARAM_TEXT);
         $saas_data_action = isset($saas_data_tabs[$saas_data_action]) ? $saas_data_action : 'ofertas';
@@ -141,7 +182,7 @@ switch ($action) {
     default:
         echo $OUTPUT->header();
         print_tabs(array($tabs), $action);
-        print $OUTPUT->box_start('generalbox boxwidthnormal');
+        print $OUTPUT->box_start('generalbox boxwidthormal');
         print $OUTPUT->heading('Ainda estamos trabalhando. Disponível em breve ...');
         print $OUTPUT->box_end();
         echo $OUTPUT->footer();

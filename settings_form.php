@@ -133,19 +133,16 @@ class saas_export_settings_form extends moodleform {
 
         $student_roles_menu = saas::get_student_roles_menu();
         $other_roles_menu = saas::get_other_roles_menu();
-        $id_teacher = $DB->get_field('role', 'id', array('shortname'=>'editingteacher'));
-        $id_student = $DB->get_field('role', 'id', array('shortname'=>'student'));
 
         $select_teacher = $mform->addElement('select', 'roles_teacher', get_string('roles_teacher', 'report_saas_export'), $other_roles_menu);
         $select_teacher->setMultiple(true);
         $select_teacher->setSize(5);
-        $mform->setDefault('roles_teacher', $id_teacher);
+        $mform->setDefault('roles_teacher', 3);
         $mform->addHelpButton('roles_teacher', 'roles_teacher', 'report_saas_export');
 
         $select_student = $mform->addElement('select', 'roles_student', get_string('roles_student', 'report_saas_export'), $student_roles_menu);
         $select_student->setMultiple(true);
         $select_student->setSize(3);
-        $mform->setDefault('roles_student', $id_student);
         $mform->addHelpButton('roles_student', 'roles_student', 'report_saas_export');
 
         $select_tutor_polo = $mform->addElement('select', 'roles_tutor_polo', get_string('roles_tutor_polo', 'report_saas_export'), $other_roles_menu);
@@ -159,7 +156,13 @@ class saas_export_settings_form extends moodleform {
         $mform->addHelpButton('roles_tutor_inst', 'roles_tutor_inst', 'report_saas_export');
 
         $config = get_config('report_saas_export');
-        $this->set_data($config);
+        if(!isset($config->roles_student)) {
+            $config->roles_student = $DB->get_field('role', 'id', array('shortname'=>'student'));
+        }
+        if(!isset($config->roles_teacher)) {
+            $config->roles_teacher = $DB->get_field('role', 'id', array('shortname'=>'editingteacher'));
+        }
+        // $this->set_data($config);
 
         $this->add_action_buttons();
     }
@@ -167,18 +170,20 @@ class saas_export_settings_form extends moodleform {
     public function validation($data, $files) {
         $errors = parent::validation($data, $files);
 
+/*
         $roles = array();
-        foreach(array('roles_teacher','roles_student', 'roles_tutor_polo','roles_tutor_inst') AS $r) {
-            if(isset($data[$r])) {
-                foreach($data[$r] AS $roleid) {
+        foreach(saas::$role_names AS $r) {
+            $role = 'roles_' . $r;
+            if(isset($data[$role])) {
+                foreach($data[$role] AS $roleid) {
                     if(isset($roles[$roleid])) {
-                        $errors[$r] = get_string('duplicated_role', 'report_saas_export');
+                        $errors[$role] = get_string('duplicated_role', 'report_saas_export');
                     }
                     $roles[$roleid] = true;
                 }
             }
         }
-
+*/
         return $errors;
     }
 }
