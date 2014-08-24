@@ -15,6 +15,7 @@ $string['oferta_curso'] = 'Oferta de curso';
 $string['disciplina'] = 'Disciplina';
 $string['inicio'] = 'Início';
 $string['fim'] = 'Fim';
+$string['periodo'] = 'Período';
 
 $string['guidelines'] = 'Orientações';
 $string['settings'] = 'Configurações';

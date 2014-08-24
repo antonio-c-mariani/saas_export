@@ -33,7 +33,7 @@ admin_externalpage_setup('report_saas_export', '', null, '', array('pagelayout'=
 $baseurl = new moodle_url('/report/saas_export/index.php');
 $api_key = get_config('report_saas_export', 'api_key');
 
-$tab_items = array('guidelines'=>true, 'settings'=>true, 'saas_data'=>false, 'course_mapping'=>false, 'polo_mapping'=>false, 'overview'=>false, 'export'=>false);
+$tab_items = array('guidelines'=>true, 'settings'=>true, 'saas_data'=>false, 'course_mapping'=>false, 'polo_mapping'=>false, 'overview'=>false);
 
 $tabs = array();
 foreach($tab_items AS $act=>$always) {

@@ -131,26 +131,27 @@ class saas_export_settings_form extends moodleform {
         // ----------------------------------------------------------------------------------------------
         $mform->addElement('header', 'role_settings', get_string('role_settings', 'report_saas_export'));
 
-        $student_roles_menu = saas::get_student_roles_menu();
-        $other_roles_menu = saas::get_other_roles_menu();
+        $student_roles_menu = array(0=>get_string('none')) + saas::get_student_roles_menu();
+        $other_roles_menu = array(0=>get_string('none')) + saas::get_other_roles_menu();
 
-        $select_teacher = $mform->addElement('select', 'roles_teacher', get_string('roles_teacher', 'report_saas_export'), $other_roles_menu);
+        $select_teacher =& $mform->addElement('select', 'roles_teacher', get_string('roles_teacher', 'report_saas_export'), $other_roles_menu);
         $select_teacher->setMultiple(true);
         $select_teacher->setSize(5);
-        $mform->setDefault('roles_teacher', 3);
+        $teacher_id = $DB->get_field('role', 'id', array('shortname'=>'editingteacher'));
+        $mform->setDefault('roles_teacher', $teacher_id);
         $mform->addHelpButton('roles_teacher', 'roles_teacher', 'report_saas_export');
 
-        $select_student = $mform->addElement('select', 'roles_student', get_string('roles_student', 'report_saas_export'), $student_roles_menu);
+        $select_student =& $mform->addElement('select', 'roles_student', get_string('roles_student', 'report_saas_export'), $student_roles_menu);
         $select_student->setMultiple(true);
         $select_student->setSize(3);
         $mform->addHelpButton('roles_student', 'roles_student', 'report_saas_export');
 
-        $select_tutor_polo = $mform->addElement('select', 'roles_tutor_polo', get_string('roles_tutor_polo', 'report_saas_export'), $other_roles_menu);
+        $select_tutor_polo =& $mform->addElement('select', 'roles_tutor_polo', get_string('roles_tutor_polo', 'report_saas_export'), $other_roles_menu);
         $select_tutor_polo->setMultiple(true);
         $select_tutor_polo->setSize(5);
         $mform->addHelpButton('roles_tutor_polo', 'roles_tutor_polo', 'report_saas_export');
 
-        $select_tutor_inst = $mform->addElement('select', 'roles_tutor_inst', get_string('roles_tutor_inst', 'report_saas_export'), $other_roles_menu);
+        $select_tutor_inst =& $mform->addElement('select', 'roles_tutor_inst', get_string('roles_tutor_inst', 'report_saas_export'), $other_roles_menu);
         $select_tutor_inst->setMultiple(true);
         $select_tutor_inst->setSize(5);
         $mform->addHelpButton('roles_tutor_inst', 'roles_tutor_inst', 'report_saas_export');
@@ -160,9 +161,9 @@ class saas_export_settings_form extends moodleform {
             $config->roles_student = $DB->get_field('role', 'id', array('shortname'=>'student'));
         }
         if(!isset($config->roles_teacher)) {
-            $config->roles_teacher = $DB->get_field('role', 'id', array('shortname'=>'editingteacher'));
+            $config->roles_teacher = $teacher_id;
         }
-        // $this->set_data($config);
+        $this->set_data($config);
 
         $this->add_action_buttons();
     }
