@@ -100,13 +100,11 @@ function show_categories($catids, $categories, $is_topo = false){
       $class = "icon-leaf";
     } else {
       if ($is_topo) {
-        $style = '';  
-        $class = "icon-plus-sign";
+        $class = "icon-plus-sign";  
       } else {
         $style = 'display: none;';
         $class = "icon-plus-sign";
       }
-      
     }
 
     echo html_writer::start_tag('li', array('style'=>$style));
@@ -134,7 +132,7 @@ function show_categories($catids, $categories, $is_topo = false){
 
 
     if(!empty($categories[$catid]->sub_ids)){
-      show_categories($categories[$catid]->sub_ids, $categories);
+      show_categories($categories[$catid]->sub_ids, $categories, true);
     }
 
     echo html_writer::end_tag('ul');

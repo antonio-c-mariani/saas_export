@@ -13,11 +13,13 @@
 
 <table class="table table-hover">
 
-<th>Ofertas de Disciplinas SAAS</th>
-<th>Cursos Moodle</th>
+<th><h4>Ofertas de Cursos SAAS</h4></th>
+<th><h4>Cursos Moodle</h4></th>
 
 <?php
   $saas = new saas();
+  
+  $ofertas_de_curso = $saas->get_ofertas_curso_salvas();
   $mapeamentos = $saas->get_mapeamento_cursos();
   $courses = $DB->get_records_menu('course', null, null, 'id, fullname');
 
@@ -81,50 +83,73 @@
 
   //Mapeamento de uma oferta do SAAS para 1 ou mais cursos Moodle.
   } else {
-    $ofertas = $saas->get_ofertas_disciplinas_salvas();
+    $ofertas_de_disciplina = $saas->get_ofertas_disciplinas_salvas();
+    
     $ofertas_mapeadas_com_cursos = array();
+
+    foreach ($ofertas_de_curso as $oferta_de_curso) {
+      $of = array();
+      foreach ($ofertas_de_disciplina as $oferta_de_disciplina) {
+          
+          if ($oferta_de_curso->uid == $oferta_de_disciplina->oferta_curso_uid) {
+            $of[] = $oferta_de_disciplina;
+          }
+      }
+      $oferta_de_curso->ofertas_de_disciplina = $of;
+    }
 
     foreach ($mapeamentos as $key => $map) {
         $ofertas_mapeadas_com_cursos[$map->oferta_disciplina_id] = $DB->get_records('saas_course_mapping',
                                      array('oferta_disciplina_id'=>$map->oferta_disciplina_id), null, 'courseid');
     }
 
-    foreach ($ofertas as $ofertaid => $oferta) {
+    foreach ($ofertas_de_curso as $oferta_de_curso) {
       echo html_writer::start_tag('tr');
-        $nome_formatado = $oferta->nome .' ('. saas::format_date($oferta->inicio, $oferta->fim) . ')';
-        echo html_writer::tag('td', $nome_formatado, array('id' => $ofertaid));
-
-        echo html_writer::start_tag('td');
-          echo html_writer::start_tag('div');
-            if (array_key_exists($ofertaid, $ofertas_mapeadas_com_cursos)) {
-              foreach ($ofertas_mapeadas_com_cursos[$ofertaid] as $courseid => $object) {
-                echo html_writer::start_tag('div', array('id'=>$courseid . '-' . $ofertaid));
-                  echo html_writer::tag('div', $courses[$courseid], array('style' => 'float:left;'));
-                  echo html_writer::tag('input', '', array('class'=>'delete_bt', 'type'=>'image', 'src' =>'img/delete.png',
-                    'alt'=>'Apagar mapeamento', 'height'=>'15', 'width'=>'15', 'uid'=>$ofertaid, 'id'=>$courseid,
-                    'style'=>'margin-left:2px;'));
-                echo html_writer::end_tag('div');
-              }
-
-              if ($saas->config->course_mapping == 'many_to_one') {
-                      echo html_writer::start_tag('div');
-                        echo html_writer::tag('button', 'Adicionar', array('type'=>'button', 'id'=>$oferta->id, 
-                                              'class'=>'btn btn-default btn-xs moodle_map_bt', 
-                                              'style'=>'margin-top:5px;', 'oferta'=>$nome_formatado));
-                      echo html_writer::end_tag('div');
-              }
-
-            } else {
-              echo html_writer::start_tag('div');
-                echo html_writer::tag('button', 'Adicionar', array('type'=>'button', 
-                                      'id'=>$oferta->id, 'class'=>'btn btn-default btn-xs moodle_map_bt', 
-                                      'oferta'=>$nome_formatado));
-              echo html_writer::end_tag('div');
-            }
-          echo html_writer::end_tag('div');
-        echo html_writer::end_tag('td');
-
+        $nome_formatado = $oferta_de_curso->nome .' ('. $oferta_de_curso->ano .'/'. $oferta_de_curso->periodo . ')';
+        echo html_writer::tag('td', $nome_formatado, array('style' =>'font-weight:bold; margin-left:10px;'));
+        echo html_writer::tag('td', '');
       echo html_writer::end_tag('tr');
+
+      foreach ($oferta_de_curso->ofertas_de_disciplina as $oferta_de_disciplina) {
+        echo html_writer::start_tag('div');
+          echo html_writer::start_tag('tr');
+              $nome_formatado = $oferta_de_disciplina->nome .' ('. saas::format_date($oferta_de_disciplina->inicio, $oferta_de_disciplina->fim) . ')';
+              echo html_writer::tag('td', $nome_formatado, array('id' => $oferta_de_disciplina->id,
+                                    'style'=>'text-indent: 30px;', 'bgcolor'=>'#F0F0F0'));
+              
+              echo html_writer::start_tag('td', array('bgcolor'=>'#F0F0F0'));
+                echo html_writer::start_tag('div');
+                if (array_key_exists($oferta_de_disciplina->id, $ofertas_mapeadas_com_cursos)) {
+                  foreach ($ofertas_mapeadas_com_cursos[$oferta_de_disciplina->id] as $courseid => $object) {
+                    echo html_writer::start_tag('div', array('id'=>$courseid . '-' . $oferta_de_disciplina->id));
+                      echo html_writer::tag('div', $courses[$courseid], array('style' => 'float:left;'));
+                      echo html_writer::tag('input', '', array('class'=>'delete_bt', 'type'=>'image', 'src' =>'img/delete.png',
+                        'alt'=>'Apagar mapeamento', 'height'=>'15', 'width'=>'15', 'uid'=>$oferta_de_disciplina->id, 
+                        'id'=>$courseid, 'style'=>'margin-left:2px;'));
+                    echo html_writer::end_tag('div');
+                  }
+
+                  if ($saas->config->course_mapping == 'many_to_one') {
+                          echo html_writer::start_tag('div');
+                            echo html_writer::tag('button', 'Adicionar', array('type'=>'button', 'id'=>$oferta_de_disciplina->id, 
+                                                  'class'=>'btn btn-default btn-xs moodle_map_bt', 
+                                                  'style'=>'margin-top:5px;', 'oferta'=>$nome_formatado));
+                          echo html_writer::end_tag('div');
+                  }
+
+                } else {
+                  echo html_writer::start_tag('div');
+                    echo html_writer::tag('button', 'Adicionar', array('type'=>'button', 
+                                          'id'=>$oferta_de_disciplina->id, 
+                                          'class'=>'btn btn-default btn-xs moodle_map_bt', 
+                                          'oferta'=>$nome_formatado));
+                  echo html_writer::end_tag('div');
+                }
+                echo html_writer::end_tag('div');
+              echo html_writer::end_tag('td');
+          echo html_writer::end_tag('tr');
+        echo html_writer::end_tag('div');
+      }
     }
   }
 ?>
