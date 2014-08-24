@@ -4,6 +4,16 @@
     xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
 >
   <TABLES>
+    <TABLE NAME="saas_config_roles" COMMENT="" NEXT="saas_course_mapping">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" NEXT="role"/>
+        <FIELD NAME="role" TYPE="char" LENGTH="20" NOTNULL="true" SEQUENCE="false" PREVIOUS="id" NEXT="roleid"/>
+        <FIELD NAME="roleid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" PREVIOUS="role"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+    </TABLE>
     <TABLE NAME="saas_course_mapping" COMMENT="" NEXT="saas_polos_mapping">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" NEXT="courseid"/>

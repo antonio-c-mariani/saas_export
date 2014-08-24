@@ -2,6 +2,21 @@
 
 $string['pluginname'] = 'Exportar dados SAAS';
 
+$string['add_polo'] = 'Adicionar novo polo';
+$string['add_oferta'] = 'Adicionar oferta de disciplina';
+$string['nome_polo'] = 'Nome do polo';
+$string['invalid_nome_polo'] = 'Nome de polo inválido';
+$string['exists_nome_polo'] = 'Já há polo com este nome';
+$string['cidade'] = 'Cidade';
+$string['invalid_cidade'] = 'Nome de cidade inválido';
+$string['estado'] = 'UF';
+
+$string['oferta_curso'] = 'Oferta de curso';
+$string['disciplina'] = 'Disciplina';
+$string['inicio'] = 'Início';
+$string['fim'] = 'Fim';
+$string['periodo'] = 'Período';
+
 $string['guidelines'] = 'Orientações';
 $string['settings'] = 'Configurações';
 $string['saas_data'] = 'Dados SAAS';
@@ -130,12 +145,6 @@ $string['saas_presentation'] = 'Este módulo possibilita a exportação de dados
     <LI>Relacionamento de estudantes e tutores presenciais com os polos.</LI>
     </UL>
     Realize a sequência de passos abaixo. Os três primeiros permitem definir quais dados serão exportados, e o quarto passo é a efetivação da exportação.';
-
-$string['menu_config_table'] = 'Visualizar Configurações';
-$string['menu_map_course_offer'] = '1 - Mapear ofertas (edição) de cursos.';
-$string['menu_map_class_offer'] = '2 - Mapear ofertas de disciplinas.';
-$string['menu_map_polo'] = '3 - Mapear polos.';
-$string['menu_send_data'] = '4 - Exportar dados para o SAAS.';
 
 $string['mark_groups'] = 'Marque os grupos abaixo que representam polos da Instituição';
 $string['mark_new_groups'] = 'Marque os novos grupos abaixo que representam polos da Instituição';
