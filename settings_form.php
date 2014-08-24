@@ -24,6 +24,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 require_once("{$CFG->libdir}/formslib.php");
+require_once("{$CFG->dirroot}/report/saas_export/classes/saas.php");
 
 class saas_export_settings_form extends moodleform {
 
@@ -156,14 +157,8 @@ class saas_export_settings_form extends moodleform {
         $select_tutor_inst->setSize(5);
         $mform->addHelpButton('roles_tutor_inst', 'roles_tutor_inst', 'report_saas_export');
 
-        $config = get_config('report_saas_export');
-        if(!isset($config->roles_student)) {
-            $config->roles_student = $DB->get_field('role', 'id', array('shortname'=>'student'));
-        }
-        if(!isset($config->roles_teacher)) {
-            $config->roles_teacher = $teacher_id;
-        }
-        $this->set_data($config);
+        $saas = new saas();
+        $this->set_data($saas->config);
 
         $this->add_action_buttons();
     }
@@ -171,7 +166,6 @@ class saas_export_settings_form extends moodleform {
     public function validation($data, $files) {
         $errors = parent::validation($data, $files);
 
-/*
         $roles = array();
         foreach(saas::$role_names AS $r) {
             $role = 'roles_' . $r;
@@ -184,7 +178,7 @@ class saas_export_settings_form extends moodleform {
                 }
             }
         }
-*/
+
         return $errors;
     }
 }
