@@ -117,7 +117,7 @@ function show_categories($catids, $categories, $is_topo = false){
 
 
     foreach ($categories[$catid]->courses as $c){
-      echo html_writer::start_tag('li', array('style'=>'display: none;'));
+      echo html_writer::start_tag('li');
 
         echo html_writer::start_tag('span', array('style'=>'background-color:#BDBDBD'));
           echo $OUTPUT->pix_icon("i/course", '', 'moodle', array('class' => 'icon smallicon'));

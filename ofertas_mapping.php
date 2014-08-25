@@ -13,7 +13,7 @@
 
 <table class="table table-hover">
 
-<th><h4>Ofertas de Cursos SAAS</h4></th>
+<th><h4>Ofertas de Cursos/Ofertas de disciplinas</h4></th>
 <th><h4>Cursos Moodle</h4></th>
 
 <?php
@@ -25,14 +25,39 @@
 
   //Mapeamento de um curso moodle para uma ou mais ofertas do SAAS.
   if ($saas->config->course_mapping == 'one_to_many') {
+    die('TODO');
+    $ofertas_de_disciplina = $saas->get_ofertas_disciplinas_salvas();
+    
+    foreach ($ofertas_de_curso as $oferta_de_curso) {
+      $of = array();
+      foreach ($ofertas_de_disciplina as $oferta_de_disciplina) {
+          
+          if ($oferta_de_curso->uid == $oferta_de_disciplina->oferta_curso_uid) {
+            $of[] = $oferta_de_disciplina;
+          }
+      }
+      $oferta_de_curso->ofertas_de_disciplina = $of;
+    }
 
-    $ofertas = $DB->get_records_menu('saas_ofertas_disciplinas', null, null, 'id, nome');
     $cursos_moodle_com_ofertas = array();
 
     foreach ($mapeamentos as $key => $map) {
         $cursos_moodle_com_ofertas[$map->courseid] = $DB->get_records('saas_course_mapping',
                                    array('courseid'=>$map->courseid), null, 'oferta_disciplina_id');
     }
+
+    foreach ($ofertas_de_curso as $oferta_de_curso) {
+        echo html_writer::start_tag('tr');
+          $nome_formatado = $oferta_de_curso->nome .' ('. $oferta_de_curso->ano .'/'. $oferta_de_curso->periodo . ')';
+          echo html_writer::tag('td', $nome_formatado, array('style'=>'font-weight:bold;'));
+          echo html_writer::tag('td', '');
+        echo html_writer::end_tag('tr');
+    }
+
+    /////////////////////
+
+
+
 
     foreach ($cursos_moodle_com_ofertas as $courseid => $ofertas_ids) {
       echo html_writer::start_tag('tr');
@@ -42,7 +67,7 @@
           foreach ($ofertas_ids as $ofertaid) {
               if ($ofertaid->oferta_disciplina_id != -1) {
                   echo html_writer::start_tag('div', array('id'=>$courseid . '-' . $ofertaid->oferta_disciplina_id));
-                    echo html_writer::tag('div', $ofertas[$ofertaid->oferta_disciplina_id],
+                    echo html_writer::tag('div', $ofertas_de_disciplina[$ofertaid->oferta_disciplina_id],
                                     array('id' => $ofertaid->oferta_disciplina_id, 'style' => 'float:left;'));
                     echo html_writer::tag('input', '', array('class'=>'delete_bt', 'type'=>'image', 'src' =>'img/delete.png', 'alt'=>'Apagar mapeamento', 'height'=>'15', 'width'=>'15', 'uid'=>$ofertaid->oferta_disciplina_id, 'id'=>$courseid,
                     'style'=>'margin-left:2px;'));
