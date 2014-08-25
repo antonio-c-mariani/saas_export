@@ -25,7 +25,7 @@
 
   //Mapeamento de um curso moodle para uma ou mais ofertas do SAAS.
   if ($saas->config->course_mapping == 'one_to_many') {
-    die('TODO');
+    
     $ofertas_de_disciplina = $saas->get_ofertas_disciplinas_salvas();
     
     foreach ($ofertas_de_curso as $oferta_de_curso) {
@@ -52,11 +52,38 @@
           echo html_writer::tag('td', $nome_formatado, array('style'=>'font-weight:bold;'));
           echo html_writer::tag('td', '');
         echo html_writer::end_tag('tr');
-    }
 
-    /////////////////////
+        echo html_writer::start_tag('tr');
+          echo html_writer::start_tag('td');
+            echo html_writer::start_tag('div', array('class'=>'btn-group'));
+              echo html_writer::start_tag('button', array('class'=>'btn btn-default dropdown-toggle btn-xs', 
+                                          'data-toggle'=>'dropdown'));
+              echo html_writer::tag('span', 'Adicionar ');
+              echo html_writer::tag('span', '', array('class'=>'caret')); 
+              echo html_writer::end_tag('button');
+              
+              echo html_writer::start_tag('ul', array('class'=>'dropdown-menu', 'role'=>'menu'));
+             
+                foreach ($oferta_de_curso->ofertas_de_disciplina as $ofd) {
+                  $nome_formatado = $ofd->nome; //.' ('. saas::format_date($ofd->inicio, $ofd->fim) . ')';
+                  echo html_writer::start_tag('li', array('id'=>$ofd->uid, 'style'=>'text-indent: 5px;'));
+                    echo html_writer::tag('span', $nome_formatado, array('style'=>'width:100%;'));
+                  echo html_writer::end_tag('li');
+                }
+                
+                
+              echo html_writer::end_tag('ul');
+            echo html_writer::end_tag('div');  
+          echo html_writer::end_tag('td');
 
+          echo html_writer::start_tag('td');
+            echo html_writer::tag('button', 'Adicionar', array('type'=>'button', 'class'=>
+                                  'btn btn-default btn-xs moodle_map_bt', 'style'=>'margin-top:5px;'));
+          echo html_writer::end_tag('td');
+        echo html_writer::end_tag('tr');
+    } 
 
+    /*
 
 
     foreach ($cursos_moodle_com_ofertas as $courseid => $ofertas_ids) {
@@ -105,7 +132,7 @@
                               'btn btn-default btn-xs moodle_map_bt', 'style'=>'margin-top:5px;'));
       echo html_writer::end_tag('td');
     echo html_writer::end_tag('tr');
-
+  */
   //Mapeamento de uma oferta do SAAS para 1 ou mais cursos Moodle.
   } else {
     $ofertas_de_disciplina = $saas->get_ofertas_disciplinas_salvas();
