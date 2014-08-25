@@ -14,7 +14,7 @@
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
       </KEYS>
     </TABLE>
-    <TABLE NAME="saas_course_mapping" COMMENT="" PREVIOUS="saas_config_roles" NEXT="saas_polos_mapping">
+    <TABLE NAME="saas_course_mapping" COMMENT="" PREVIOUS="saas_config_roles" NEXT="saas_groups_polos_mapping">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" NEXT="courseid"/>
         <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" PREVIOUS="id" NEXT="oferta_disciplina_id"/>
@@ -25,7 +25,7 @@
         <KEY NAME="saas_course_mapping_unique" TYPE="unique" FIELDS="courseid, oferta_disciplina_id" COMMENT="saas_id must be unique" PREVIOUS="primary"/>
       </KEYS>
     </TABLE>
-    <TABLE NAME="saas_polos_mapping" COMMENT="" PREVIOUS="saas_course_mapping" NEXT="saas_ofertas_cursos">
+    <TABLE NAME="saas_groups_polos_mapping" COMMENT="" PREVIOUS="saas_course_mapping" NEXT="saas_ofertas_cursos">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" NEXT="groupname"/>
         <FIELD NAME="groupname" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" PREVIOUS="id" NEXT="polo_id"/>
@@ -36,7 +36,7 @@
         <KEY NAME="saas_polos_mapping_unique" TYPE="unique" FIELDS="groupname" PREVIOUS="primary"/>
       </KEYS>
     </TABLE>
-    <TABLE NAME="saas_ofertas_cursos" COMMENT="Table that will save the relation between moodle courses offers and saas courses offers" PREVIOUS="saas_polos_mapping" NEXT="saas_ofertas_disciplinas">
+    <TABLE NAME="saas_ofertas_cursos" COMMENT="Table that will save the relation between moodle courses offers and saas courses offers" PREVIOUS="saas_groups_polos_mapping" NEXT="saas_ofertas_disciplinas">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" NEXT="uid"/>
         <FIELD NAME="uid" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="id" NEXT="nome"/>
@@ -65,7 +65,7 @@
         <KEY NAME="offer_dis_uid_unique" TYPE="unique" FIELDS="uid" COMMENT="uid must be unique" PREVIOUS="primary"/>
       </KEYS>
     </TABLE>
-    <TABLE NAME="saas_polos" COMMENT="Table that will save only the moodle groups that are pólos" PREVIOUS="saas_ofertas_disciplinas">
+    <TABLE NAME="saas_polos" COMMENT="Table that will save only the moodle groups that are pólos" PREVIOUS="saas_ofertas_disciplinas" NEXT="saas_categories_polos_mapping">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" NEXT="uid"/>
         <FIELD NAME="uid" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="id" NEXT="nome"/>
@@ -77,6 +77,16 @@
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id" NEXT="saas_polos_uid_unique"/>
         <KEY NAME="saas_polos_uid_unique" TYPE="unique" FIELDS="uid" COMMENT="uid must be unique" PREVIOUS="primary"/>
+      </KEYS>
+    </TABLE>
+    <TABLE NAME="saas_categories_polos_mapping" COMMENT="" PREVIOUS="saas_polos">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" NEXT="categoryid"/>
+        <FIELD NAME="categoryid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" PREVIOUS="id" NEXT="polo_id"/>
+        <FIELD NAME="polo_id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" PREVIOUS="categoryid"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id" NEXT=""/>
       </KEYS>
     </TABLE>
   </TABLES>

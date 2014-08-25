@@ -22,6 +22,8 @@ $string['settings'] = 'Configurações';
 $string['saas_data'] = 'Dados SAAS';
 $string['overview'] = 'Visão geral';
 $string['export'] = 'Exportação';
+$string['reload'] = 'Atualizar dados';
+$string['reloaded'] = 'Os dados de ofertas de curso/disciplinas e de polos foram atualizados a partir do SAAS';
 
 $string['polos'] = 'Polos';
 $string['polos_title'] = 'Polos definidos no SAAS';
@@ -47,7 +49,9 @@ $string['many_to_one'] = 'O conteúdo de uma oferta de disciplina do SAAS está 
 $string['polo_mapping'] = 'Mapeamento de polos';
 $string['polo_mapping_help'] = 'Indica a forma como os polos são mapeados na estrutura de cursos do Moodle';
 $string['no_polo'] = 'Não há no Moodle forma de agrupar estudantes por polo';
-$string['group_to_polo'] = 'São utilizados grupos nos cursos Moodle para obter estudantes por polo';
+$string['group_to_polo'] = 'São utilizados grupos nos cursos Moodle para agrupar estudantes por polo';
+$string['category_to_polo'] = 'Os polos são identificados por categorias no Moodle';
+$string['title_no_polo'] = 'A configuração atual indica que não há no Moodle forma de agrupar estudantes por polo';
 //------------------------------------------------------------------
 
 $string['student'] = 'Aluno';

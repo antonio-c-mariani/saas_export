@@ -33,7 +33,7 @@ admin_externalpage_setup('report_saas_export', '', null, '', array('pagelayout'=
 $baseurl = new moodle_url('/report/saas_export/index.php');
 $api_key = get_config('report_saas_export', 'api_key');
 
-$tab_items = array('guidelines'=>true, 'settings'=>true, 'saas_data'=>false, 'course_mapping'=>false, 'polo_mapping'=>false, 'overview'=>false);
+$tab_items = array('guidelines'=>true, 'settings'=>true, 'saas_data'=>false, 'course_mapping'=>false, 'polo_mapping'=>false, 'overview'=>false, 'export'=>false);
 
 $tabs = array();
 foreach($tab_items AS $act=>$always) {
@@ -72,9 +72,9 @@ switch ($action) {
         echo $OUTPUT->footer();
         break;
     case 'saas_data':
-        $saas->load_saas_data(true);
+        $saas->load_saas_data();
 
-        $saas_data_tab_items = array('ofertas', 'polos');
+        $saas_data_tab_items = array('ofertas', 'polos', 'reload');
         $saas_data_tabs = array();
         foreach($saas_data_tab_items AS $act) {
             $url = clone($baseurl);
@@ -98,7 +98,7 @@ switch ($action) {
                 $saas->load_ofertas_disciplinas_saas();
                 redirect($url);
             }
-        } else {
+        } else if($saas_data_action == 'polos') {
             $polo_form = new polo_form($url);
             if ($polo_form->is_cancelled()) {
                 redirect($url);
@@ -121,12 +121,17 @@ switch ($action) {
             $oferta_form->display();
             print $OUTPUT->box_end();
             print html_writer::end_tag('DIV');
-        } else {
+        } else if($saas_data_action == 'polos') {
             $saas->show_table_polos();
             print html_writer::start_tag('DIV', array('align'=>'center'));
             print $OUTPUT->box_start('generalbox boxwidthnormal');
             $polo_form->display();
             print $OUTPUT->box_end();
+            print html_writer::end_tag('DIV');
+        } else {
+            $saas->load_saas_data(true);
+            print html_writer::start_tag('DIV', array('align'=>'center'));
+            print $OUTPUT->heading(get_string('reloaded', 'report_saas_export'));
             print html_writer::end_tag('DIV');
         }
 
@@ -146,8 +151,14 @@ switch ($action) {
 
         $polo_mapping_type = $saas->get_config('polo_mapping');
         switch ($polo_mapping_type) {
+            case 'no_polo':
+                print $OUTPUT->heading(get_string('title_no_polo', 'report_saas_export'));
+                break;
             case 'group_to_polo':
                 include('groups_polos_mapping.php');
+                break;
+            case 'category_to_polo':
+                include('categories_polos_mapping.php');
                 break;
             default:
                 print $OUTPUT->heading('Mapeamento ainda não implementado: ' . $polo_mapping_type);
@@ -174,9 +185,25 @@ switch ($action) {
         if($saas_data_action == 'ofertas') {
             $saas->show_table_ofertas_curso_disciplinas(true);
         } else {
-            $saas->show_overview_polos();
+            $polo_mapping_type = $saas->get_config('polo_mapping');
+            switch ($polo_mapping_type) {
+                case 'no_polo':
+                    print $OUTPUT->heading(get_string('title_no_polo', 'report_saas_export'));
+                    break;
+                case 'group_to_polo':
+                    $saas->show_overview_groups_polos();
+                    break;
+                default:
+                    print $OUTPUT->heading('Mapeamento ainda não implementado: ' . $polo_mapping_type);
+            }
         }
 
+        echo $OUTPUT->footer();
+        break;
+    case 'export':
+        echo $OUTPUT->header();
+        print_tabs(array($tabs), $action);
+        $saas->send_users_by_oferta_disciplina();
         echo $OUTPUT->footer();
         break;
     default:

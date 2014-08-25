@@ -2,7 +2,7 @@
 
 class saas {
 
-    public static $role_names             = array('teacher', 'student', 'tutor_polo', 'tutor_inst');
+    public static $role_names             = array('teacher'=>'professor', 'student'=>'aluno', 'tutor_polo'=>'tutor', 'tutor_inst'=>'tutor');
     public static $role_names_disciplinas = array('teacher', 'student', 'tutor_inst');
     public static $role_names_polos       = array('student', 'tutor_polo');
 
@@ -27,7 +27,7 @@ class saas {
             $roles[$rec->role][] = $rec->roleid;
         }
 
-        foreach(self::$role_names as $r) {
+        foreach(self::$role_names as $r=>$pap) {
             $role = 'roles_'.$r;
             $this->config->$role = isset($roles[$r]) ? implode(',', $roles[$r]) : '';
         }
@@ -249,19 +249,34 @@ class saas {
         print html_writer::end_tag('DIV');
     }
 
-    function show_overview_polos() {
+    function show_overview_groups_polos() {
         global $DB;
 
         $ofertas_cursos = $DB->get_records('saas_ofertas_cursos', array('enable'=>1), 'nome, ano, periodo');
-        $polos = $DB->get_records('saas_polos', array('enable'=>1), 'nome');
+        foreach($ofertas_cursos AS $id=>$oc) {
+            $oc->polos = array();
+        }
+        $sql = "SELECT DISTINCT oc.id AS oc_id, sp.*
+                  FROM {saas_ofertas_cursos} oc
+                  JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1)
+                  JOIN {saas_course_mapping} cm ON (cm.oferta_disciplina_id = od.id)
+                  JOIN {course} c ON (c.id = cm.courseid)
+                  JOIN {groups} g ON (g.courseid = c.id)
+                  JOIN {saas_groups_polos_mapping} spm ON (spm.groupname = g.name)
+                  JOIN {saas_polos} sp ON (sp.id = spm.polo_id AND sp.enable = 1)
+                 WHERE oc.enable = 1
+              ORDER BY oc.id, sp.nome";
+        foreach($DB->get_recordset_sql($sql) AS $pl) {
+            $ofertas_cursos[$pl->oc_id]->polos[] = $pl;
+        }
 
         $counts = $this->get_polos_count();
 
         $data = array();
         $color = '#E0E0E0';
-        foreach($ofertas_cursos AS $oc_id=>$oc) {
+        foreach($ofertas_cursos AS $oc) {
             $color = $color == '#C0C0C0' ? '#E0E0E0 ' : '#C0C0C0';
-            $rows = isset($counts[$oc_id]) ? count($counts[$oc_id]) : 1;
+            $rows = max(count($oc->polos), 1);
             $row = new html_table_row();
 
             $cell = new html_table_cell();
@@ -276,16 +291,24 @@ class saas {
             $cell->style = "vertical-align: middle; background-color: {$color};";
             $row->cells[] = $cell;
 
-            if(isset($counts[$oc_id])) {
-                foreach($counts[$oc_id] AS $p_id=>$p_counts) {
+            if(empty($oc->polos)) {
+                for($i=1; $i <= count(self::$role_names_polos)+1; $i++) {
                     $cell = new html_table_cell();
-                    $cell->text = $polos[$p_id]->nome;
+                    $cell->text = '';
+                    $cell->style = "background-color: {$color};";
+                    $row->cells[] = $cell;
+                }
+                $data[] = $row;
+            } else {
+                foreach($oc->polos AS $pl) {
+                    $cell = new html_table_cell();
+                    $cell->text = $pl->nome;
                     $cell->style = "background-color: {$color};";
                     $row->cells[] = $cell;
 
                     foreach(self::$role_names_polos AS $r) {
                         $cell = new html_table_cell();
-                        $cell->text = isset($p_counts[$r]) ? $p_counts[$r] : 0;
+                        $cell->text = isset($counts[$oc->id][$pl->id][$r]) ? $counts[$oc->id][$pl->id][$r] : 0;
                         $cell->style = "text-align: right; background-color: {$color};";
                         $row->cells[] = $cell;
                     }
@@ -293,18 +316,6 @@ class saas {
                     $data[] = $row;
                     $row = new html_table_row();
                 }
-            } else {
-                $cell = new html_table_cell();
-                $cell->text = '';
-                $cell->style = "background-color: {$color};";
-                $row->cells[] = $cell;
-                foreach(self::$role_names_polos AS $r) {
-                    $cell = new html_table_cell();
-                    $cell->text = '-';
-                    $cell->style = "text-align: right; background-color: {$color};";
-                    $row->cells[] = $cell;
-                }
-                $data[] = $row;
             }
         }
 
@@ -329,15 +340,19 @@ class saas {
 
         $ofertas = $DB->get_records('saas_ofertas_cursos', array('enable'=>1), 'nome, ano, periodo');
 
-        $sql = "SELECT od.*, oc.id as oc_id
+        $sql = "SELECT DISTINCT od.*, oc.id as oc_id, cm.id IS NOT NULL AS mapped
                   FROM {saas_ofertas_cursos} oc
              LEFT JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1)
+             LEFT JOIN {saas_course_mapping} cm ON (cm.oferta_disciplina_id = od.id)
                  WHERE oc.enable = 1
               ORDER BY od.nome";
         $recs = $DB->get_recordset_sql($sql);
         foreach($recs as $rec) {
-            $ofertas[$rec->oc_id]->ofertas_disciplinas[$rec->id] = $rec;
-
+            if(empty($rec->id)) {
+                $ofertas[$rec->oc_id]->ofertas_disciplinas = array();
+            } else {
+                $ofertas[$rec->oc_id]->ofertas_disciplinas[$rec->id] = $rec;
+            }
         }
         return $ofertas;
     }
@@ -365,7 +380,7 @@ class saas {
                   JOIN {user} u ON (u.id = ue.userid AND u.suspended = 0)
                   JOIN {groups} g ON (g.courseid = c.id)
                   JOIN {groups_members} gm ON (gm.groupid = g.id AND gm.userid = u.id)
-                  JOIN {saas_polos_mapping} spm ON (spm.groupname = g.name)
+                  JOIN {saas_groups_polos_mapping} spm ON (spm.groupname = g.name)
                   JOIN {saas_polos} sp ON (sp.id = spm.polo_id AND sp.enable = 1)
                  WHERE oc.enable = 1
               GROUP BY oc.id, sp.id, scr.role
@@ -382,21 +397,39 @@ class saas {
         return $polo_counts;
     }
 
-    function get_ofertas_count() {
-        global $DB;
-
+    function get_sql_users_by_oferta_disciplina($id_oferta_disciplina=0, $only_count=false) {
         $now = time();
-        $sql = "SELECT od.id AS od_id, scr.role, COUNT(DISTINCT ra.userid) as count
+
+        $active = ENROL_USER_ACTIVE;
+        $contextlevel = CONTEXT_COURSE;
+        $enable = ENROL_INSTANCE_ENABLED;
+
+        if($only_count) {
+            $group_by = 'GROUP BY od_id, scr.role';
+            $field = 'COUNT(DISTINCT ra.userid) AS count';
+            $distinct = '';
+        } else {
+            $group_by = '';
+            $field = 'u.' . $this->get_config('userid_field') . ' AS userfield';
+            $distinct = 'DISTINCT';
+        }
+
+        $condition = '';
+        if($id_oferta_disciplina) {
+            $condition = "AND od.id = {$id_oferta_disciplina}";
+        }
+
+        $sql = "SELECT {$distinct} od.id AS od_id, scr.role, {$field}
                   FROM {saas_ofertas_cursos} oc
                   JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1)
                   JOIN {saas_course_mapping} cm ON (cm.oferta_disciplina_id = od.id)
                   JOIN {course} c ON (c.id = cm.courseid)
-                  JOIN {enrol} e ON (e.courseid = c.id AND e.status = :enable)
+                  JOIN {enrol} e ON (e.courseid = c.id AND e.status = {$enable})
                   JOIN {user_enrolments} ue
                     ON (ue.enrolid = e.id AND
-                        ue.status = :active AND
+                        ue.status = {$active} AND
                         (ue.timeend = 0 OR (ue.timestart <= {$now} AND ue.timeend >= {$now})))
-                  JOIN {context} ctx ON (ctx.instanceid = c.id AND ctx.contextlevel = :contextcourse)
+                  JOIN {context} ctx ON (ctx.instanceid = c.id AND ctx.contextlevel = {$contextlevel})
                   JOIN {role_assignments} ra
                     ON (ra.contextid = ctx.id AND
                         ra.userid = ue.userid AND
@@ -404,31 +437,31 @@ class saas {
                   JOIN {saas_config_roles} scr ON (scr.roleid = ra.roleid AND scr.role IN ('student', 'teacher', 'tutor_inst'))
                   JOIN {user} u ON (u.id = ue.userid AND u.suspended = 0)
                  WHERE oc.enable = 1
-              GROUP BY od_id, scr.role
+                   {$condition}
+              {$group_by}
               ORDER BY od_id, scr.role";
 
-        $params = array('contextcourse'=>CONTEXT_COURSE, 'enable'=>ENROL_INSTANCE_ENABLED, 'active'=>ENROL_USER_ACTIVE);
-        $rs = $DB->get_recordset_sql($sql, $params);
-
-        $course_counts = array();
-        foreach($rs AS $rec) {
-            $course_counts[$rec->od_id][$rec->role] = $rec->count;
-        }
-
-        return $course_counts;
+        return $sql;
     }
 
     function show_table_ofertas_curso_disciplinas($show_counts=false) {
+        global $DB;
+
         $data = array();
         $color = '#E0E0E0';
 
         if($show_counts) {
-            $counts = $this->get_ofertas_count();
+            $sql =  $this->get_sql_users_by_oferta_disciplina(0, true);
+            $rs = $DB->get_recordset_sql($sql);
+            $ofertas_disciplinas_counts = array();
+            foreach($rs AS $rec) {
+                $ofertas_disciplinas_counts[$rec->od_id][$rec->role] = $rec->count;
+            }
         }
 
         foreach($this->get_ofertas() AS $oc_id=>$oc) {
             $color = $color == '#C0C0C0' ? '#E0E0E0 ' : '#C0C0C0';
-            $rows = isset($oc->ofertas_disciplinas) ? count($oc->ofertas_disciplinas) : 1;
+            $rows = max(count($oc->ofertas_disciplinas), 1);
             $row = new html_table_row();
 
             $cell = new html_table_cell();
@@ -443,7 +476,15 @@ class saas {
             $cell->style = "vertical-align: middle; background-color: {$color};";
             $row->cells[] = $cell;
 
-            if(isset($oc->ofertas_disciplinas)) {
+            if(empty($oc->ofertas_disciplinas)) {
+                $data[] = $row;
+                for($i=1 ; $i <= count(self::$role_names_disciplinas)+3; $i++) {
+                    $cell = new html_table_cell();
+                    $cell->text = '';
+                    $cell->style = "background-color: {$color};";
+                    $row->cells[] = $cell;
+                }
+            } else {
                 foreach($oc->ofertas_disciplinas AS $od_id=>$od) {
                     $cell = new html_table_cell();
                     $cell->text = $od->nome;
@@ -463,7 +504,11 @@ class saas {
                     if($show_counts) {
                         foreach(self::$role_names_disciplinas AS $r) {
                             $cell = new html_table_cell();
-                            $cell->text = isset($counts[$od_id][$r]) ? $counts[$od_id][$r] : '-';
+                            if($od->mapped) {
+                                $cell->text = isset($ofertas_disciplinas_counts[$od_id][$r]) ? $ofertas_disciplinas_counts[$od_id][$r] : '0';
+                            } else {
+                                $cell->text = '-';
+                            }
                             $cell->style = "text-align: right; background-color: {$color};";
                             $row->cells[] = $cell;
                         }
@@ -472,8 +517,6 @@ class saas {
                     $data[] = $row;
                     $row = new html_table_row();
                 }
-            } else {
-                $data[] = $row;
             }
         }
 
@@ -758,8 +801,8 @@ class saas {
 
     //Envia todos os dados, tanto pessoas, como pessoas com os papéis e as pessoas por pólos.
     function send_data(){
-        $this->send_users();
-        //$this->send_users_by_role();
+        //$this->send_users();
+        //$this->send_users_by_oferta_disciplina();
         //$this->send_users_by_polo();
     }
 
@@ -777,7 +820,7 @@ class saas {
 
                 foreach ($users as $u) {
                     if ($count > 100) {
-                        $this->post_ws('pessoa', $users_to_send);
+                        $this->put_ws('pessoa', $users_to_send);
                         $users_to_send = array();
                         $count = 0;
                     }
@@ -816,30 +859,35 @@ class saas {
         $offers_polo = $DB->get_records_sql($sql);
         foreach ($offers_polo as $offer_polo){
             //send students
-            $this->post_ws('polo/oferta/curso/aluno/'. $offer_polo->saas_id .'/'. urlencode($offer_polo->groupname),
+            $this->put_ws('polo/oferta/curso/aluno/'. $offer_polo->saas_id .'/'. urlencode($offer_polo->groupname),
                            $this->get_users_at_polo($this->config->student_role, $offer_polo->saas_id, $offer_polo->groupname));
             //send tutors
-            $this->post_ws('polo/oferta/curso/tutor/'. $offer_polo->saas_id .'/'. urlencode($offer_polo->groupname),
+            $this->put_ws('polo/oferta/curso/tutor/'. $offer_polo->saas_id .'/'. urlencode($offer_polo->groupname),
                            $this->get_users_at_polo($this->config->tutor_polo_role, $offer_polo->saas_id, $offer_polo->groupname));
         }
     }
 
     //envia os usuários com os seus devidos papéis em cada oferta de disciplina.
-    function send_users_by_role() {
+    function send_users_by_oferta_disciplina() {
         global $DB;
 
-        $sql = "SELECT saas_id, courseid
-                  FROM {ofertas_disciplinas_saas} od
-                 WHERE od.enable = 1
-                   AND od.courseid <> -1";
-        $mapped_ofertas_disciplinas = $DB->get_records_sql_menu($sql);
-        $roles = array('aluno' => $this->config->student_role,
-                       'professor' => $this->config->teacher_role,
-                       'tutor' =>$this->config->tutor_role);
+        $sql = "SELECT DISTINCT od.id, od.uid
+                  FROM {saas_ofertas_cursos} oc
+                  JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1)
+                  JOIN {saas_course_mapping} cm ON (cm.oferta_disciplina_id = od.id)
+                 WHERE oc.enable = 1";
+        foreach($DB->get_records_sql($sql) AS $id=>$od) {
+            $users = array();
+            $rs = $DB->get_recordset_sql($this->get_sql_users_by_oferta_disciplina($id));
+            foreach($rs AS $rec) {
+                $users[$rec->role][] = $rec->userfield;
+            }
 
-        foreach ($mapped_ofertas_disciplinas as $saas_id => $courseid){
-            foreach ($roles as $papel => $str_roleids){
-                $this->post_ws('oferta/disciplina/'.$papel.'/' . $saas_id, $this->get_users_by_role($str_roleids, $courseid));
+            foreach(self::$role_names_disciplinas AS $r) {
+                if(!isset($users[$r])) {
+                    $users[$r] = array();
+                }
+                $this->put_ws('oferta/disciplina/' . self::$role_names[$r] . '/' . $od->uid, $users[$r]);
             }
         }
     }
@@ -904,7 +952,7 @@ class saas {
 
         $DB->delete_records('saas_config_roles');
 
-        foreach(self::$role_names AS $r) {
+        foreach(self::$role_names AS $r=>$pap) {
             $rname = 'roles_' . $r;
             if(isset($data->$rname)) {
                 foreach($data->$rname AS $roleid) {

@@ -63,6 +63,9 @@ class oferta_form extends moodleform {
 
         $errors = parent::validation($data, $files);
 
+        // todo: validar: não pode haver duas ofertas da mesma disciplina numa oferta de curso
+
+
         return $errors;
     }
 }
