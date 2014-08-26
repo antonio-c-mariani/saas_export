@@ -100,10 +100,10 @@ function show_categories($catids, $categories, $is_topo = false){
       $class = "icon-leaf";
     } else {
       if ($is_topo) {
-        $class = "icon-plus-sign";  
+        $class = "icon-minus-sign";  
       } else {
         $style = 'display: none;';
-        $class = "icon-plus-sign";
+        $class = "icon-minus-sign";
       }
     }
 
