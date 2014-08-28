@@ -1,0 +1,18 @@
+
+
+- como serão as permissões para quem vai exportar
+   - talvez duas permissões distintas, para configurar e outra para mapear e exportar
+   - definir em nível global? tem como definir em outro contexto?
+
+- algumas ofertas de disciplinas (antigas) pode não ter data de início e fim
+
+- novo plugin via atualização de versão (upgrade)
+
+- problemas de duplicação de dados (cadastradas manualmente ou via csv e depois via plugin)
+
+- usar sobrenome e idnumber como opção para cpf
+
+- incluir cpf (custom fields) com opção de identificador de usuário
+
+- incluir 0 (zeros) à esquerda no caso de cpf como identificador a usuário  (str_pad left)
+
