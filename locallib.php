@@ -87,7 +87,7 @@ function get_courses_from_categories(&$categories, $repeat_allowed = true) {
 
 }
 
-function show_categories($catids, $categories, $is_topo = false){
+function show_categories($catids, $categories, $first_category = false){
   global $OUTPUT;
 
   foreach ($catids as $catid){
@@ -95,95 +95,47 @@ function show_categories($catids, $categories, $is_topo = false){
     $has_sub_categories = empty($categories[$catid]->sub_ids);
 
     $class = "";
+    $cat_class = "";
     $style = "";
-    if($has_courses && $has_sub_categories){
-      $class = "icon-leaf";
-    } else {
-      if ($is_topo) {
-        $class = "icon-minus-sign";  
-      } else {
-        $style = 'display: none;';
-        $class = "icon-minus-sign";
-      }
-    }
 
-    echo html_writer::start_tag('li', array('style'=>$style));
-      echo html_writer::start_tag('span');
+    if($has_courses && $has_sub_categories){
+      $style = "background: #ccc;";
+    } elseif ($first_category) {
+      $class = "icon-folder-open";
+      $cat_class = 'category-root';
+    } else {
+      $class = "icon-folder-close";
+    }  
+
+    echo html_writer::start_tag('li', array('class'=>$cat_class));
+      echo html_writer::start_tag('span', array('style'=>$style));
         echo html_writer::tag('i', '', array('class'=>$class));
         echo $categories[$catid]->name;
       echo html_writer::end_tag('span');
 
     echo html_writer::start_tag('ul');
 
-
     foreach ($categories[$catid]->courses as $c){
       echo html_writer::start_tag('li');
-
-        echo html_writer::start_tag('span', array('style'=>'background-color:#BDBDBD'));
+        
+        echo html_writer::start_tag('span', array('id'=>$c->id, 'class'=>'select_moodle_course',
+                                    'rel'=>'tooltip', 'data-placement'=>'right',
+                                    'data-original-title'=>'Selecionar'));
           echo $OUTPUT->pix_icon("i/course", '', 'moodle', array('class' => 'icon smallicon'));
           echo html_writer::tag('html', $c->fullname);
         echo html_writer::end_tag('span');
-
-        echo html_writer::tag('button', 'Selecionar', array('type'=>'button', 'id'=>$c->id,
-                              'class'=>'select_moodle_course btn btn-link'));
-
+        
       echo html_writer::end_tag('li');
     }
 
 
     if(!empty($categories[$catid]->sub_ids)){
-      show_categories($categories[$catid]->sub_ids, $categories, true);
+      show_categories($categories[$catid]->sub_ids, $categories);
     }
 
     echo html_writer::end_tag('ul');
     echo html_writer::end_tag('li');
   }
-}
-
-function build_saas_tree_offers() {
-  global $OUTPUT;
-
-  $saas = new saas();
-
-  $ofertas_curso = $saas->get_ofertas_curso_salvas();
-  $ofertas_disciplina = $saas->get_ofertas_disciplinas_salvas();
-
-  echo html_writer::start_tag('div', array('class'=>'tree well'));
-    echo html_writer::start_tag('ul');
-
-      foreach ($ofertas_curso as $oferta_curso) {
-        echo html_writer::start_tag('li');
-          echo html_writer::start_tag('span');
-            echo html_writer::tag('i', '', array('class'=>'icon-plus-sign'));
-            echo $oferta_curso->nome . ' (' . $oferta_curso->ano . '-' . $oferta_curso->periodo . ')';
-          echo html_writer::end_tag('span');
-
-          echo html_writer::start_tag('ul');
-
-            foreach ($ofertas_disciplina as $oferta_disciplina) {
-              if ($oferta_disciplina->oferta_curso_uid == $oferta_curso->uid) {
-                echo html_writer::start_tag('li', array('style'=>'display: none;'));
-
-                  echo html_writer::start_tag('span', array('style'=>'background-color:#BDBDBD'));
-                    echo $OUTPUT->pix_icon("i/course", '', 'moodle', array('class' => 'icon smallicon'));
-                    echo html_writer::tag('html', $oferta_disciplina->nome.'('.
-                                          $saas::format_date($oferta_disciplina->inicio).'/'.
-                                          $saas::format_date($oferta_disciplina->fim).')');
-                  echo html_writer::end_tag('span');
-
-                  echo html_writer::tag('button', 'Selecionar', array('type'=>'button', 'id'=>$oferta_disciplina->id,
-                                        'class'=>'select_saas_offer btn btn-link'));
-
-                echo html_writer::end_tag('li');
-              }
-            }
-
-          echo html_writer::end_tag('ul');
-        echo html_writer::end_tag('li');
-      }
-
-    echo html_writer::end_tag('ul');
-  echo html_writer::end_tag('div');
 }
 
 ?>

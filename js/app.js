@@ -1,9 +1,21 @@
 $(document).ready(function(){
-   
+   	//Recarrega a página ao fechar a Modal (fix this)
     $('.saas-bt-close').click(function() {
     	window.location.reload();
     });
-    
+
+    //Cria a tooltip sobre os cursos moodle.
+    $(".select_moodle_course").mouseenter(function() {
+  		$(this).tooltip('show');
+  		$(this).css('cursor', 'pointer');	
+	});
+
+    //Destroi a tooltip quando o mouse sai de cima do curso moodle.
+	$(".select_moodle_course").mouseleave(function() {
+  		$(this).tooltip('destroy');	
+	});
+        
+    //Desfaz um mapeamento.
     $('.delete_bt').click(function(element) {	
 	   	$.post("delete_mapping.php",
 		{
@@ -13,20 +25,10 @@ $(document).ready(function(){
 		})
         .done(function() {
 			window.location.reload();
-			//Por enquanto está redirecionando a página.	
-        	/*
-			var div_to_delete = '#' + element.target.getAttribute('id') + '-' + element.target.getAttribute('uid');
-			var parent_div = $(div_to_delete).parent().parent();
-			
-			$('div').remove(div_to_delete);
-			
-			if (parent_div.children().is(':empty')) {
-				parent_div.children().html('<div><button id="2" type="button" class="btn btn-default btn-xs moodle_map_bt">Adicionar</button></div>');
-			}
-			*/ 
 		});
     });
 
+    //Desfaz mais de uma mapeamento.
     $('.delete_many_offers_bt').click(function(element) {	
 	   	$.post("delete_mapping.php",
 		{
@@ -39,50 +41,33 @@ $(document).ready(function(){
 		});
     });
 
-
-    
+    //Controles da Modal
     $('.moodle_map_bt').click(function(saas) {
-    	$('.select_moodle_course').click(function(moodle) {
-	   		var uid_saas = saas.target.getAttribute('id');
-	   		var id_moodle = moodle.target.getAttribute('id');
-	   		
-	   		if (!uid_saas) {
-	   			uid_saas = -1;
-	   		}
-	   		
-	   		if (!id_moodle) {
-	   			id_moodle = -1;
-	   		}
-
-	   		$.post("save_mapping.php",
-		    {
-		      uid:uid_saas,
-		      id:id_moodle
-		    },
-		    function(data,status){
-		      window.location.reload();
-		    });
-   		});
-
+    	//Mostra a modal
     	$('#cursos_moodle_modal').modal('show');
+    	//Adiciona o nome da oferta de disciplina que está sendo mapeada na modal.
     	$('<h4> Oferta: ' +saas.target.getAttribute('oferta')+ '</h4>').insertAfter('.modal_cursos_moodle_title');
 		
-		$('.tree li:has(ul)').addClass('parent_li').find(' > span').attr('title', 'Collapse this branch');
+		//Define inicialmente as categorias que estão abertas
+		$('.tree li:has(ul)').addClass('parent_li');
+		$('.parent_li').css('display', 'none');
+		$('.category-root').css('display', 'list-item');
+		var primeiro_nivel = $('.category-root').children('ul');
+		primeiro_nivel.children('li').show();
+
+		//Expande e contrai as categorias.
 		$('.tree li.parent_li > span').on('click', function (e) {
-	  		var children = $(this).parent('li.parent_li').find(' > ul > li');
+	  		var children = $(this).siblings('ul').children('li');
+	  		
+	  		if (children.is(':visible')) {
+	  			children.hide('fast');
+	  		} else {
+	  			children.show('fast');
+	  			children.find('li').hide('fast');	
+	  		}
+        });
 
-	    	if (children.is(":visible")) {
-	        	children.hide('fast');
-	        	$(this).attr('title', 'Expand this branch').find(' > i').addClass('icon-plus-sign').removeClass('icon-minus-sign');
-	    	} else {
-	        	children.show('fast');
-	        	$(this).attr('title', 'Collapse this branch').find(' > i').addClass('icon-minus-sign').removeClass('icon-plus-sign');
-	    	}
-        });  
-    });
-
-    $('.saas_map_bt').click(function(moodle) {
-    	$('.select_saas_offer').click(function(saas) {
+        $('.select_moodle_course').click(function(moodle) {
 	   		var uid_saas = saas.target.getAttribute('id');
 	   		var id_moodle = moodle.target.getAttribute('id');
 	   		
@@ -102,21 +87,7 @@ $(document).ready(function(){
 		    function(data,status){
 		      window.location.reload();
 		    });
-   		});
-
-    	$('#ofertas_saas_modal').modal('show');
-		
-		$('.tree li:has(ul)').addClass('parent_li').find(' > span').attr('title', 'Collapse this branch');
-		$('.tree li.parent_li > span').on('click', function (e) {
-	  		var children = $(this).parent('li.parent_li').find(' > ul > li');
-
-	    	if (children.is(":visible")) {
-	        	children.hide('fast');
-	        	$(this).attr('title', 'Expand this branch').find(' > i').addClass('icon-plus-sign').removeClass('icon-minus-sign');
-	    	} else {
-	        	children.show('fast');
-	        	$(this).attr('title', 'Collapse this branch').find(' > i').addClass('icon-minus-sign').removeClass('icon-plus-sign');
-	    	}
-        });  
+   		});  
     });
+
 });

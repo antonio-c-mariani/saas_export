@@ -3,6 +3,7 @@
   require_once($CFG->dirroot . '/report/saas_export/locallib.php');
   require_once($CFG->dirroot . '/report/saas_export/classes/saas.php');
 ?>
+
 <div class="saas-styles">
 
 <link rel="stylesheet" href="css/bootstrap.css" type="text/css">
@@ -55,25 +56,14 @@
 
         echo html_writer::start_tag('tr');
           echo html_writer::start_tag('td');
-            echo html_writer::start_tag('div', array('class'=>'btn-group'));
-              echo html_writer::start_tag('button', array('class'=>'btn btn-default dropdown-toggle btn-xs', 
-                                          'data-toggle'=>'dropdown'));
-              echo html_writer::tag('span', 'Adicionar ');
-              echo html_writer::tag('span', '', array('class'=>'caret')); 
-              echo html_writer::end_tag('button');
+            echo html_writer::start_tag('select', array('class'=>'selectpicker', 'name'=>'map[]', 'multiple'=>'true'));
               
-              echo html_writer::start_tag('ul', array('class'=>'dropdown-menu', 'role'=>'menu'));
-             
                 foreach ($oferta_de_curso->ofertas_de_disciplina as $ofd) {
                   $nome_formatado = $ofd->nome; //.' ('. saas::format_date($ofd->inicio, $ofd->fim) . ')';
-                  echo html_writer::start_tag('li', array('id'=>$ofd->uid, 'style'=>'text-indent: 5px;'));
-                    echo html_writer::tag('span', $nome_formatado, array('style'=>'width:100%;'));
-                  echo html_writer::end_tag('li');
+                  echo html_writer::tag('option', $nome_formatado, array('id'=>$ofd->uid));
                 }
-                
-                
-              echo html_writer::end_tag('ul');
-            echo html_writer::end_tag('div');  
+              
+            echo html_writer::end_tag('select');  
           echo html_writer::end_tag('td');
 
           echo html_writer::start_tag('td');
@@ -83,56 +73,6 @@
         echo html_writer::end_tag('tr');
     } 
 
-    /*
-
-
-    foreach ($cursos_moodle_com_ofertas as $courseid => $ofertas_ids) {
-      echo html_writer::start_tag('tr');
-
-        echo html_writer::start_tag('td');
-
-          foreach ($ofertas_ids as $ofertaid) {
-              if ($ofertaid->oferta_disciplina_id != -1) {
-                  echo html_writer::start_tag('div', array('id'=>$courseid . '-' . $ofertaid->oferta_disciplina_id));
-                    echo html_writer::tag('div', $ofertas_de_disciplina[$ofertaid->oferta_disciplina_id],
-                                    array('id' => $ofertaid->oferta_disciplina_id, 'style' => 'float:left;'));
-                    echo html_writer::tag('input', '', array('class'=>'delete_bt', 'type'=>'image', 'src' =>'img/delete.png', 'alt'=>'Apagar mapeamento', 'height'=>'15', 'width'=>'15', 'uid'=>$ofertaid->oferta_disciplina_id, 'id'=>$courseid,
-                    'style'=>'margin-left:2px;'));
-                  echo html_writer::end_tag('div');
-
-              }
-          }
-
-        echo html_writer::tag('button', 'Adicionar', array('type'=>'button', 'id' =>$courseid,
-                              'class'=>'btn btn-default btn-xs saas_map_bt', 'style'=>'margin-top:5px;'));
-
-        echo html_writer::end_tag('td');
-
-        echo html_writer::start_tag('div', array('id'=>$courseid . '-' . $ofertaid->oferta_disciplina_id));
-          echo html_writer::start_tag('td');
-          echo $courses[$courseid];
-          echo html_writer::tag('input', '', array('class'=>'delete_many_offers_bt', 'type'=>'image',
-                                'src' =>'img/delete.png', 'alt'=>'Apagar mapeamento', 'height'=>'15',
-                                'width'=>'15', 'id'=>$courseid, 'style'=>'margin-left:2px;'));
-          echo html_writer::end_tag('td');
-        echo html_writer::end_tag('div');
-
-        }
-
-      echo html_writer::end_tag('tr');
-
-    echo html_writer::start_tag('tr');
-      echo html_writer::start_tag('td');
-        echo html_writer::tag('button', 'Adicionar', array('type'=>'button', 'class'=>
-                              'btn btn-default btn-xs saas_map_bt', 'style'=>'margin-top:5px;', 'disabled'=>'true'));
-      echo html_writer::end_tag('td');
-
-      echo html_writer::start_tag('td');
-        echo html_writer::tag('button', 'Adicionar', array('type'=>'button', 'class'=>
-                              'btn btn-default btn-xs moodle_map_bt', 'style'=>'margin-top:5px;'));
-      echo html_writer::end_tag('td');
-    echo html_writer::end_tag('tr');
-  */
   //Mapeamento de uma oferta do SAAS para 1 ou mais cursos Moodle.
   } else {
     $ofertas_de_disciplina = $saas->get_ofertas_disciplinas_salvas();
@@ -165,12 +105,12 @@
       foreach ($oferta_de_curso->ofertas_de_disciplina as $oferta_de_disciplina) {
         echo html_writer::start_tag('div');
           echo html_writer::start_tag('tr');
-              $nome_formatado = $oferta_de_disciplina->nome .' ('. saas::format_date($oferta_de_disciplina->inicio, $oferta_de_disciplina->fim) . ')';
-              echo html_writer::tag('td', $nome_formatado, array('id' => $oferta_de_disciplina->id,
-                                    'style'=>'text-indent: 30px;', 'bgcolor'=>'#F0F0F0'));
-              
-              echo html_writer::start_tag('td', array('bgcolor'=>'#F0F0F0'));
-                echo html_writer::start_tag('div');
+            $nome_formatado = $oferta_de_disciplina->nome .' ('. saas::format_date($oferta_de_disciplina->inicio, $oferta_de_disciplina->fim) . ')';
+            echo html_writer::tag('td', $nome_formatado, array('id' => $oferta_de_disciplina->id,
+                                  'style'=>'text-indent: 30px;', 'bgcolor'=>'#F0F0F0'));
+            
+            echo html_writer::start_tag('td', array('bgcolor'=>'#F0F0F0'));
+              echo html_writer::start_tag('div');
                 if (array_key_exists($oferta_de_disciplina->id, $ofertas_mapeadas_com_cursos)) {
                   foreach ($ofertas_mapeadas_com_cursos[$oferta_de_disciplina->id] as $courseid => $object) {
                     echo html_writer::start_tag('div', array('id'=>$courseid . '-' . $oferta_de_disciplina->id));
@@ -182,11 +122,11 @@
                   }
 
                   if ($saas->config->course_mapping == 'many_to_one') {
-                          echo html_writer::start_tag('div');
-                            echo html_writer::tag('button', 'Adicionar', array('type'=>'button', 'id'=>$oferta_de_disciplina->id, 
-                                                  'class'=>'btn btn-default btn-xs moodle_map_bt', 
-                                                  'style'=>'margin-top:5px;', 'oferta'=>$nome_formatado));
-                          echo html_writer::end_tag('div');
+                    echo html_writer::start_tag('div');
+                      echo html_writer::tag('button', 'Adicionar', array('type'=>'button', 'id'=>$oferta_de_disciplina->id, 
+                                            'class'=>'btn btn-default btn-xs moodle_map_bt', 
+                                            'style'=>'margin-top:5px;', 'oferta'=>$nome_formatado));
+                    echo html_writer::end_tag('div');
                   }
 
                 } else {
@@ -197,8 +137,8 @@
                                           'oferta'=>$nome_formatado));
                   echo html_writer::end_tag('div');
                 }
-                echo html_writer::end_tag('div');
-              echo html_writer::end_tag('td');
+              echo html_writer::end_tag('div');
+            echo html_writer::end_tag('td');
           echo html_writer::end_tag('tr');
         echo html_writer::end_tag('div');
       }
@@ -208,46 +148,34 @@
 
 </table>
 
-<!-- Modal para Cursos Moodle-->
-<div class="modal fade bs-example-modal-lg" id="cursos_moodle_modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <div class="modal-header">
-        <button type="button" class="saas-bt-close close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-        <h2 class="modal_cursos_moodle_title">Cursos Moodle</h2>
-      </div>
-        <?php
-          $repeat_allowed = false;
+  <!-- Modal para Cursos Moodle-->
+  <div class="modal fade bs-example-modal-lg" id="cursos_moodle_modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+      
+        <div class="modal-header">
+          <button type="button" class="saas-bt-close close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+          <h2 class="modal_cursos_moodle_title">Cursos Moodle</h2>
+        </div>
+      
+        <div class="modal-body">
+          <?php
+            $repeat_allowed = false;
 
-          if ($saas->config->course_mapping == 'many_to_one') {
-            $repeat_allowed = true;
-          }
+            if ($saas->config->course_mapping == 'many_to_one') {
+              $repeat_allowed = true;
+            }
 
-          build_tree_categories($repeat_allowed);
-        ?>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-default saas-bt-close" data-dismiss="modal">Fechar</button>
+            build_tree_categories($repeat_allowed);
+          ?>
+        </div>
+      
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default saas-bt-close" data-dismiss="modal">Fechar</button>
+        </div>
+      
       </div>
     </div>
   </div>
-</div>
-
-<!-- Modal para Ofertas do SAAS-->
-<div class="modal fade bs-example-modal-lg" id="ofertas_saas_modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <div class="modal-header">
-        <button type="button" class="saas-bt-close close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-        <h2 class="modal_ofertas_saas_title">Ofertas SAAS</h2>
-      </div>
-        <?php
-          build_saas_tree_offers();
-        ?>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-default saas-bt-close" data-dismiss="modal">Fechar</button>
-      </div>
-    </div>
-  </div>
-</div>
 
 </div>
