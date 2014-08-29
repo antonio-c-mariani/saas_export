@@ -16,3 +16,21 @@
 
 - incluir 0 (zeros) à esquerda no caso de cpf como identificador a usuário  (str_pad left)
 
+
+-----------------------------------------------------------------------------------------
+Resultado de conversa com equipe saas em 29/08
+
+- utilizar POST em vez de PUT
+- enviar pessoas uma a uma em vez de lote, incluindo data do último acesso (a ser definido na especificação do WS)
+
+- opção de configuração (check box) que mapeia "enrol suspended" para evadido
+
+- no caso de usuários "suspended", ignorar completamente
+- no caso de enrol "suspended",  enviar estudante->of.disc somente se opção "enrol suspended para evadido" estiver marcada, com situação 'evadido'.
+  Ignorar em caso contrário
+- não considerar o início e fim de um enrol
+
+- enviar nota final na ofer.disc (curso) junto com a assoc do estudante com oferta-disciplina
+
+- na terça-feira será definido o que será feito com os logs.
+  talvez o plugin receba uma URL indicando onde o gerente pode ver o relatório de ocorrências.
