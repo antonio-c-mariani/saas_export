@@ -44,6 +44,7 @@ $(document).ready(function(){
     //Controles da Modal
     $('.moodle_map_bt').click(function(saas) {
     	//Mostra a modal
+        jQuery.noConflict();
     	$('#cursos_moodle_modal').modal('show');
     	//Adiciona o nome da oferta de disciplina que está sendo mapeada na modal.
     	$('<h4> Oferta: ' +saas.target.getAttribute('oferta')+ '</h4>').insertAfter('.modal_cursos_moodle_title');
