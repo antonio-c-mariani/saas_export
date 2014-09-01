@@ -28,7 +28,7 @@
     <TABLE NAME="saas_map_groups_polos" COMMENT="" PREVIOUS="saas_map_course" NEXT="saas_ofertas_cursos">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" NEXT="groupname"/>
-        <FIELD NAME="groupname" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" PREVIOUS="id" NEXT="polo_id"/>
+        <FIELD NAME="groupname" TYPE="char" LENGTH="254" NOTNULL="true" SEQUENCE="false" PREVIOUS="id" NEXT="polo_id"/>
         <FIELD NAME="polo_id" TYPE="char" LENGTH="254" NOTNULL="true" SEQUENCE="false" PREVIOUS="groupname"/>
       </FIELDS>
       <KEYS>

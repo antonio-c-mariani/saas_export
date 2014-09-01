@@ -48,29 +48,30 @@
     }
 
     foreach ($ofertas_de_curso as $oferta_de_curso) {
-        echo html_writer::start_tag('tr');
-          $nome_formatado = $oferta_de_curso->nome .' ('. $oferta_de_curso->ano .'/'. $oferta_de_curso->periodo . ')';
-          echo html_writer::tag('td', $nome_formatado, array('style'=>'font-weight:bold;'));
-          echo html_writer::tag('td', '');
-        echo html_writer::end_tag('tr');
+        $nome_formatado = $oferta_de_curso->nome .' ('. $oferta_de_curso->ano .'/'. $oferta_de_curso->periodo . ')';
 
-        echo html_writer::start_tag('tr');
-          echo html_writer::start_tag('td');
-            echo html_writer::start_tag('select', array('class'=>'selectpicker', 'name'=>'map[]', 'multiple'=>'true'));
-              
-                foreach ($oferta_de_curso->ofertas_de_disciplina as $ofd) {
-                  $nome_formatado = $ofd->nome; //.' ('. saas::format_date($ofd->inicio, $ofd->fim) . ')';
-                  echo html_writer::tag('option', $nome_formatado, array('id'=>$ofd->uid));
-                }
-              
-            echo html_writer::end_tag('select');  
-          echo html_writer::end_tag('td');
+        echo html_writer::start_tag('tr'),
+               html_writer::tag('td', $nome_formatado, array('style'=>'font-weight:bold;')),
+               html_writer::tag('td', ''),
+             html_writer::end_tag('tr'),
 
-          echo html_writer::start_tag('td');
-            echo html_writer::tag('button', 'Adicionar', array('type'=>'button', 'class'=>
-                                  'btn btn-default btn-xs moodle_map_bt', 'style'=>'margin-top:5px;'));
-          echo html_writer::end_tag('td');
-        echo html_writer::end_tag('tr');
+             html_writer::start_tag('tr'),
+               html_writer::start_tag('td'),
+                 html_writer::start_tag('select', array('class'=>'selectpicker', 'name'=>'map[]', 'multiple'=>'true'));
+              
+        foreach ($oferta_de_curso->ofertas_de_disciplina as $ofd) {
+            $nome_formatado = $ofd->nome; //.' ('. saas::format_date($ofd->inicio, $ofd->fim) . ')';
+            echo html_writer::tag('option', $nome_formatado, array('id'=>$ofd->uid));
+        }
+              
+        echo html_writer::end_tag('select'),
+              html_writer::end_tag('td'),
+
+              html_writer::start_tag('td'),
+                html_writer::tag('button', 'Adicionar', array('type'=>'button', 'class'=>
+                                      'btn btn-default btn-xs moodle_map_bt', 'style'=>'margin-top:5px;')),
+              html_writer::end_tag('td'),
+            html_writer::end_tag('tr');
     } 
 
   //Mapeamento de uma oferta do SAAS para 1 ou mais cursos Moodle.
