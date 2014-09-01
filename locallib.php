@@ -137,5 +137,3 @@ function show_categories($catids, $categories, $first_category = false){
     echo html_writer::end_tag('li');
   }
 }
-
-?>
