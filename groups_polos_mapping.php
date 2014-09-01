@@ -5,20 +5,20 @@ defined('MOODLE_INTERNAL') || die();
 print html_writer::start_tag('DIV', array('align'=>'center'));
 
 if(isset($_POST['map_polos']) && isset($_POST['save'])) {
-    $mapped_groups = $DB->get_records('saas_groups_polos_mapping', null, 'groupname', 'groupname, id, polo_id');
+    $mapped_groups = $DB->get_records('saas_map_groups_polos', null, 'groupname', 'groupname, id, polo_id');
     $saved = false;
     foreach($_POST['map_polos'] AS $groupname=>$poloid) {
         $decoded_groupname = urldecode($groupname);
         if(isset($mapped_groups[$decoded_groupname])) {
             if(empty($poloid)) {
-                $DB->delete_records('saas_groups_polos_mapping', array('id'=>$mapped_groups[$decoded_groupname]->id));
+                $DB->delete_records('saas_map_groups_polos', array('id'=>$mapped_groups[$decoded_groupname]->id));
                 $saved = true;
             } else {
                 if($poloid != $mapped_groups[$decoded_groupname]->polo_id) {
                     $obj = new stdClass();
                     $obj->id = $mapped_groups[$decoded_groupname]->id;
                     $obj->polo_id = $poloid;
-                    $DB->update_record('saas_groups_polos_mapping', $obj);
+                    $DB->update_record('saas_map_groups_polos', $obj);
                     $saved = true;
                 }
             }
@@ -27,7 +27,7 @@ if(isset($_POST['map_polos']) && isset($_POST['save'])) {
                 $obj = new stdClass();
                 $obj->groupname = $decoded_groupname;
                 $obj->polo_id = $poloid;
-                $DB->insert_record('saas_groups_polos_mapping', $obj);
+                $DB->insert_record('saas_map_groups_polos', $obj);
                 $saved = true;
             }
         }
@@ -39,12 +39,12 @@ if(isset($_POST['map_polos']) && isset($_POST['save'])) {
 $polos = $DB->get_records_menu('saas_polos', null, 'nome', 'id, nome');
 
 $sql = "SELECT DISTINCT g.name as groupname, polo.polo_id, polo.nome as saas_polo_nome
-          FROM {saas_course_mapping} scm
+          FROM {saas_map_course} scm
           JOIN {course} c ON (c.id = scm.courseid)
           JOIN {saas_ofertas_disciplinas} sod ON (sod.id = scm.oferta_disciplina_id AND sod.enable = 1)
           JOIN {groups} g ON (g.courseid = c.id)
      LEFT JOIN (SELECT spm.groupname, spm.polo_id, sp.nome
-                  FROM {saas_groups_polos_mapping} spm
+                  FROM {saas_map_groups_polos} spm
                   JOIN {saas_polos} sp ON (sp.id = spm.polo_id)) polo
             ON (polo.groupname = g.name)
       ORDER BY g.name";

@@ -201,7 +201,7 @@ class saas {
     function get_mapeamento_cursos() {
         global $DB;
 
-        return $DB->get_records('saas_course_mapping');
+        return $DB->get_records('saas_map_course');
     }
 
     function get_mapped_polos_by_name() {
@@ -259,10 +259,10 @@ class saas {
         $sql = "SELECT DISTINCT oc.id AS oc_id, sp.*
                   FROM {saas_ofertas_cursos} oc
                   JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1)
-                  JOIN {saas_course_mapping} cm ON (cm.oferta_disciplina_id = od.id)
+                  JOIN {saas_map_course} cm ON (cm.oferta_disciplina_id = od.id)
                   JOIN {course} c ON (c.id = cm.courseid)
                   JOIN {groups} g ON (g.courseid = c.id)
-                  JOIN {saas_groups_polos_mapping} spm ON (spm.groupname = g.name)
+                  JOIN {saas_map_groups_polos} spm ON (spm.groupname = g.name)
                   JOIN {saas_polos} sp ON (sp.id = spm.polo_id AND sp.enable = 1)
                  WHERE oc.enable = 1
               ORDER BY oc.id, sp.nome";
@@ -343,7 +343,7 @@ class saas {
         $sql = "SELECT DISTINCT od.*, oc.id as oc_id, cm.id IS NOT NULL AS mapped
                   FROM {saas_ofertas_cursos} oc
              LEFT JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1)
-             LEFT JOIN {saas_course_mapping} cm ON (cm.oferta_disciplina_id = od.id)
+             LEFT JOIN {saas_map_course} cm ON (cm.oferta_disciplina_id = od.id)
                  WHERE oc.enable = 1
               ORDER BY od.nome";
         $recs = $DB->get_recordset_sql($sql);
@@ -364,7 +364,7 @@ class saas {
         $sql = "SELECT oc.id AS oc_id, sp.id AS p_id, scr.role, COUNT(DISTINCT ra.userid) as count
                   FROM {saas_ofertas_cursos} oc
                   JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1)
-                  JOIN {saas_course_mapping} cm ON (cm.oferta_disciplina_id = od.id)
+                  JOIN {saas_map_course} cm ON (cm.oferta_disciplina_id = od.id)
                   JOIN {course} c ON (c.id = cm.courseid)
                   JOIN {enrol} e ON (e.courseid = c.id AND e.status = :enable)
                   JOIN {user_enrolments} ue
@@ -380,7 +380,7 @@ class saas {
                   JOIN {user} u ON (u.id = ue.userid AND u.suspended = 0)
                   JOIN {groups} g ON (g.courseid = c.id)
                   JOIN {groups_members} gm ON (gm.groupid = g.id AND gm.userid = u.id)
-                  JOIN {saas_groups_polos_mapping} spm ON (spm.groupname = g.name)
+                  JOIN {saas_map_groups_polos} spm ON (spm.groupname = g.name)
                   JOIN {saas_polos} sp ON (sp.id = spm.polo_id AND sp.enable = 1)
                  WHERE oc.enable = 1
               GROUP BY oc.id, sp.id, scr.role
@@ -422,7 +422,7 @@ class saas {
         $sql = "SELECT {$distinct} od.id AS od_id, scr.role, {$field}
                   FROM {saas_ofertas_cursos} oc
                   JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1)
-                  JOIN {saas_course_mapping} cm ON (cm.oferta_disciplina_id = od.id)
+                  JOIN {saas_map_course} cm ON (cm.oferta_disciplina_id = od.id)
                   JOIN {course} c ON (c.id = cm.courseid)
                   JOIN {enrol} e ON (e.courseid = c.id AND e.status = {$enable})
                   JOIN {user_enrolments} ue
@@ -625,7 +625,7 @@ class saas {
 
             list($in_sql, $params) = $DB->get_in_or_equal(explode(',', $str_roleids), SQL_PARAMS_NAMED);
             $sql = "SELECT DISTINCT {$fields}
-                       FROM {saas_course_mapping} AS cm
+                       FROM {saas_map_course} AS cm
                        JOIN {saas_ofertas_disciplinas} od ON (cm.oferta_disciplina_id = od.id)
                        JOIN {course} c ON (c.id = cm.courseid)
                       JOIN {context} ctx
@@ -874,7 +874,7 @@ class saas {
         $sql = "SELECT DISTINCT od.id, od.uid
                   FROM {saas_ofertas_cursos} oc
                   JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1)
-                  JOIN {saas_course_mapping} cm ON (cm.oferta_disciplina_id = od.id)
+                  JOIN {saas_map_course} cm ON (cm.oferta_disciplina_id = od.id)
                  WHERE oc.enable = 1";
         foreach($DB->get_records_sql($sql) AS $id=>$od) {
             $users = array();

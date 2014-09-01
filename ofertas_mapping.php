@@ -43,7 +43,7 @@
     $cursos_moodle_com_ofertas = array();
 
     foreach ($mapeamentos as $key => $map) {
-        $cursos_moodle_com_ofertas[$map->courseid] = $DB->get_records('saas_course_mapping',
+        $cursos_moodle_com_ofertas[$map->courseid] = $DB->get_records('saas_map_course',
                                    array('courseid'=>$map->courseid), null, 'oferta_disciplina_id');
     }
 
@@ -91,7 +91,7 @@
     }
 
     foreach ($mapeamentos as $key => $map) {
-        $ofertas_mapeadas_com_cursos[$map->oferta_disciplina_id] = $DB->get_records('saas_course_mapping',
+        $ofertas_mapeadas_com_cursos[$map->oferta_disciplina_id] = $DB->get_records('saas_map_course',
                                      array('oferta_disciplina_id'=>$map->oferta_disciplina_id), null, 'courseid');
     }
 
