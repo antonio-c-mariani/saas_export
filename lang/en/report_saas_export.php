@@ -12,6 +12,7 @@ $string['invalid_cidade'] = 'Nome de cidade inválido';
 $string['estado'] = 'UF';
 
 $string['no_permission_to_config'] = 'Você não tem permissão para configurar o relatório de exportação de dados para SAAS';
+$string['userid_field_unknown'] = 'Campo identificador de usuário inexistente: \'{$a}\'';
 
 $string['oferta_curso'] = 'Oferta de curso';
 $string['disciplina'] = 'Disciplina';
@@ -123,8 +124,10 @@ $string['course_name_default'] = 'Nome de cursos';
 $string['course_name_default_help'] = 'Campo do curso Moodle correspondente ao nome da oferta de disciplina.';
 
 $string['username'] = 'Id. Usuário';
-$string['userid_field'] = 'Identificador de usuários';
+$string['userid_field'] = 'Id. de usuários';
 $string['userid_field_help'] = 'Campo do perfil do usuário a ser usado como identificador único do usuário no SAAS.';
+$string['filter_userid_field'] = 'Aplicar filtro de CPF';
+$string['filter_userid_field_help'] = 'Aplicar filtro de limpeza e formatação de CFP sobre o campo \'Id. de usuários\', resultando em um número de 11 dígitos (com zeros a esquerda).';
 
 $string['cpf'] = 'CPF';
 $string['cpf_help'] = 'Campo do perfil do usuário que contém o CPF.';

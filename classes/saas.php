@@ -31,6 +31,10 @@ class saas {
             $role = 'roles_'.$r;
             $this->config->$role = isset($roles[$r]) ? implode(',', $roles[$r]) : '';
         }
+
+        if(!isset($this->config->filter_userid_field)) {
+            $this->config->filter_userid_field = false;
+        }
     }
 
     function get_config($name) {
@@ -360,15 +364,15 @@ class saas {
 
         print html_writer::start_tag('DIV', array('align'=>'center'));
 
-        list($sql, $params) =  $this->get_sql_users_by_oferta_curso_polo(false, $ocid, $poloid);
+        list($sql, $params) =  $this->get_sql_users_by_oferta_curso_polo($ocid, $poloid, false);
         $rs = $DB->get_recordset_sql($sql, $params);
         $data = array();
         foreach(self::$role_names_polos AS $role) {
             $data[$role] = array();
         }
         foreach($rs AS $rec) {
-            $user = $this->get_user($rec->role, $rec->userfield);
-            $data[$rec->role][] = array((count($data[$rec->role])+1) . '.', $rec->userfield, $user->name, $user->email, $user->cpf);
+            $user = $this->get_user($rec->role, $rec->userid, $rec->userfield);
+            $data[$rec->role][] = array((count($data[$rec->role])+1) . '.', $user->userfield, $user->name, $user->email, $user->cpf);
         }
 
         foreach(self::$role_names_polos AS $role) {
@@ -409,7 +413,9 @@ class saas {
         return $ofertas;
     }
 
-    function get_sql_users_by_oferta_curso_polo($only_count=false, $ocid=0, $poloid=0) {
+    function get_sql_users_by_oferta_curso_polo($ocid=0, $poloid=0, $only_count=false) {
+        global $DB;
+
         $condition = '';
         $params = array('contextcourse'=>CONTEXT_COURSE, 'enable'=>ENROL_INSTANCE_ENABLED, 'active'=>ENROL_USER_ACTIVE);
         if($ocid) {
@@ -421,13 +427,25 @@ class saas {
             $params['poloid'] = $poloid;
         }
 
+        $join_user_info_data = '';
         if($only_count) {
             $group_by = 'GROUP BY oc.id, sp.id, scr.role';
             $field = 'COUNT(DISTINCT ra.userid) AS count';
             $distinct = '';
         } else {
             $group_by = '';
-            $field = 'u.' . $this->get_config('userid_field') . ' AS userfield';
+            $userid_field = $this->get_config('userid_field');
+            if($userid_field == 'username' || $userid_field == 'idnumber') {
+                $field = "ra.userid, u.{$userid_field} AS userfield";
+            } else {
+                if($fieldid = $DB->get_field('user_info_field', 'id', array('shortname'=>$userid_field))) {
+                    $join_user_info_data = "JOIN {user_info_data} udt ON (udt.fieldid = :fieldid AND udt.userid = u.id AND udt.data != '')";
+                    $params['fieldid'] = $fieldid;
+                    $field = "ra.userid, udt.data AS userfield";
+                } else {
+                    print_error('userid_field_unknown', 'report_saas_export', '', $userid_field);
+                }
+            }
             $distinct = 'DISTINCT';
         }
 
@@ -447,6 +465,7 @@ class saas {
                         ((ra.component = '' AND e.enrol = 'manual') OR (ra.component = CONCAT('enrol_',e.enrol) AND ra.itemid = ue.id)))
                   JOIN {saas_config_roles} scr ON (scr.roleid = ra.roleid AND scr.role IN ('student', 'tutor_polo'))
                   JOIN {user} u ON (u.id = ue.userid AND u.deleted = 0 AND u.suspended = 0)
+                  {$join_user_info_data}
                   JOIN {groups} g ON (g.courseid = c.id)
                   JOIN {groups_members} gm ON (gm.groupid = g.id AND gm.userid = u.id)
                   JOIN {saas_map_groups_polos} spm ON (spm.groupname = g.name)
@@ -461,7 +480,7 @@ class saas {
     function get_polos_count() {
         global $DB;
 
-        list($sql, $params) = $this->get_sql_users_by_oferta_curso_polo(true);
+        list($sql, $params) = $this->get_sql_users_by_oferta_curso_polo(0, 0, true);
         $rs = $DB->get_recordset_sql($sql, $params);
 
         $polo_counts = array();
@@ -473,17 +492,29 @@ class saas {
     }
 
     function get_sql_users_by_oferta_disciplina($id_oferta_disciplina=0, $only_count=false) {
-        $active = ENROL_USER_ACTIVE;
-        $contextlevel = CONTEXT_COURSE;
-        $enable = ENROL_INSTANCE_ENABLED;
+        global $DB;
 
+        $params = array('active'=>ENROL_USER_ACTIVE, 'contextlevel'=>CONTEXT_COURSE, 'enable'=>ENROL_INSTANCE_ENABLED);
+
+        $join_user_info_data = '';
         if($only_count) {
             $group_by = 'GROUP BY od_id, scr.role';
             $field = 'COUNT(DISTINCT ra.userid) AS count';
             $distinct = '';
         } else {
             $group_by = '';
-            $field = 'u.' . $this->get_config('userid_field') . ' AS userfield';
+            $userid_field = $this->get_config('userid_field');
+            if($userid_field == 'username' || $userid_field == 'idnumber') {
+                $field = "ra.userid, u.{$userid_field} AS userfield";
+            } else {
+                if($fieldid = $DB->get_field('user_info_field', 'id', array('shortname'=>$userid_field))) {
+                    $join_user_info_data = "JOIN {user_info_data} udt ON (udt.fieldid = :fieldid AND udt.userid = u.id AND udt.data != '')";
+                    $params['fieldid'] = $fieldid;
+                    $field = "ra.userid, udt.data AS userfield";
+                } else {
+                    print_error('userid_field_unknown', 'report_saas_export', '', $userid_field);
+                }
+            }
             $distinct = 'DISTINCT';
         }
 
@@ -497,23 +528,22 @@ class saas {
                   JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1)
                   JOIN {saas_map_course} cm ON (cm.oferta_disciplina_id = od.id)
                   JOIN {course} c ON (c.id = cm.courseid)
-                  JOIN {enrol} e ON (e.courseid = c.id AND e.status = {$enable})
-                  JOIN {user_enrolments} ue
-                    ON (ue.enrolid = e.id AND
-                        ue.status = {$active})
-                  JOIN {context} ctx ON (ctx.instanceid = c.id AND ctx.contextlevel = {$contextlevel})
+                  JOIN {enrol} e ON (e.courseid = c.id AND e.status = :enable)
+                  JOIN {user_enrolments} ue ON (ue.enrolid = e.id AND ue.status = :active)
+                  JOIN {context} ctx ON (ctx.instanceid = c.id AND ctx.contextlevel = :contextlevel)
                   JOIN {role_assignments} ra
                     ON (ra.contextid = ctx.id AND
                         ra.userid = ue.userid AND
                         ((ra.component = '' AND e.enrol = 'manual') OR (ra.component = CONCAT('enrol_',e.enrol) AND ra.itemid = ue.id)))
                   JOIN {saas_config_roles} scr ON (scr.roleid = ra.roleid AND scr.role IN ('student', 'teacher', 'tutor_inst'))
                   JOIN {user} u ON (u.id = ue.userid AND u.deleted = 0 AND u.suspended = 0)
+                  {$join_user_info_data}
                  WHERE oc.enable = 1
                    {$condition}
               {$group_by}
               ORDER BY od_id, scr.role";
 
-        return $sql;
+        return array($sql, $params);
     }
 
     function show_users_oferta_disciplina($ofer_disciplina_id) {
@@ -525,15 +555,15 @@ class saas {
 
         print html_writer::start_tag('DIV', array('align'=>'center'));
 
-        $sql =  $this->get_sql_users_by_oferta_disciplina($ofer_disciplina_id);
-        $rs = $DB->get_recordset_sql($sql);
+        list($sql, $params) =  $this->get_sql_users_by_oferta_disciplina($ofer_disciplina_id);
+        $rs = $DB->get_recordset_sql($sql, $params);
         $data = array();
         foreach(self::$role_names_disciplinas AS $role) {
             $data[$role] = array();
         }
         foreach($rs AS $rec) {
-            $user = $this->get_user($rec->role, $rec->userfield);
-            $data[$rec->role][] = array((count($data[$rec->role])+1) . '.', $rec->userfield, $user->name, $user->email, $user->cpf);
+            $user = $this->get_user($rec->role, $rec->userid, $rec->userfield);
+            $data[$rec->role][] = array((count($data[$rec->role])+1) . '.', $user->userfield, $user->name, $user->email, $user->cpf);
         }
 
         foreach(self::$role_names_disciplinas AS $role) {
@@ -552,14 +582,14 @@ class saas {
         print html_writer::end_tag('DIV');
     }
 
-    function get_user($role, $userfield) {
+    function get_user($role, $userid, $userfield) {
         global $DB;
 
-        $dbuser = $DB->get_record('user', array($this->get_config('userid_field')=>$userfield), 'id, username, idnumber, firstname, lastname, email');
+        $dbuser = $DB->get_record('user', array('id'=>$userid), 'id, username, idnumber, firstname, lastname, email');
 
         $user = new stdClass();
-        $user->userfield = $userfield;
         $user->email = $dbuser->email;
+        $user->userfield = $this->config->filter_userid_field ? $this->format_cpf($userfield) : $userfield;
 
         $name_field = $this->get_config('name_field_' . $role);
         switch($name_field) {
@@ -573,22 +603,36 @@ class saas {
 
         $cpf_field = $this->get_config('cpf_field_' . $role);
         switch($cpf_field) {
-            case ''        : $user->cpf = ''; break;
-            case 'username': $user->cpf = $dbuser->username; break;
-            case 'idnumber': $user->cpf = $dbuser->idnumber; break;
-            case 'lastname': $user->cpf = $dbuser->lastname; break;
-            default: 
+            case ''        : $cpf = ''; break;
+            case 'username': $cpf = $dbuser->username; break;
+            case 'idnumber': $cpf = $dbuser->idnumber; break;
+            case 'lastname': $cpf = $dbuser->lastname; break;
+            default:
                 if($fieldid = $DB->get_field('user_info_field', 'id', array('shortname'=>$cpf_field))) {
                     $cpf = $DB->get_field('user_info_data', 'data', array('userid'=>$dbuser->id, 'fieldid'=>$fieldid));
-                    $user->cpf = $cpf ? $cpf : '';
                 } else {
-                    $user->cpf = '';
+                    $cpf = '';
                 }
         }
-        if($cpf_regexp =  $this->get_config('cpf_regexp')) {
-            // todo: tratar expressão regular
-        }
+        $user->cpf = $this->format_cpf($cpf);
+
         return $user;
+    }
+
+    function format_cpf($cpf) {
+        if(empty($cpf)) {
+            $cpf = '';
+        } else {
+            $cpf_regexp = $this->get_config('cpf_regexp');
+            if(!empty($cpf_regexp)) {
+                if(preg_match($cpf_regexp, $cpf, $matches)) {
+                    unset($matches[0]);
+                    $cpf = implode('', $matches);
+                }
+            }
+            $cpf = empty($cpf) ? '' : str_pad(preg_replace('|[^0-9]+|', '', $cpf), 11, '0', STR_PAD_LEFT);
+        }
+        return $cpf;
     }
 
     function show_table_ofertas_curso_disciplinas($show_counts=false) {
@@ -598,8 +642,8 @@ class saas {
         $color = '#E0E0E0';
 
         if($show_counts) {
-            $sql =  $this->get_sql_users_by_oferta_disciplina(0, true);
-            $rs = $DB->get_recordset_sql($sql);
+            list($sql, $params) =  $this->get_sql_users_by_oferta_disciplina(0, true);
+            $rs = $DB->get_recordset_sql($sql, $params);
             $ofertas_disciplinas_counts = array();
             foreach($rs AS $rec) {
                 $ofertas_disciplinas_counts[$rec->od_id][$rec->role] = $rec->count;
@@ -1044,7 +1088,8 @@ class saas {
                  WHERE oc.enable = 1";
         foreach($DB->get_records_sql($sql) AS $id=>$od) {
             $users = array();
-            $rs = $DB->get_recordset_sql($this->get_sql_users_by_oferta_disciplina($id));
+            list($sql, $params) = $this->get_sql_users_by_oferta_disciplina($id);
+            $rs = $DB->get_recordset_sql($sql, $params);
             foreach($rs AS $rec) {
                 $users[$rec->role][] = $rec->userfield;
             }

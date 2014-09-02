@@ -83,9 +83,13 @@ class saas_export_settings_form extends moodleform {
 
         $userid_options = array('username' => get_string('username'),
                                 'idnumber' => get_string('idnumber') );
+        $userid_options = array_merge($userid_options, saas::get_user_info_fields());
         $mform->addElement('select', 'userid_field', get_string('userid_field', 'report_saas_export'), $userid_options, $attributes);
         $mform->setDefault('userid_field', 'fullname');
         $mform->addHelpButton('userid_field', 'userid_field', 'report_saas_export');
+
+        $mform->addElement('checkbox', 'filter_userid_field', get_string('filter_userid_field','report_saas_export'));
+        $mform->addHelpButton('filter_userid_field', 'filter_userid_field', 'report_saas_export');
 
         $name_options = array('firstname'         => get_string('firstname'),
                               'lastname'          => get_string('lastname'),
@@ -138,7 +142,7 @@ class saas_export_settings_form extends moodleform {
         $mform->addHelpButton('cpf_field_tutor_inst', 'cpf_field_tutor_inst', 'report_saas_export');
 
         $mform->addElement('text', 'cpf_regexp', get_string('cpf_regexp', 'report_saas_export'), $text_attr);
-        $mform->setDefault('cpf_regexp', '[0-9]+');
+        $mform->setDefault('cpf_regexp', '|([0-9]+)|');
         $mform->addHelpButton('cpf_regexp', 'cpf_regexp', 'report_saas_export');
         $mform->setType('cpf_regexp', PARAM_TEXT);
 
