@@ -27,7 +27,8 @@ require_once($CFG->dirroot . '/report/saas_export/polo_form.php');
 require_once($CFG->dirroot . '/report/saas_export/oferta_form.php');
 
 require_login();
-require_capability('report/saas_export:view', context_system::instance());
+$syscontext = context_system::instance();
+require_capability('report/saas_export:view', $syscontext);
 admin_externalpage_setup('report_saas_export', '', null, '', array('pagelayout'=>'report'));
 
 $baseurl = new moodle_url('/report/saas_export/index.php');
@@ -59,15 +60,22 @@ switch ($action) {
         $baseurl->param('action', 'settings');
         $mform = new saas_export_settings_form($baseurl);
 
-        if ($mform->is_cancelled()) {
-            redirect($baseurl);
-        } else if ($data = $mform->get_data()) {
-            saas::save_settings($data);
-            redirect($baseurl);
+        if(has_capability('report/saas_export:config', $syscontext)) {
+            if ($mform->is_cancelled()) {
+                redirect($baseurl);
+            } else if ($data = $mform->get_data()) {
+                saas::save_settings($data);
+                redirect($baseurl);
+            }
         }
 
         echo $OUTPUT->header();
         print_tabs(array($tabs), $action);
+
+        if(!has_capability('report/saas_export:config', $syscontext)) {
+            print $OUTPUT->heading(get_string('no_permission_to_config', 'report_saas_export'), '3');
+        }
+
         $mform->display();
         echo $OUTPUT->footer();
         break;

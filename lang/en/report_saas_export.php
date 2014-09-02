@@ -11,6 +11,8 @@ $string['cidade'] = 'Cidade';
 $string['invalid_cidade'] = 'Nome de cidade inválido';
 $string['estado'] = 'UF';
 
+$string['no_permission_to_config'] = 'Você não tem permissão para configurar o relatório de exportação de dados para SAAS';
+
 $string['oferta_curso'] = 'Oferta de curso';
 $string['disciplina'] = 'Disciplina';
 $string['inicio'] = 'Início';
@@ -104,7 +106,8 @@ $string['roles_tutor_inst_help'] = 'Papeis com os quais tutores da instituição
 
 $string['profile_field_name'] = 'Nome:';
 $string['profile_field_name_help'] = 'Campo(s) do perfil do usuário que define o nome completo para este papel.';
-$string['saas_export:view'] = 'Exportar dados para o SAAS.';
+$string['saas_export:view'] = 'Exportar dados para o SAAS';
+$string['saas_export:config'] = 'Configurar exportação de dados para o SAAS';
 
 $string['ws_url'] = 'URL SAAS';
 $string['ws_url_help'] = 'URL do servidor do SAAS para onde os dados serão transferidos.';
