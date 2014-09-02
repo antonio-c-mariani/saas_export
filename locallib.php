@@ -65,7 +65,7 @@ function get_courses_from_categories(&$categories, $repeat_allowed = true) {
       $sql_repeat = "";
       $sql_and = "";
   } else {
-      $sql_repeat = " LEFT JOIN {saas_course_mapping} scm ON (scm.courseid = c.id) ";
+      $sql_repeat = " LEFT JOIN {saas_map_course} scm ON (scm.courseid = c.id) ";
       $sql_and = " AND scm.courseid IS NULL";
 
   }

@@ -30,7 +30,6 @@ class polo_form extends moodleform {
     function definition() {
         $mform = $this->_form;
 
-        // ----------------------------------------------------------------------------------------------
         $mform->addElement('header', 'add_polo', get_string('add_polo', 'report_saas_export'));
 
         $mform->addElement('text', 'nome', get_string('nome_polo', 'report_saas_export'), 'size="50"');

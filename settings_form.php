@@ -43,6 +43,7 @@ class saas_export_settings_form extends moodleform {
 
         $mform->addElement('text', 'api_key', get_string('api_key', 'report_saas_export'), 'size="50"');
         $mform->addHelpButton('api_key', 'api_key', 'report_saas_export');
+        $mform->setType('api_key', PARAM_TEXT);
 
         // ----------------------------------------------------------------------------------------------
         $mform->addElement('header', 'course_settings', get_string('course_settings', 'report_saas_export'));
@@ -100,6 +101,7 @@ class saas_export_settings_form extends moodleform {
         $mform->addElement('text', 'name_regexp', get_string('name_regexp', 'report_saas_export'), 'size="50"');
         $mform->setDefault('name_regexp', '');
         $mform->addHelpButton('name_regexp', 'name_regexp', 'report_saas_export');
+        $mform->setType('name_regexp', PARAM_TEXT);
 
         // ----------------------------------------------------------------------------------------------
         $mform->addElement('header', 'cpf_settings', get_string('cpf_settings', 'report_saas_export'));
@@ -129,6 +131,7 @@ class saas_export_settings_form extends moodleform {
         $mform->addElement('text', 'cpf_regexp', get_string('cpf_regexp', 'report_saas_export'), 'size="50"');
         $mform->setDefault('cpf_regexp', '[0-9]+');
         $mform->addHelpButton('cpf_regexp', 'cpf_regexp', 'report_saas_export');
+        $mform->setType('cpf_regexp', PARAM_TEXT);
 
         // ----------------------------------------------------------------------------------------------
         $mform->addElement('header', 'role_settings', get_string('role_settings', 'report_saas_export'));
