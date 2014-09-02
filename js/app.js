@@ -41,7 +41,7 @@ $(document).ready(function(){
 		});
     });
 
-    //Controles da Modal
+    //Controles da Modal da árvore de categorias do Moodle.
     $('.moodle_map_bt').click(function(saas) {
     	//Mostra a modal
     	$('#cursos_moodle_modal').modal('show');
@@ -70,11 +70,11 @@ $(document).ready(function(){
         $('.select_moodle_course').click(function(moodle) {
 	   		var uid_saas = saas.target.getAttribute('id');
 	   		var id_moodle = moodle.target.getAttribute('id');
-	   		
+			
 	   		if (!uid_saas) {
 	   			uid_saas = -1;
 	   		}
-	   		
+			
 	   		if (!id_moodle) {
 	   			id_moodle = -1;
 	   		}
@@ -89,5 +89,17 @@ $(document).ready(function(){
 		    });
    		});  
     });
+
+	$('.saas_map_bt').click(function(saas) {
+    	//Mostra a modal
+	
+    	var modal_id = saas.target.getAttribute('id');
+    	$('.' + modal_id).modal('show');
+    	alert();
+    	//Adiciona o nome da oferta de disciplina que está sendo mapeada na modal.
+    	//$('<h4> Oferta: ' +saas.target.getAttribute('oferta')+ '</h4>').insertAfter('.modal_cursos_moodle_title');
+		
+    });
+
 
 });

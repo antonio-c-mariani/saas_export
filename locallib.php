@@ -138,4 +138,16 @@ function show_categories($catids, $categories, $first_category = false){
   }
 }
 
+function show_saas_offers($oferta_de_curso_uid, $repeat_allowed = true) {
+  global $DB;
+
+  $ofertas_de_disciplinas = $DB->get_records('saas_ofertas_disciplinas', array('oferta_curso_uid'=>$oferta_de_curso_uid));
+
+  echo html_writer::start_tag('ul', array('class'=>'saas_offers_list', 'id'=>$oferta_de_curso_uid));
+    foreach($ofertas_de_disciplinas as $od) {
+        echo html_writer::tag('li', $od->nome, array('class'=>'oferta_de_disciplina', 'id'=>$od->uid));
+    }
+  echo html_writer::end_tag('ul');
+}
+
 ?>
