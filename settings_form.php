@@ -115,7 +115,7 @@ class saas_export_settings_form extends moodleform {
         // ----------------------------------------------------------------------------------------------
         $mform->addElement('header', 'cpf_settings', get_string('cpf_settings', 'report_saas_export'));
 
-        $cpf_options = array('none'     => get_string('none'),
+        $cpf_options = array(''         => get_string('none'),
                              'username' => get_string('username'),
                              'idnumber' => get_string('idnumber'),
                              'lastname' => get_string('lastname') );

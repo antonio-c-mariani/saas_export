@@ -192,6 +192,9 @@ switch ($action) {
 
         if($saas_data_action == 'ofertas') {
             $saas->show_table_ofertas_curso_disciplinas(true);
+            if($odid = optional_param('odid', 0 , PARAM_INT)) {
+                $saas->show_users_oferta_disciplina($odid);
+            }
         } else {
             $polo_mapping_type = $saas->get_config('polo_mapping');
             switch ($polo_mapping_type) {
@@ -203,6 +206,11 @@ switch ($action) {
                     break;
                 default:
                     print $OUTPUT->heading('Mapeamento ainda não implementado: ' . $polo_mapping_type);
+            }
+            $ocid = optional_param('ocid', 0 , PARAM_INT);
+            $poloid = optional_param('poloid', 0 , PARAM_INT);
+            if($ocid && $poloid) {
+                $saas->show_users_oferta_curso_polo($ocid, $poloid);
             }
         }
 

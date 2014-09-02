@@ -56,10 +56,14 @@ $string['category_to_polo'] = 'Os polos são identificados por categorias no Moo
 $string['title_no_polo'] = 'A configuração atual indica que não há no Moodle forma de agrupar estudantes por polo';
 //------------------------------------------------------------------
 
-$string['student'] = 'Aluno';
+$string['student'] = 'Estudante';
+$string['students'] = 'Estudantes';
 $string['teacher'] = 'Professor';
+$string['teachers'] = 'Professores';
 $string['tutor_inst'] = 'Tutor a distância';
+$string['tutor_insts'] = 'Tutores a distância';
 $string['tutor_polo'] = 'Tutor presencial (polo)';
+$string['tutor_polos'] = 'Tutores presenciais (polo)';
 $string['title'] = 'Exportação de dados para o SAAS';
 $string['success'] = 'Todos os dados foram enviados com sucesso.';
 $string['config'] = 'Configurações';
@@ -118,6 +122,7 @@ $string['api_key_help'] = 'Chave de identificação da instituição definida no
 $string['course_name_default'] = 'Nome de cursos';
 $string['course_name_default_help'] = 'Campo do curso Moodle correspondente ao nome da oferta de disciplina.';
 
+$string['username'] = 'Id. Usuário';
 $string['userid_field'] = 'Identificador de usuários';
 $string['userid_field_help'] = 'Campo do perfil do usuário a ser usado como identificador único do usuário no SAAS.';
 
