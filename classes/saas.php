@@ -655,16 +655,14 @@ class saas {
         $grades = array();
         foreach($DB->get_records('saas_map_course', array('oferta_disciplina_id' => $ofer_disciplina_id)) AS $rec) {
             $grade_item = grade_item::fetch_course_item($rec->courseid);
-            $sql = "SELECT ra.userid
+            $sql = "SELECT DISTINCT ra.userid
                       FROM {context} ctx
                       JOIN {role_assignments} ra ON (ra.contextid = ctx.id)
                       JOIN {saas_config_roles} scr ON (scr.role = 'student' AND scr.roleid = ra.roleid)
                      WHERE ctx.instanceid = :courseid
                        AND ctx.contextlevel = :contextlevel";
             foreach($DB->get_recordset_sql($sql, array('courseid'=>$rec->courseid, 'contextlevel'=>CONTEXT_COURSE)) AS $us) {
-                if($grade_item->gradetype != GRADE_TYPE_VALUE) {
-                    $final = -1.0;
-                } else {
+                if($grade_item->gradetype == GRADE_TYPE_VALUE) {
                     $grade = new grade_grade(array('itemid'=>$grade_item->id, 'userid'=>$us->userid));
                     $finalgrade = $grade->finalgrade;
                     if(is_numeric($finalgrade)) {
@@ -672,6 +670,8 @@ class saas {
                     } else {
                         $final = 0.0;
                     }
+                } else {
+                    $final = -1.0;
                 }
                 if(isset($grades[$us->userid])) {
                     $grades[$us->userid] = max($grades[$us->userid], $final);

@@ -55,6 +55,13 @@ $string['no_polo'] = 'Não há no Moodle forma de agrupar estudantes por polo';
 $string['group_to_polo'] = 'São utilizados grupos nos cursos Moodle para agrupar estudantes por polo';
 $string['category_to_polo'] = 'Os polos são identificados por categorias no Moodle';
 $string['title_no_polo'] = 'A configuração atual indica que não há no Moodle forma de agrupar estudantes por polo';
+
+$string['group_to_polo_msg1'] = 'Estão listados abaixo todos os grupos existentes nos cursos Moodle que foram mapeados na aba \'Mapeamento de disciplinas\'.
+   Estes grupos podem, agora, ser mapeados para polos registrados no SAAS, sendo possível mapear mais de um grupo para o mesmo polo.
+   Os grupos não mapeados são ignorados pois considera-se que eles não correspondem a polos.';
+$string['group_to_polo_msg2'] = 'Os estudantes e tutores pertencentes aos grupos mapeados serão associados aos polos correspondentes no SAAS.
+   Por sua vez, os polos serão associados às ofertas de curso em função do mapeamento dos cursos Moodle para as ofertas de disciplinas (ver aba \'Mapeamento de disciplinas\')';
+
 //------------------------------------------------------------------
 
 $string['student'] = 'Estudante';
@@ -132,7 +139,7 @@ $string['filter_userid_field_help'] = 'Aplicar filtro de limpeza e formatação 
 $string['lastcourseaccess'] = 'Último acesso à disciplina';
 $string['suspended'] = 'Suspenso';
 $string['suspended_as_evaded'] = 'Tratar como evasão as inscrições suspensas';
-$string['suspended_as_evaded_help'] = 'Considerar como evasão as inscrições em cursos Moodle que estão com o estado de suspensas. Caso esta opção esteja marcada,
+$string['suspended_as_evaded_help'] = 'Considerar como evasão as inscrições em cursos Moodle que estão com o estado de suspensas. Caso esta opção não esteja marcada,
     as inscrições suspensas são completamente ignoradas.';
 
 $string['cpf'] = 'CPF';
