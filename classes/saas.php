@@ -1,5 +1,7 @@
 <?php
 
+require_once($CFG->libdir . '/gradelib.php');
+
 class saas {
 
     public static $role_names             = array('teacher'=>'professor', 'student'=>'aluno', 'tutor_polo'=>'tutor', 'tutor_inst'=>'tutor');
@@ -502,6 +504,7 @@ class saas {
         $params['active'] = ENROL_USER_ACTIVE;
 
         $join_user_info_data = '';
+        $join_user_lastaccess = '';
         if($only_count) {
             $fields = 'COUNT(DISTINCT ra.userid) AS count';
         } else {
@@ -519,7 +522,8 @@ class saas {
                     print_error('userid_field_unknown', 'report_saas_export', '', $userid_field);
                 }
             }
-            $fields .= ', MAX(ue.status) as suspended';
+            $join_user_lastaccess = 'LEFT JOIN {user_lastaccess} ul ON (ul.userid = u.id AND ul.courseid = c.id)';
+            $fields .= ', MAX(ue.status) as suspended, MAX(u.currentlogin) AS currentlogin, MAX(ul.timeaccess) AS lastaccess';
         }
 
         $condition = '';
@@ -542,6 +546,7 @@ class saas {
                   JOIN {saas_config_roles} scr ON (scr.roleid = ra.roleid AND scr.role IN ('student', 'teacher', 'tutor_inst'))
                   JOIN {user} u ON (u.id = ue.userid AND u.deleted = 0 AND u.suspended = 0)
                   {$join_user_info_data}
+                  {$join_user_lastaccess}
                  WHERE oc.enable = 1
                    {$condition}
                    {$user_enrol_condition}
@@ -553,6 +558,8 @@ class saas {
 
     function show_users_oferta_disciplina($ofer_disciplina_id) {
         global $DB, $OUTPUT;
+
+        $grades = $this->get_grades($ofer_disciplina_id);
 
         $od = $DB->get_record('saas_ofertas_disciplinas', array('id'=>$ofer_disciplina_id));
         $oc = $DB->get_record('saas_ofertas_cursos', array('uid'=>$od->oferta_curso_uid));
@@ -571,6 +578,9 @@ class saas {
             $row = array((count($data[$rec->role])+1) . '.', $user->userfield, $user->name, $user->email, $user->cpf);
             if($rec->role == 'student') {
                 $row[] = $rec->suspended == 1 ? html_writer::tag('span', get_string('yes'), array('class'=>'saas_export_warning')) : get_string('no');
+                $row[] = empty($rec->currentlogin) ? '-' : date('d-m-Y H:i', $rec->currentlogin);
+                $row[] = empty($rec->lastaccess) ? '-' : date('d-m-Y H:i', $rec->lastaccess);
+                $row[] = isset($grades[$rec->userid]) && $grades[$rec->userid] >= 0 ? $grades[$rec->userid] : '-';
             }
             $data[$rec->role][] = $row;
         }
@@ -582,8 +592,16 @@ class saas {
 
                 $table = new html_table();
                 $table->head = array('', get_string('username', 'report_saas_export'), get_string('name'), get_string('email'), get_string('cpf', 'report_saas_export'));
+                $table->colclasses = array('rightalign', 'leftalign', 'leftalign', 'leftalign', 'leftalign');
                 if($role == 'student') {
                     $table->head[] = get_string('suspended', 'report_saas_export');
+                    $table->head[] = get_string('lastlogin');
+                    $table->head[] = get_string('lastcourseaccess', 'report_saas_export');
+                    $table->head[] = get_string('finalgrade', 'grades');
+                    $table->colclasses[] = 'centeralign';
+                    $table->colclasses[] = 'centeralign';
+                    $table->colclasses[] = 'centeralign';
+                    $table->colclasses[] = 'rightalign';
                 }
                 $table->data = $data[$role];
                 print html_writer::table($table);
@@ -629,6 +647,40 @@ class saas {
         $user->cpf = $this->format_cpf($cpf);
 
         return $user;
+    }
+
+    function get_grades($ofer_disciplina_id) {
+        global $DB;
+
+        $grades = array();
+        foreach($DB->get_records('saas_map_course', array('oferta_disciplina_id' => $ofer_disciplina_id)) AS $rec) {
+            $grade_item = grade_item::fetch_course_item($rec->courseid);
+            $sql = "SELECT ra.userid
+                      FROM {context} ctx
+                      JOIN {role_assignments} ra ON (ra.contextid = ctx.id)
+                      JOIN {saas_config_roles} scr ON (scr.role = 'student' AND scr.roleid = ra.roleid)
+                     WHERE ctx.instanceid = :courseid
+                       AND ctx.contextlevel = :contextlevel";
+            foreach($DB->get_recordset_sql($sql, array('courseid'=>$rec->courseid, 'contextlevel'=>CONTEXT_COURSE)) AS $us) {
+                if($grade_item->gradetype != GRADE_TYPE_VALUE) {
+                    $final = -1.0;
+                } else {
+                    $grade = new grade_grade(array('itemid'=>$grade_item->id, 'userid'=>$us->userid));
+                    $finalgrade = $grade->finalgrade;
+                    if(is_numeric($finalgrade)) {
+                        $final = (float)$finalgrade / $grade_item->grademax * 10;
+                    } else {
+                        $final = 0.0;
+                    }
+                }
+                if(isset($grades[$us->userid])) {
+                    $grades[$us->userid] = max($grades[$us->userid], $final);
+                } else {
+                    $grades[$us->userid] = $final;
+                }
+            }
+        }
+        return $grades;
     }
 
     function format_cpf($cpf) {
