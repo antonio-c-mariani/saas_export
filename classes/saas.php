@@ -32,9 +32,8 @@ class saas {
             $this->config->$role = isset($roles[$r]) ? implode(',', $roles[$r]) : '';
         }
 
-        if(!isset($this->config->filter_userid_field)) {
-            $this->config->filter_userid_field = false;
-        }
+        $this->config->filter_userid_field = isset($this->config->filter_userid_field) ? $this->config->filter_userid_field : false;
+        $this->config->suspended_as_evaded = isset($this->config->suspended_as_evaded) ? $this->config->suspended_as_evaded : false;
     }
 
     function get_config($name) {
@@ -455,9 +454,7 @@ class saas {
                   JOIN {saas_map_course} cm ON (cm.oferta_disciplina_id = od.id)
                   JOIN {course} c ON (c.id = cm.courseid)
                   JOIN {enrol} e ON (e.courseid = c.id AND e.status = :enable)
-                  JOIN {user_enrolments} ue
-                    ON (ue.enrolid = e.id AND
-                        ue.status = :active)
+                  JOIN {user_enrolments} ue ON (ue.enrolid = e.id AND ue.status = :active)
                   JOIN {context} ctx ON (ctx.instanceid = c.id AND ctx.contextlevel = :contextcourse)
                   JOIN {role_assignments} ra
                     ON (ra.contextid = ctx.id AND
@@ -494,28 +491,35 @@ class saas {
     function get_sql_users_by_oferta_disciplina($id_oferta_disciplina=0, $only_count=false) {
         global $DB;
 
-        $params = array('active'=>ENROL_USER_ACTIVE, 'contextlevel'=>CONTEXT_COURSE, 'enable'=>ENROL_INSTANCE_ENABLED);
+        $params = array('contextlevel'=>CONTEXT_COURSE, 'enable'=>ENROL_INSTANCE_ENABLED);
+        $group_by = 'GROUP BY od_id, scr.role';
+
+        if($this->get_config('suspended_as_evaded')) {
+            $user_enrol_condition = "AND (ue.status = :active OR scr.role = 'student')";
+        } else {
+            $user_enrol_condition = 'AND ue.status = :active';
+        }
+        $params['active'] = ENROL_USER_ACTIVE;
 
         $join_user_info_data = '';
         if($only_count) {
-            $group_by = 'GROUP BY od_id, scr.role';
-            $field = 'COUNT(DISTINCT ra.userid) AS count';
-            $distinct = '';
+            $fields = 'COUNT(DISTINCT ra.userid) AS count';
         } else {
-            $group_by = '';
             $userid_field = $this->get_config('userid_field');
             if($userid_field == 'username' || $userid_field == 'idnumber') {
-                $field = "ra.userid, u.{$userid_field} AS userfield";
+                $fields = "ra.userid, u.{$userid_field} AS userfield";
+                $group_by .= ', ra.userid, u.' . $userid_field;
             } else {
                 if($fieldid = $DB->get_field('user_info_field', 'id', array('shortname'=>$userid_field))) {
                     $join_user_info_data = "JOIN {user_info_data} udt ON (udt.fieldid = :fieldid AND udt.userid = u.id AND udt.data != '')";
                     $params['fieldid'] = $fieldid;
-                    $field = "ra.userid, udt.data AS userfield";
+                    $fields = "ra.userid, udt.data AS userfield";
+                    $group_by .= ', ra.userid, udt.data';
                 } else {
                     print_error('userid_field_unknown', 'report_saas_export', '', $userid_field);
                 }
             }
-            $distinct = 'DISTINCT';
+            $fields .= ', MAX(ue.status) as suspended';
         }
 
         $condition = '';
@@ -523,13 +527,13 @@ class saas {
             $condition = "AND od.id = {$id_oferta_disciplina}";
         }
 
-        $sql = "SELECT {$distinct} od.id AS od_id, scr.role, {$field}
+        $sql = "SELECT od.id AS od_id, scr.role, {$fields}
                   FROM {saas_ofertas_cursos} oc
                   JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1)
                   JOIN {saas_map_course} cm ON (cm.oferta_disciplina_id = od.id)
                   JOIN {course} c ON (c.id = cm.courseid)
                   JOIN {enrol} e ON (e.courseid = c.id AND e.status = :enable)
-                  JOIN {user_enrolments} ue ON (ue.enrolid = e.id AND ue.status = :active)
+                  JOIN {user_enrolments} ue ON (ue.enrolid = e.id)
                   JOIN {context} ctx ON (ctx.instanceid = c.id AND ctx.contextlevel = :contextlevel)
                   JOIN {role_assignments} ra
                     ON (ra.contextid = ctx.id AND
@@ -540,6 +544,7 @@ class saas {
                   {$join_user_info_data}
                  WHERE oc.enable = 1
                    {$condition}
+                   {$user_enrol_condition}
               {$group_by}
               ORDER BY od_id, scr.role";
 
@@ -563,7 +568,11 @@ class saas {
         }
         foreach($rs AS $rec) {
             $user = $this->get_user($rec->role, $rec->userid, $rec->userfield);
-            $data[$rec->role][] = array((count($data[$rec->role])+1) . '.', $user->userfield, $user->name, $user->email, $user->cpf);
+            $row = array((count($data[$rec->role])+1) . '.', $user->userfield, $user->name, $user->email, $user->cpf);
+            if($rec->role == 'student') {
+                $row[] = $rec->suspended == 1 ? html_writer::tag('span', get_string('yes'), array('class'=>'saas_export_warning')) : get_string('no');
+            }
+            $data[$rec->role][] = $row;
         }
 
         foreach(self::$role_names_disciplinas AS $role) {
@@ -573,6 +582,9 @@ class saas {
 
                 $table = new html_table();
                 $table->head = array('', get_string('username', 'report_saas_export'), get_string('name'), get_string('email'), get_string('cpf', 'report_saas_export'));
+                if($role == 'student') {
+                    $table->head[] = get_string('suspended', 'report_saas_export');
+                }
                 $table->data = $data[$role];
                 print html_writer::table($table);
                 print $OUTPUT->box_end();
@@ -589,7 +601,7 @@ class saas {
 
         $user = new stdClass();
         $user->email = $dbuser->email;
-        $user->userfield = $this->config->filter_userid_field ? $this->format_cpf($userfield) : $userfield;
+        $user->userfield = $this->get_config('filter_userid_field') ? $this->format_cpf($userfield) : $userfield;
 
         $name_field = $this->get_config('name_field_' . $role);
         switch($name_field) {
@@ -796,14 +808,12 @@ class saas {
         $config_role = "roles_{$user_type}";
 
         //Verifica se o papel foi definido
-        if (isset($this->config->{$config_role})) {
-
-            $str_roleids = $this->config->{$config_role};
+        if ($str_roleids = $this->get_config($config_role)) {
             if(empty($str_roleids)) {
                 return false;
             }
 
-            $config_cpf = $this->config->{"cpf_field_{$user_type}"};
+            $config_cpf = $this->get_config('cpf_field_'.$user_type);
 
             $join_custom_fields = '';
             if($config_cpf == 'none') {

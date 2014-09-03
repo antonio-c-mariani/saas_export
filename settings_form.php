@@ -88,7 +88,7 @@ class saas_export_settings_form extends moodleform {
         $mform->setDefault('userid_field', 'fullname');
         $mform->addHelpButton('userid_field', 'userid_field', 'report_saas_export');
 
-        $mform->addElement('checkbox', 'filter_userid_field', get_string('filter_userid_field','report_saas_export'));
+        $mform->addElement('checkbox', 'filter_userid_field', get_string('filter_userid_field','report_saas_export'), null, $attributes);
         $mform->addHelpButton('filter_userid_field', 'filter_userid_field', 'report_saas_export');
 
         $name_options = array('firstname'         => get_string('firstname'),
@@ -163,6 +163,9 @@ class saas_export_settings_form extends moodleform {
         $select_student->setMultiple(true);
         $select_student->setSize(3);
         $mform->addHelpButton('roles_student', 'roles_student', 'report_saas_export');
+
+        $mform->addElement('checkbox', 'suspended_as_evaded', get_string('suspended_as_evaded','report_saas_export'), null, $attributes);
+        $mform->addHelpButton('suspended_as_evaded', 'suspended_as_evaded', 'report_saas_export');
 
         $select_tutor_polo =& $mform->addElement('select', 'roles_tutor_polo', get_string('roles_tutor_polo', 'report_saas_export'), $other_roles_menu, $attributes);
         $select_tutor_polo->setMultiple(true);
