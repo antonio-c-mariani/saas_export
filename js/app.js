@@ -45,11 +45,11 @@ $(document).ready(function(){
     $('.moodle_map_bt').click(function(saas) {
 
         //Mostra a modal
-        jQuery.noConflict();
         $('#cursos_moodle_modal').modal('show');
 
         //Adiciona o nome da oferta de disciplina que está sendo mapeada na modal.
-        $('<h4> Oferta: ' +saas.target.getAttribute('oferta')+ '</h4>').insertAfter('.modal_cursos_moodle_title');
+        $('<h4> Oferta de Disciplina: ' +saas.target.getAttribute('od_nome')+ '</h4>').insertAfter('.modal_cursos_moodle_title');
+        $('<h4> Oferta de Curso: ' +saas.target.getAttribute('oc_nome')+ '</h4>').insertAfter('.modal_cursos_moodle_title');
 
         //Define inicialmente as categorias que estão abertas
         $('.tree li:has(ul)').addClass('parent_li');
@@ -74,23 +74,17 @@ $(document).ready(function(){
             var uid_saas = saas.target.getAttribute('id');
             var id_moodle = moodle.target.getAttribute('id');
 
-            if (!uid_saas) {
-                uid_saas = -1;
+            if (uid_saas && id_moodle) {
+                $.post("save_mapping.php",
+                    {
+                      uid:uid_saas,
+                      id:id_moodle
+                    },
+                    function(data,status){
+                        window.location.reload();
+                    }
+                );
             }
-            
-            if (!id_moodle) {
-                id_moodle = -1;
-            }
-
-            $.post("save_mapping.php",
-                {
-                  uid:uid_saas,
-                  id:id_moodle
-                },
-                function(data,status){
-                    window.location.reload();
-                }
-            );
         });
     });
 

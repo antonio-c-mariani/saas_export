@@ -67,31 +67,30 @@
             echo html_writer::end_tag('td');
 
         //Modal desta oferta.
+            echo html_writer::start_tag('div', array('class'=>'modal fade bs-example-modal-lg', 'id'=>$oferta_de_curso->uid,
+                                        'tabindex'=>'-1', 'role'=>'dialog', 'aria-labelledby'=>'myModalLabel', 'aria-hidden'=>'true'));
+                echo html_writer::start_tag('div', array('class'=>'modal-dialog modal-lg'));
+                    echo html_writer::start_tag('div', array('class'=>'modal-content'));
+                        
+                        echo html_writer::start_tag('div', array('class'=>'modal-header'));
+                            echo html_writer::start_tag('button', array('class'=>'saas-bt-close close', 'data-dismiss'=>'modal'));
+                              echo '<span aria-hidden="true">&times;</span><span class="sr-only">Close</span>';
+                            echo html_writer::end_tag('button');
+                            echo html_writer::tag('h2', 'Ofertas de Curso: '. $oferta_de_curso->nome, array('class'=>'modal_saas_title'));
+                        echo html_writer::end_tag('div');
 
-            echo '<div class="modal fade bs-example-modal-lg" id="'.$oferta_de_curso->uid.'" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-                    <div class="modal-dialog modal-lg">
-                      <div class="modal-content">
+                        echo html_writer::start_tag('div', array('class'=>'modal-body'));
+                            show_saas_offers($oferta_de_curso->uid, true);
+                        echo html_writer::end_tag('div');
+                    
+                        echo html_writer::start_tag('div', array('class'=>'modal-footer'));
+                            echo html_writer::start_tag('button', 'Fechar', array('class'=>'btn btn-default saas-bt-close', 'data-dismiss'=>'modal'));
+                        echo html_writer::end_tag('div');
 
-                        <div class="modal-header">
-                          <button type="button" class="saas-bt-close close" data-dismiss="modal">
-                              <span aria-hidden="true">&times;</span><span class="sr-only">Close</span>
-                          </button>
-                          <h2 class="modal_saas_ofertas_disciplina_title">Ofertas de Curso: ' .$oferta_de_curso->nome. '</h2>
-                        </div>
-
-                        <div class="modal-body">';
-
-                          show_saas_offers($oferta_de_curso->uid, true);
-
-                  echo '</div>
-
-                        <div class="modal-footer">
-                          <button type="button" class="btn btn-default saas-bt-close" data-dismiss="modal">Fechar</button>
-                        </div>
-
-                      </div>
-                    </div>
-                  </div>';
+                    echo html_writer::end_tag('div');
+                echo html_writer::end_tag('div');
+            echo html_writer::end_tag('div');
+        
         echo html_writer::end_tag('tr');
     }
 
@@ -125,6 +124,7 @@
       echo html_writer::end_tag('tr');
 
       foreach ($oferta_de_curso->ofertas_de_disciplina as $oferta_de_disciplina) {
+        $oc_nome = $oferta_de_curso->nome . ' (' . $oferta_de_curso->ano . '/' . $oferta_de_curso->periodo . ')';
         echo html_writer::start_tag('div');
           echo html_writer::start_tag('tr');
             $nome_formatado = $oferta_de_disciplina->nome .' ('. saas::format_date($oferta_de_disciplina->inicio, $oferta_de_disciplina->fim) . ')';
@@ -147,7 +147,7 @@
                     echo html_writer::start_tag('div');
                       echo html_writer::tag('button', 'Adicionar', array('type'=>'button', 'id'=>$oferta_de_disciplina->id,
                                             'class'=>'btn btn-default btn-xs moodle_map_bt',
-                                            'style'=>'margin-top:5px;', 'oferta'=>$nome_formatado));
+                                            'style'=>'margin-top:5px;', 'od_nome'=>$nome_formatado, 'oc_nome'=>$oc_nome));
                     echo html_writer::end_tag('div');
                   }
 
@@ -156,7 +156,7 @@
                     echo html_writer::tag('button', 'Adicionar', array('type'=>'button', 
                                           'id'=>$oferta_de_disciplina->id, 
                                           'class'=>'btn btn-default btn-xs moodle_map_bt', 
-                                          'oferta'=>$nome_formatado));
+                                          'od_nome'=>$nome_formatado, 'oc_nome'=>$oc_nome));
                   echo html_writer::end_tag('div');
                 }
               echo html_writer::end_tag('div');
