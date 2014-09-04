@@ -1,7 +1,7 @@
 
 
 - como serão as permissões para quem vai exportar
-   - talvez duas permissões distintas, para configurar e outra para mapear e exportar
+OK    - talvez duas permissões distintas, para configurar e outra para mapear e exportar
    - definir em nível global? tem como definir em outro contexto?
 
 - algumas ofertas de disciplinas (antigas) pode não ter data de início e fim
@@ -10,11 +10,11 @@
 
 - problemas de duplicação de dados (cadastradas manualmente ou via csv e depois via plugin)
 
-- usar sobrenome e idnumber como opção para cpf
+OK    - usar sobrenome e idnumber como opção para cpf
 
-- incluir cpf (custom fields) com opção de identificador de usuário
+OK    - incluir cpf (custom fields) com opção de identificador de usuário
 
-- incluir 0 (zeros) à esquerda no caso de cpf como identificador a usuário  (str_pad left)
+OK    - incluir 0 (zeros) à esquerda no caso de cpf como identificador a usuário  (str_pad left)
 
 
 -----------------------------------------------------------------------------------------
@@ -25,10 +25,10 @@ Resultado de conversa com equipe saas em 29/08
 
 - opção de configuração (check box) que mapeia "enrol suspended" para evadido
 
-- no caso de usuários "suspended", ignorar completamente
+OK    - no caso de usuários "suspended", ignorar completamente
 - no caso de enrol "suspended",  enviar estudante->of.disc somente se opção "enrol suspended para evadido" estiver marcada, com situação 'evadido'.
   Ignorar em caso contrário
-- não considerar o início e fim de um enrol
+OK    - não considerar o início e fim de um enrol
 
 - enviar nota final na ofer.disc (curso) junto com a assoc do estudante com oferta-disciplina
 

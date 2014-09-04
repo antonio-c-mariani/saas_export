@@ -27,7 +27,8 @@ require_once($CFG->dirroot . '/report/saas_export/polo_form.php');
 require_once($CFG->dirroot . '/report/saas_export/oferta_form.php');
 
 require_login();
-require_capability('report/saas_export:view', context_system::instance());
+$syscontext = context_system::instance();
+require_capability('report/saas_export:view', $syscontext);
 admin_externalpage_setup('report_saas_export', '', null, '', array('pagelayout'=>'report'));
 
 $baseurl = new moodle_url('/report/saas_export/index.php');
@@ -59,15 +60,22 @@ switch ($action) {
         $baseurl->param('action', 'settings');
         $mform = new saas_export_settings_form($baseurl);
 
-        if ($mform->is_cancelled()) {
-            redirect($baseurl);
-        } else if ($data = $mform->get_data()) {
-            saas::save_settings($data);
-            redirect($baseurl);
+        if(has_capability('report/saas_export:config', $syscontext)) {
+            if ($mform->is_cancelled()) {
+                redirect($baseurl);
+            } else if ($data = $mform->get_data()) {
+                saas::save_settings($data);
+                redirect($baseurl);
+            }
         }
 
         echo $OUTPUT->header();
         print_tabs(array($tabs), $action);
+
+        if(!has_capability('report/saas_export:config', $syscontext)) {
+            print $OUTPUT->heading(get_string('no_permission_to_config', 'report_saas_export'), '3');
+        }
+
         $mform->display();
         echo $OUTPUT->footer();
         break;
@@ -184,6 +192,9 @@ switch ($action) {
 
         if($saas_data_action == 'ofertas') {
             $saas->show_table_ofertas_curso_disciplinas(true);
+            if($odid = optional_param('odid', 0 , PARAM_INT)) {
+                $saas->show_users_oferta_disciplina($odid);
+            }
         } else {
             $polo_mapping_type = $saas->get_config('polo_mapping');
             switch ($polo_mapping_type) {
@@ -195,6 +206,11 @@ switch ($action) {
                     break;
                 default:
                     print $OUTPUT->heading('Mapeamento ainda não implementado: ' . $polo_mapping_type);
+            }
+            $ocid = optional_param('ocid', 0 , PARAM_INT);
+            $poloid = optional_param('poloid', 0 , PARAM_INT);
+            if($ocid && $poloid) {
+                $saas->show_users_oferta_curso_polo($ocid, $poloid);
             }
         }
 

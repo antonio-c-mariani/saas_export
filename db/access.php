@@ -31,5 +31,14 @@ $capabilities = array(
         'archetypes' => array(
             'manager' => CAP_ALLOW
         ),
+    ),
+
+    'report/saas_export:config' => array(
+        'riskbitmask' => RISK_CONFIG,
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'archetypes' => array(
+            'manager' => CAP_ALLOW
+        ),
     )
 );

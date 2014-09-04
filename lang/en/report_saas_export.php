@@ -11,6 +11,9 @@ $string['cidade'] = 'Cidade';
 $string['invalid_cidade'] = 'Nome de cidade inválido';
 $string['estado'] = 'UF';
 
+$string['no_permission_to_config'] = 'Você não tem permissão para configurar o relatório de exportação de dados para SAAS';
+$string['userid_field_unknown'] = 'Campo identificador de usuário inexistente: \'{$a}\'';
+
 $string['oferta_curso'] = 'Oferta de curso';
 $string['disciplina'] = 'Disciplina';
 $string['inicio'] = 'Início';
@@ -52,12 +55,23 @@ $string['no_polo'] = 'Não há no Moodle forma de agrupar estudantes por polo';
 $string['group_to_polo'] = 'São utilizados grupos nos cursos Moodle para agrupar estudantes por polo';
 $string['category_to_polo'] = 'Os polos são identificados por categorias no Moodle';
 $string['title_no_polo'] = 'A configuração atual indica que não há no Moodle forma de agrupar estudantes por polo';
+
+$string['group_to_polo_msg1'] = 'Estão listados abaixo todos os grupos existentes nos cursos Moodle que foram mapeados na aba \'Mapeamento de disciplinas\'.
+   Estes grupos podem, agora, ser mapeados para polos registrados no SAAS, sendo possível mapear mais de um grupo para o mesmo polo.
+   Os grupos não mapeados são ignorados pois considera-se que eles não correspondem a polos.';
+$string['group_to_polo_msg2'] = 'Os estudantes e tutores pertencentes aos grupos mapeados serão associados aos polos correspondentes no SAAS.
+   Por sua vez, os polos serão associados às ofertas de curso em função do mapeamento dos cursos Moodle para as ofertas de disciplinas (ver aba \'Mapeamento de disciplinas\')';
+
 //------------------------------------------------------------------
 
-$string['student'] = 'Aluno';
+$string['student'] = 'Estudante';
+$string['students'] = 'Estudantes';
 $string['teacher'] = 'Professor';
+$string['teachers'] = 'Professores';
 $string['tutor_inst'] = 'Tutor a distância';
+$string['tutor_insts'] = 'Tutores a distância';
 $string['tutor_polo'] = 'Tutor presencial (polo)';
+$string['tutor_polos'] = 'Tutores presenciais (polo)';
 $string['title'] = 'Exportação de dados para o SAAS';
 $string['success'] = 'Todos os dados foram enviados com sucesso.';
 $string['config'] = 'Configurações';
@@ -104,7 +118,8 @@ $string['roles_tutor_inst_help'] = 'Papeis com os quais tutores da instituição
 
 $string['profile_field_name'] = 'Nome:';
 $string['profile_field_name_help'] = 'Campo(s) do perfil do usuário que define o nome completo para este papel.';
-$string['saas_export:view'] = 'Exportar dados para o SAAS.';
+$string['saas_export:view'] = 'Exportar dados para o SAAS';
+$string['saas_export:config'] = 'Configurar exportação de dados para o SAAS';
 
 $string['ws_url'] = 'URL SAAS';
 $string['ws_url_help'] = 'URL do servidor do SAAS para onde os dados serão transferidos.';
@@ -115,8 +130,17 @@ $string['api_key_help'] = 'Chave de identificação da instituição definida no
 $string['course_name_default'] = 'Nome de cursos';
 $string['course_name_default_help'] = 'Campo do curso Moodle correspondente ao nome da oferta de disciplina.';
 
-$string['userid_field'] = 'Identificador de usuários';
+$string['username'] = 'Id. Usuário';
+$string['userid_field'] = 'Id. de usuários';
 $string['userid_field_help'] = 'Campo do perfil do usuário a ser usado como identificador único do usuário no SAAS.';
+$string['filter_userid_field'] = 'Aplicar filtro de CPF';
+$string['filter_userid_field_help'] = 'Aplicar filtro de limpeza e formatação de CFP sobre o campo \'Id. de usuários\', resultando em um número de 11 dígitos (com zeros a esquerda).';
+
+$string['lastcourseaccess'] = 'Último acesso à disciplina';
+$string['suspended'] = 'Suspenso';
+$string['suspended_as_evaded'] = 'Tratar como evasão as inscrições suspensas';
+$string['suspended_as_evaded_help'] = 'Considerar como evasão as inscrições em cursos Moodle que estão com o estado de suspensas. Caso esta opção não esteja marcada,
+    as inscrições suspensas são completamente ignoradas.';
 
 $string['cpf'] = 'CPF';
 $string['cpf_help'] = 'Campo do perfil do usuário que contém o CPF.';

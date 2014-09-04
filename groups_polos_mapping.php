@@ -3,6 +3,11 @@
 defined('MOODLE_INTERNAL') || die();
 
 print html_writer::start_tag('DIV', array('align'=>'center'));
+print $OUTPUT->heading(get_string('group_to_polo', 'report_saas_export'));
+print $OUTPUT->box_start('generalbox boxwidthwide');
+print html_writer::tag('P', get_string('group_to_polo_msg1', 'report_saas_export'), array('class'=>'justifiedalign'));
+print html_writer::tag('P', get_string('group_to_polo_msg2', 'report_saas_export'), array('class'=>'justifiedalign'));
+print $OUTPUT->box_end();
 
 if(isset($_POST['map_polos']) && isset($_POST['save'])) {
     $mapped_groups = $DB->get_records('saas_map_groups_polos', null, 'groupname', 'groupname, id, polo_id');
