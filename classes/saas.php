@@ -254,13 +254,30 @@ class saas {
         print html_writer::end_tag('DIV');
     }
 
-    function show_overview_groups_polos() {
-        global $DB;
+    function show_overview_categories_polos($ocid, $poloid) {
+        // todo: faltam as subcategorias
+        $sql = "SELECT DISTINCT oc.id AS oc_id, sp.*
+                  FROM {saas_ofertas_cursos} oc
+                  JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1)
+                  JOIN {saas_map_course} cm ON (cm.oferta_disciplina_id = od.id)
+                  JOIN {course} c ON (c.id = cm.courseid)
 
-        $ofertas_cursos = $DB->get_records('saas_ofertas_cursos', array('enable'=>1), 'nome, ano, periodo');
-        foreach($ofertas_cursos AS $id=>$oc) {
-            $oc->polos = array();
+                  JOIN {course_categories} cc ON (cc.id = c.category)
+                  -- JOIN {course_categories} cc ON (cc.id = c.category)
+                  JOIN {saas_map_catcourses_polos} smcp ON (smcp.type = 'category' AND smcp.instanceid = cc.id)
+
+                  JOIN {saas_polos} sp ON (sp.id = smcp.polo_id AND sp.enable = 1)
+                 WHERE oc.enable = 1
+              ORDER BY oc.id, sp.nome";
+        $this->show_table_overview_polos($sql);
+
+        if($ocid && $poloid) {
+            list($sql, $params) = $this->get_sql_users_by_oferta_curso_polo_categories($ocid, $poloid, false);
+            $this->show_users_oferta_curso_polo($ocid, $poloid, $sql, $params);
         }
+    }
+
+    function show_overview_groups_polos($ocid, $poloid) {
         $sql = "SELECT DISTINCT oc.id AS oc_id, sp.*
                   FROM {saas_ofertas_cursos} oc
                   JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1)
@@ -271,6 +288,21 @@ class saas {
                   JOIN {saas_polos} sp ON (sp.id = spm.polo_id AND sp.enable = 1)
                  WHERE oc.enable = 1
               ORDER BY oc.id, sp.nome";
+        $this->show_table_overview_polos($sql);
+
+        if($ocid && $poloid) {
+            list($sql, $params) = $this->get_sql_users_by_oferta_curso_polo_groups($ocid, $poloid, false);
+            $this->show_users_oferta_curso_polo($ocid, $poloid, $sql, $params);
+        }
+    }
+
+    function show_table_overview_polos($sql) {
+        global $DB;
+
+        $ofertas_cursos = $DB->get_records('saas_ofertas_cursos', array('enable'=>1), 'nome, ano, periodo');
+        foreach($ofertas_cursos AS $id=>$oc) {
+            $oc->polos = array();
+        }
         foreach($DB->get_recordset_sql($sql) AS $pl) {
             $ofertas_cursos[$pl->oc_id]->polos[] = $pl;
         }
@@ -356,7 +388,7 @@ class saas {
         print html_writer::end_tag('DIV');
     }
 
-    function show_users_oferta_curso_polo($ocid, $poloid) {
+    function show_users_oferta_curso_polo($ocid, $poloid, $sql, $params) {
         global $DB, $OUTPUT;
 
         $oc = $DB->get_record('saas_ofertas_cursos', array('id'=>$ocid));
@@ -365,7 +397,6 @@ class saas {
 
         print html_writer::start_tag('DIV', array('align'=>'center'));
 
-        list($sql, $params) =  $this->get_sql_users_by_oferta_curso_polo($ocid, $poloid, false);
         $rs = $DB->get_recordset_sql($sql, $params);
         $data = array();
         foreach(self::$role_names_polos AS $role) {
@@ -414,7 +445,72 @@ class saas {
         return $ofertas;
     }
 
-    function get_sql_users_by_oferta_curso_polo($ocid=0, $poloid=0, $only_count=false) {
+    function get_sql_users_by_oferta_curso_polo_categories($ocid=0, $poloid=0, $only_count=false) {
+        global $DB;
+
+        $condition = '';
+        $params = array('contextcourse'=>CONTEXT_COURSE, 'enable'=>ENROL_INSTANCE_ENABLED, 'active'=>ENROL_USER_ACTIVE);
+        if($ocid) {
+            $condition .= ' AND oc.id = :ocid';
+            $params['ocid'] = $ocid;
+        }
+        if($poloid) {
+            $condition .= ' AND sp.id = :poloid';
+            $params['poloid'] = $poloid;
+        }
+
+        $join_user_info_data = '';
+        if($only_count) {
+            $group_by = 'GROUP BY oc.id, sp.id, scr.role';
+            $field = 'COUNT(DISTINCT ra.userid) AS count';
+            $distinct = '';
+        } else {
+            $group_by = '';
+            $userid_field = $this->get_config('userid_field');
+            if($userid_field == 'username' || $userid_field == 'idnumber') {
+                $field = "ra.userid, u.{$userid_field} AS userfield";
+            } else {
+                if($fieldid = $DB->get_field('user_info_field', 'id', array('shortname'=>$userid_field))) {
+                    $join_user_info_data = "JOIN {user_info_data} udt ON (udt.fieldid = :fieldid AND udt.userid = u.id AND udt.data != '')";
+                    $params['fieldid'] = $fieldid;
+                    $field = "ra.userid, udt.data AS userfield";
+                } else {
+                    print_error('userid_field_unknown', 'report_saas_export', '', $userid_field);
+                }
+            }
+            $distinct = 'DISTINCT';
+        }
+
+        $sql = "SELECT {$distinct} oc.id AS oc_id, sp.id AS p_id, scr.role, $field
+                  FROM {saas_ofertas_cursos} oc
+                  JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1)
+                  JOIN {saas_map_course} cm ON (cm.oferta_disciplina_id = od.id)
+                  JOIN {course} c ON (c.id = cm.courseid)
+                  JOIN {enrol} e ON (e.courseid = c.id AND e.status = :enable)
+                  JOIN {user_enrolments} ue ON (ue.enrolid = e.id AND ue.status = :active)
+                  JOIN {context} ctx ON (ctx.instanceid = c.id AND ctx.contextlevel = :contextcourse)
+                  JOIN {role_assignments} ra
+                    ON (ra.contextid = ctx.id AND
+                        ra.userid = ue.userid AND
+                        ((ra.component = '' AND e.enrol = 'manual') OR (ra.component = CONCAT('enrol_',e.enrol) AND ra.itemid = ue.id)))
+                  JOIN {saas_config_roles} scr ON (scr.roleid = ra.roleid AND scr.role IN ('student', 'tutor_polo'))
+                  JOIN {user} u ON (u.id = ue.userid AND u.deleted = 0 AND u.suspended = 0)
+                  {$join_user_info_data}
+
+                  JOIN {course_categories} cc ON (cc.id = c.category)
+                  -- JOIN {course_categories} cc ON (cc.id = c.category)
+                  JOIN {saas_map_catcourses_polos} smcp ON (smcp.type = 'category' AND smcp.instanceid = cc.id)
+
+                  JOIN {saas_map_groups_polos} spm ON (spm.polo_id = smcp.polo_id)
+                  JOIN {saas_polos} sp ON (sp.id = spm.polo_id AND sp.enable = 1)
+                 WHERE oc.enable = 1
+                   {$condition}
+              {$group_by}
+              ORDER BY oc.id, sp.id, scr.role";
+        return array($sql, $params);
+    }
+
+    function get_sql_users_by_oferta_curso_polo_groups($ocid=0, $poloid=0, $only_count=false) {
         global $DB;
 
         $condition = '';
@@ -479,10 +575,22 @@ class saas {
     function get_polos_count() {
         global $DB;
 
-        list($sql, $params) = $this->get_sql_users_by_oferta_curso_polo(0, 0, true);
+        $polo_counts = array();
+
+        $polo_mapping_type = $this->get_config('polo_mapping');
+        switch ($polo_mapping_type) {
+            case 'group_to_polo':
+                list($sql, $params) = $this->get_sql_users_by_oferta_curso_polo_groups(0, 0, true);
+                break;
+            case 'category_to_polo':
+                list($sql, $params) = $this->get_sql_users_by_oferta_curso_polo_categories(0, 0, true);
+                break;
+            default:
+                return $polo_counts;
+        }
+
         $rs = $DB->get_recordset_sql($sql, $params);
 
-        $polo_counts = array();
         foreach($rs AS $rec) {
             $polo_counts[$rec->oc_id][$rec->p_id][$rec->role] = $rec->count;
         }

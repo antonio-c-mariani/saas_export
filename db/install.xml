@@ -65,7 +65,7 @@
         <KEY NAME="offer_dis_uid_unique" TYPE="unique" FIELDS="uid" COMMENT="uid must be unique" PREVIOUS="primary"/>
       </KEYS>
     </TABLE>
-    <TABLE NAME="saas_polos" COMMENT="Table that will save only the moodle groups that are pólos" PREVIOUS="saas_ofertas_disciplinas" NEXT="saas_map_categories_polos">
+    <TABLE NAME="saas_polos" COMMENT="Table that will save only the moodle groups that are pólos" PREVIOUS="saas_ofertas_disciplinas" NEXT="saas_map_catcourses_polos">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" NEXT="uid"/>
         <FIELD NAME="uid" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="id" NEXT="nome"/>
@@ -79,14 +79,16 @@
         <KEY NAME="saas_polos_uid_unique" TYPE="unique" FIELDS="uid" COMMENT="uid must be unique" PREVIOUS="primary"/>
       </KEYS>
     </TABLE>
-    <TABLE NAME="saas_map_categories_polos" COMMENT="" PREVIOUS="saas_polos">
+    <TABLE NAME="saas_map_catcourses_polos" COMMENT="" PREVIOUS="saas_polos">
       <FIELDS>
-        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" NEXT="categoryid"/>
-        <FIELD NAME="categoryid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" PREVIOUS="id" NEXT="polo_id"/>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" NEXT="type"/>
+        <FIELD NAME="type" TYPE="char" LENGTH="10" NOTNULL="true" SEQUENCE="false" PREVIOUS="id" NEXT="instanceid"/>
+        <FIELD NAME="instanceid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" PREVIOUS="type" NEXT="polo_id"/>
         <FIELD NAME="polo_id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" PREVIOUS="categoryid"/>
       </FIELDS>
       <KEYS>
-        <KEY NAME="primary" TYPE="primary" FIELDS="id" NEXT=""/>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id" NEXT="saas_map_inst_polo_unique"/>
+        <KEY NAME="saas_map_inst_polo_unique" TYPE="unique" FIELDS="type, instanceid, polo_id" COMMENT="must be unique" PREVIOUS="primary"/>
       </KEYS>
     </TABLE>
   </TABLES>

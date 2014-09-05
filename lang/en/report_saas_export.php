@@ -12,6 +12,7 @@ $string['invalid_cidade'] = 'Nome de cidade inválido';
 $string['estado'] = 'UF';
 
 $string['no_permission_to_config'] = 'Você não tem permissão para configurar o relatório de exportação de dados para SAAS';
+$string['no_permission_to_export'] = 'Você não tem permissão para exportar de dados para SAAS';
 $string['userid_field_unknown'] = 'Campo identificador de usuário inexistente: \'{$a}\'';
 
 $string['oferta_curso'] = 'Oferta de curso';
@@ -122,14 +123,15 @@ $string['roles_tutor_inst_help'] = 'Papeis com os quais tutores da instituição
 
 $string['profile_field_name'] = 'Nome:';
 $string['profile_field_name_help'] = 'Campo(s) do perfil do usuário que define o nome completo para este papel.';
-$string['saas_export:view'] = 'Exportar dados para o SAAS';
+$string['saas_export:view'] = 'Visualizar configuração, mapeamento e exportações para o SAAS';
 $string['saas_export:config'] = 'Configurar exportação de dados para o SAAS';
+$string['saas_export:export'] = 'Exportar dados para o SAAS';
 
 $string['ws_url'] = 'URL SAAS';
 $string['ws_url_help'] = 'URL do servidor do SAAS para onde os dados serão transferidos.';
 
 $string['api_key'] = 'Chave da Instituição';
-$string['api_key_help'] = 'Chave de identificação da instituição definida no SAAS. Entre em contato com a administração do SAAS para solicitar a chave.'; 
+$string['api_key_help'] = 'Chave de identificação da instituição definida no SAAS. Entre em contato com a administração do SAAS para solicitar a chave.';
 
 $string['course_name_default'] = 'Nome de cursos';
 $string['course_name_default_help'] = 'Campo do curso Moodle correspondente ao nome da oferta de disciplina.';

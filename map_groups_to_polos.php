@@ -2,6 +2,9 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+$syscontext = context_system::instance();
+$may_export = has_capability('report/saas_export:export', $syscontext);
+
 print html_writer::start_tag('DIV', array('align'=>'center'));
 print $OUTPUT->heading(get_string('group_to_polo', 'report_saas_export'));
 print $OUTPUT->box_start('generalbox boxwidthwide');
@@ -9,7 +12,7 @@ print html_writer::tag('P', get_string('group_to_polo_msg1', 'report_saas_export
 print html_writer::tag('P', get_string('group_to_polo_msg2', 'report_saas_export'), array('class'=>'justifiedalign'));
 print $OUTPUT->box_end();
 
-if(isset($_POST['map_polos']) && isset($_POST['save'])) {
+if(isset($_POST['map_polos']) && isset($_POST['save']) && $may_export) {
     $mapped_groups = $DB->get_records('saas_map_groups_polos', null, 'groupname', 'groupname, id, polo_id');
     $saved = false;
     foreach($_POST['map_polos'] AS $groupname=>$poloid) {
@@ -58,7 +61,8 @@ $data = array();
 foreach($map AS $groupname=>$m) {
     $poloid = empty($m->polo_id) ? 0 : $m->polo_id;
     $encoded_groupname = urlencode($groupname);
-    $select = html_writer::select($polos, "map_polos[{$encoded_groupname}]", $poloid);
+    $polo_name = empty($m->saas_polo_nome) ? '' : $m->saas_polo_nome;
+    $select = $may_export ? html_writer::select($polos, "map_polos[{$encoded_groupname}]", $poloid) : $polo_name;
     $data[] = array($m->groupname, $select);
 }
 
@@ -70,7 +74,9 @@ $table->head  = array(get_string('moodle_group', 'report_saas_export'), get_stri
 $table->data = $data;
 echo html_writer::table($table);
 
-echo html_writer::empty_tag('input', array('type'=>'submit', 'name'=>'save', 'value'=>s(get_string('save', 'admin'))));
+if($may_export) {
+    echo html_writer::empty_tag('input', array('type'=>'submit', 'name'=>'save', 'value'=>s(get_string('save', 'admin'))));
+}
 echo html_writer::end_tag('form');
 
 print html_writer::end_tag('DIV');
