@@ -2,24 +2,32 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-print html_writer::start_tag('DIV', array('align'=>'center'));
+$syscontext = context_system::instance();
+$may_export = has_capability('report/saas_export:export', $syscontext);
 
-if(isset($_POST['map_polos']) && isset($_POST['save'])) {
-    $mapped = $DB->get_records('saas_map_categories_polos', null, null, 'polo_id, id, categoryid');
+print html_writer::start_tag('DIV', array('align'=>'center'));
+print $OUTPUT->heading(get_string('category_to_polo', 'report_saas_export'));
+print $OUTPUT->box_start('generalbox boxwidthwide');
+print html_writer::tag('P', get_string('category_to_polo_msg1', 'report_saas_export'), array('class'=>'justifiedalign'));
+print html_writer::tag('P', get_string('category_to_polo_msg2', 'report_saas_export'), array('class'=>'justifiedalign'));
+print $OUTPUT->box_end();
+
+if(isset($_POST['map_polos']) && isset($_POST['save']) && $may_export) {
+    $mapped = $DB->get_records('saas_map_catcourses_polos', array('type'=>'category'), null, 'polo_id, id, instanceid');
     $saved = false;
     foreach($_POST['map_polos'] AS $poloid=>$categoryid) {
         if(isset($mapped[$poloid]) && empty($categoryid)) {
-            $DB->delete_records('saas_map_categories_polos', array('id'=>$mapped[$poloid]->id));
+            $DB->delete_records('saas_map_catcourses_polos', array('id'=>$mapped[$poloid]->id));
             $saved = true;
         }
     }
     foreach($_POST['map_polos'] AS $poloid=>$categoryid) {
         if(isset($mapped[$poloid]) && !empty($categoryid)) {
-            if($categoryid != $mapped[$poloid]->categoryid) {
+            if($categoryid != $mapped[$poloid]->instanceid) {
                 $obj = new stdClass();
                 $obj->id = $mapped[$poloid]->id;
-                $obj->categoryid = $categoryid;
-                $DB->update_record('saas_map_categories_polos', $obj);
+                $obj->instanceid = $categoryid;
+                $DB->update_record('saas_map_catcourses_polos', $obj);
                 $saved = true;
             }
         }
@@ -27,9 +35,10 @@ if(isset($_POST['map_polos']) && isset($_POST['save'])) {
     foreach($_POST['map_polos'] AS $poloid=>$categoryid) {
         if(!isset($mapped[$poloid]) && !empty($categoryid)) {
             $obj = new stdClass();
-            $obj->categoryid = $categoryid;
+            $obj->type = 'category';
+            $obj->instanceid = $categoryid;
             $obj->polo_id = $poloid;
-            $DB->insert_record('saas_map_categories_polos', $obj);
+            $DB->insert_record('saas_map_catcourses_polos', $obj);
             $saved = true;
         }
     }
@@ -39,10 +48,10 @@ if(isset($_POST['map_polos']) && isset($_POST['save'])) {
 
 $categories = $DB->get_records_menu('course_categories', null, 'name', 'id, name');
 
-$sql = "SELECT sp.id AS sp_id, sp.nome As nome_polo, cpm.categoryid, cc.name as nome_categoria
+$sql = "SELECT sp.id AS sp_id, sp.nome As nome_polo, cpm.instanceid AS categoryid, cc.name as nome_categoria
           FROM {saas_polos} sp
-     LEFT JOIN {saas_map_categories_polos} cpm ON (cpm.polo_id = sp.id)
-     LEFT JOIN {course_categories} cc ON (cc.id = cpm.categoryid)
+     LEFT JOIN {saas_map_catcourses_polos} cpm ON (cpm.polo_id = sp.id AND cpm.type = 'category')
+     LEFT JOIN {course_categories} cc ON (cc.id = cpm.instanceid)
          WHERE sp.enable = 1
       ORDER BY sp.nome";
 $map = $DB->get_records_sql($sql);

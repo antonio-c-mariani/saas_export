@@ -5,3 +5,5 @@
 .rightalign {text-align: right;}
 .centeralign {text-align: center;}
 .justifiedalign {text-align: justify;}
+
+.centerimg {display: block; margin-left: 20%; margin-right: auto;}

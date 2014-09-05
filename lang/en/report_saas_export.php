@@ -12,6 +12,7 @@ $string['invalid_cidade'] = 'Nome de cidade inválido';
 $string['estado'] = 'UF';
 
 $string['no_permission_to_config'] = 'Você não tem permissão para configurar o relatório de exportação de dados para SAAS';
+$string['no_permission_to_export'] = 'Você não tem permissão para exportar de dados para SAAS';
 $string['userid_field_unknown'] = 'Campo identificador de usuário inexistente: \'{$a}\'';
 
 $string['oferta_curso'] = 'Oferta de curso';
@@ -62,6 +63,10 @@ $string['group_to_polo_msg1'] = 'Estão listados abaixo todos os grupos existent
 $string['group_to_polo_msg2'] = 'Os estudantes e tutores pertencentes aos grupos mapeados serão associados aos polos correspondentes no SAAS.
    Por sua vez, os polos serão associados às ofertas de curso em função do mapeamento dos cursos Moodle para as ofertas de disciplinas (ver aba \'Mapeamento de disciplinas\')';
 
+$string['category_to_polo_msg1'] = 'Estão listados abaixo os polos registrados no SAAS. A cada polo podem ser associadas uma ou mais categorias do Moodle,
+   fato que indica que nos cursos Moodle que estejam nestas categorias (ou em suas sub-categorias) estão inscritos apenas estudantes e tutores desse polo.';
+$string['category_to_polo_msg2'] = 'Os estudantes e tutores inscritos em cursos Moodle que tenham sido mapeados na aba \'Mapeamento de disciplinas\' serão associados aos polos do SAAS
+   correspondentes à categoria na qual esteja esse curso Moodle, na oferta de curso do SAAS identificada no mapeamento realizado na aba supra citada.';
 //------------------------------------------------------------------
 
 $string['student'] = 'Estudante';
@@ -118,14 +123,15 @@ $string['roles_tutor_inst_help'] = 'Papeis com os quais tutores da instituição
 
 $string['profile_field_name'] = 'Nome:';
 $string['profile_field_name_help'] = 'Campo(s) do perfil do usuário que define o nome completo para este papel.';
-$string['saas_export:view'] = 'Exportar dados para o SAAS';
+$string['saas_export:view'] = 'Visualizar configuração, mapeamento e exportações para o SAAS';
 $string['saas_export:config'] = 'Configurar exportação de dados para o SAAS';
+$string['saas_export:export'] = 'Exportar dados para o SAAS';
 
 $string['ws_url'] = 'URL SAAS';
 $string['ws_url_help'] = 'URL do servidor do SAAS para onde os dados serão transferidos.';
 
 $string['api_key'] = 'Chave da Instituição';
-$string['api_key_help'] = 'Chave de identificação da instituição definida no SAAS. Entre em contato com a administração do SAAS para solicitar a chave.'; 
+$string['api_key_help'] = 'Chave de identificação da instituição definida no SAAS. Entre em contato com a administração do SAAS para solicitar a chave.';
 
 $string['course_name_default'] = 'Nome de cursos';
 $string['course_name_default_help'] = 'Campo do curso Moodle correspondente ao nome da oferta de disciplina.';
@@ -163,16 +169,6 @@ $string['no_mapped_courses_offer'] = 'Não há ofertas de cursos mapeadas mapead
 $string['ws_error'] = 'Houve falha na comunicação com o SAAS: \'{$a}\'<BR>Verifique se a chave da instituição e a url do webservice foram cadastradas corretamente.';
 $string['update_data_error'] = 'Erro ao atualizar base de dados {$a}';
 $string['get_data_error'] = 'Erro ao acessar base de dados {$a}';
-
-$string['saas_presentation'] = 'Este módulo possibilita a exportação de dados do Moodle para o SAAS
-    (Sistema de Acompanhamento e Avaliação dos Cursos da Rede e-Tec Brasil).
-    Os dados exportados incluem:
-    <UL>
-    <LI>Identificador, nome, email e CPF de professores, estudantes e tutores vinculados às ofertas de disciplinas;</LI>
-    <LI>Relacionamento de professores, estudantes e tutores a distância com ofertas as de disciplinas;</LI>
-    <LI>Relacionamento de estudantes e tutores presenciais com os polos.</LI>
-    </UL>
-    Realize a sequência de passos abaixo. Os três primeiros permitem definir quais dados serão exportados, e o quarto passo é a efetivação da exportação.';
 
 $string['mark_groups'] = 'Marque os grupos abaixo que representam polos da Instituição';
 $string['mark_new_groups'] = 'Marque os novos grupos abaixo que representam polos da Instituição';
