@@ -89,12 +89,20 @@ $(document).ready(function(){
     });
 
     $('.saas_map_bt').click(function(saas) {
-        //Mostra a modal
-        var modal_id = saas.target.getAttribute('id');
-        $('.' + modal_id).modal('show');
-        alert();
-        //Adiciona o nome da oferta de disciplina que está sendo mapeada na modal.
-        //$('<h4> Oferta: ' +saas.target.getAttribute('oferta')+ '</h4>').insertAfter('.modal_cursos_moodle_title');
+        var oc_uid = saas.target.getAttribute('id_da_modal');
+        $('#' + oc_uid).modal('show');
+        
+        $('.saas-bt-save').click(function(moodle) {
+            var lista_de_ofertas = $('#'+oc_uid + ' .lista_de_ofertas');
+            var checkbox = lista_de_ofertas.children('.od_checkbox');
+            
+            $.each(checkbox, function(key, chk) {
+                if(chk.checked) {
+                    //Finish this, create a <tr>.
+                    //$('<h4> Oferta de Curso </h4>').insertAfter('.tr' + oc_uid);
+                }
+            });
+        });
     });
 
 });

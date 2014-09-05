@@ -141,13 +141,20 @@ function show_categories($catids, $categories, $first_category = false){
 function show_saas_offers($oferta_de_curso_uid, $repeat_allowed = true) {
   global $DB;
 
+  $modal = "";
+  
   $ofertas_de_disciplinas = $DB->get_records('saas_ofertas_disciplinas', array('oferta_curso_uid'=>$oferta_de_curso_uid));
 
-  echo html_writer::start_tag('ul', array('class'=>'saas_offers_list', 'id'=>$oferta_de_curso_uid));
-    foreach($ofertas_de_disciplinas as $od) {
-        echo html_writer::tag('li', $od->nome, array('class'=>'oferta_de_disciplina', 'id'=>$od->uid));
-    }
-  echo html_writer::end_tag('ul');
+  $modal .= html_writer::start_tag('div', array('style'=>'display:block;', 'id'=>$oferta_de_curso_uid,
+                                   'class'=>'lista_de_ofertas'));
+      foreach($ofertas_de_disciplinas as $od) {
+          $modal .= html_writer::tag('input', '', array('type'=>'checkbox', 'class'=>'od_checkbox', 
+                                         'chk_id'=>$od->uid, 'style'=>'margin-right:5px;'));
+          $modal .= html_writer::tag('div', $od->nome, array('style'=>'display:inline;'));
+      }
+  $modal .= html_writer::end_tag('div');
+  
+  return $modal;
 }
 
 ?>
