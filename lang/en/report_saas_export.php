@@ -62,6 +62,10 @@ $string['group_to_polo_msg1'] = 'Estão listados abaixo todos os grupos existent
 $string['group_to_polo_msg2'] = 'Os estudantes e tutores pertencentes aos grupos mapeados serão associados aos polos correspondentes no SAAS.
    Por sua vez, os polos serão associados às ofertas de curso em função do mapeamento dos cursos Moodle para as ofertas de disciplinas (ver aba \'Mapeamento de disciplinas\')';
 
+$string['category_to_polo_msg1'] = 'Estão listados abaixo os polos registrados no SAAS. A cada polo podem ser associadas uma ou mais categorias do Moodle,
+   fato que indica que nos cursos Moodle que estejam nestas categorias (ou em suas sub-categorias) estão inscritos apenas estudantes e tutores desse polo.';
+$string['category_to_polo_msg2'] = 'Os estudantes e tutores inscritos em cursos Moodle que tenham sido mapeados na aba \'Mapeamento de disciplinas\' serão associados aos polos do SAAS
+   correspondentes à categoria na qual esteja esse curso Moodle, na oferta de curso do SAAS identificada no mapeamento realizado na aba supra citada.';
 //------------------------------------------------------------------
 
 $string['student'] = 'Estudante';
@@ -163,16 +167,6 @@ $string['no_mapped_courses_offer'] = 'Não há ofertas de cursos mapeadas mapead
 $string['ws_error'] = 'Houve falha na comunicação com o SAAS: \'{$a}\'<BR>Verifique se a chave da instituição e a url do webservice foram cadastradas corretamente.';
 $string['update_data_error'] = 'Erro ao atualizar base de dados {$a}';
 $string['get_data_error'] = 'Erro ao acessar base de dados {$a}';
-
-$string['saas_presentation'] = 'Este módulo possibilita a exportação de dados do Moodle para o SAAS
-    (Sistema de Acompanhamento e Avaliação dos Cursos da Rede e-Tec Brasil).
-    Os dados exportados incluem:
-    <UL>
-    <LI>Identificador, nome, email e CPF de professores, estudantes e tutores vinculados às ofertas de disciplinas;</LI>
-    <LI>Relacionamento de professores, estudantes e tutores a distância com ofertas as de disciplinas;</LI>
-    <LI>Relacionamento de estudantes e tutores presenciais com os polos.</LI>
-    </UL>
-    Realize a sequência de passos abaixo. Os três primeiros permitem definir quais dados serão exportados, e o quarto passo é a efetivação da exportação.';
 
 $string['mark_groups'] = 'Marque os grupos abaixo que representam polos da Instituição';
 $string['mark_new_groups'] = 'Marque os novos grupos abaixo que representam polos da Instituição';
