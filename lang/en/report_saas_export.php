@@ -29,6 +29,8 @@ $string['export'] = 'Exportação';
 $string['reload'] = 'Atualizar dados';
 $string['reloaded'] = 'Os dados de ofertas de curso/disciplinas e de polos foram atualizados a partir do SAAS';
 
+$string['moodle_courses'] = 'Cursos Moodle';
+$string['moodle_categories'] = 'Categorias Moodle';
 $string['polos'] = 'Polos';
 $string['polos_title'] = 'Polos definidos no SAAS';
 $string['ofertas'] = 'Ofertas de cursos e disciplinas';
@@ -55,6 +57,7 @@ $string['polo_mapping_help'] = 'Indica a forma como os polos são mapeados na es
 $string['no_polo'] = 'Não há no Moodle forma de agrupar estudantes por polo';
 $string['group_to_polo'] = 'São utilizados grupos nos cursos Moodle para agrupar estudantes por polo';
 $string['category_to_polo'] = 'Os polos são identificados por categorias no Moodle';
+$string['course_to_polo'] = 'Os polos são identificados por cursos no Moodle';
 $string['title_no_polo'] = 'A configuração atual indica que não há no Moodle forma de agrupar estudantes por polo';
 
 $string['group_to_polo_msg1'] = 'Estão listados abaixo todos os grupos existentes nos cursos Moodle que foram mapeados na aba \'Mapeamento de disciplinas\'.
@@ -67,6 +70,11 @@ $string['category_to_polo_msg1'] = 'Estão listados abaixo os polos registrados 
    fato que indica que nos cursos Moodle que estejam nestas categorias (ou em suas sub-categorias) estão inscritos apenas estudantes e tutores desse polo.';
 $string['category_to_polo_msg2'] = 'Os estudantes e tutores inscritos em cursos Moodle que tenham sido mapeados na aba \'Mapeamento de disciplinas\' serão associados aos polos do SAAS
    correspondentes à categoria na qual esteja esse curso Moodle, na oferta de curso do SAAS identificada no mapeamento realizado na aba supra citada.';
+
+$string['course_to_polo_msg1'] = 'Estão listados abaixo os polos registrados no SAAS. A cada polo podem ser associadas um ou mais cursos do Moodle,
+   fato que indica que nos cursos mapeados estão inscritos apenas estudantes e tutores desse polo.';
+$string['course_to_polo_msg2'] = 'Os estudantes e tutores inscritos em cursos Moodle que tenham sido mapeados na aba \'Mapeamento de disciplinas\' serão associados aos polos do SAAS
+   correspondentes aos cursos Moodle, na oferta de curso do SAAS identificada no mapeamento realizado na aba supra citada.';
 //------------------------------------------------------------------
 
 $string['student'] = 'Estudante';
@@ -190,6 +198,6 @@ $string['obs_passo3'] = '<p>Neste passo, são indicados quais grupos de cursos M
 $string['obs_passo4'] = '<p>Abaixo é apresentado um quadro resumo com os dados que serão exportados para o SAAS.</p>';
 
 $string['saved'] = 'Os dados foram salvos';
-$string['no_changes'] = 'Os dados não foram salvos pois não houve alteração';
+$string['no_changes'] = 'Os dados não foram salvos pois não houve alterações';
 $string['moodle_group'] = 'Grupo Moodle';
 $string['polo_saas'] = 'Polo SAAS';

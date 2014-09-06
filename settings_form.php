@@ -73,7 +73,8 @@ class saas_export_settings_form extends moodleform {
 
         $polo_mapping_options = array('no_polo'          => get_string('no_polo', 'report_saas_export'),
                                       'group_to_polo'    => get_string('group_to_polo', 'report_saas_export'),
-                                      'category_to_polo' => get_string('category_to_polo', 'report_saas_export'));
+                                      'category_to_polo' => get_string('category_to_polo', 'report_saas_export'),
+                                      'course_to_polo'   => get_string('course_to_polo', 'report_saas_export'));
         $mform->addElement('select', 'polo_mapping', get_string('polo_mapping', 'report_saas_export'), $polo_mapping_options, $attributes);
         $mform->setDefault('polo_mapping', 'group_to_polo');
         $mform->addHelpButton('polo_mapping', 'polo_mapping', 'report_saas_export');

@@ -157,4 +157,138 @@ function show_saas_offers($oferta_de_curso_uid, $repeat_allowed = true) {
   return $modal;
 }
 
+// ----------------------------------------------------------------------------------------------
+// Rotinas auxiliara para mapeamento de cursos para categoriasA
+
+function saas_get_polos_menu() {
+    global $DB;
+
+    return $DB->get_records_menu('saas_polos', null, 'nome', "id, CONCAT(nome, ' (', cidade, '/', estado, ')') as nome");
+}
+
+function saas_get_category_tree_map_courses_polos() {
+    global $DB;
+
+    $sql = "SELECT DISTINCT ccp.id, ccp.depth, ccp.path, ccp.name
+              FROM {course} c
+              JOIN {saas_map_course} smc ON (smc.courseid = c.id)
+              JOIN {course_categories} cc ON (cc.id = c.category)
+              JOIN {course_categories} ccp ON (ccp.id = cc.id OR cc.path LIKE CONCAT('%/',ccp.id,'/%'))
+          ORDER BY ccp.depth, ccp.name";
+    $categories = $DB->get_records_sql($sql);
+
+    foreach($categories AS $cat) {
+        $cat->subs = array();
+        $cat->courses = array();
+        if($cat->depth > 1) {
+            $path = explode('/', $cat->path);
+            $superid = $path[count($path)-2];
+            $categories[$superid]->subs[$cat->id] = $cat;
+        }
+    }
+
+    $sql = "SELECT DISTINCT c.id, c.category, c.fullname AS name, smcp.polo_id
+              FROM {course} c
+              JOIN {saas_map_course} smc ON (smc.courseid = c.id)
+         LEFT JOIN {saas_map_catcourses_polos} smcp ON (smcp.instanceid = c.id AND smcp.type = 'course')
+          ORDER BY c.fullname";
+
+    foreach($DB->get_records_sql($sql) AS $course) {
+        $categories[$course->category]->courses[$course->id] = $course;
+    }
+
+    foreach(array_keys($categories) AS $catid) {
+        if($categories[$catid]->depth > 1) {
+            unset($categories[$catid]);
+        }
+    }
+
+    return $categories;
+}
+
+function saas_show_category_tree_map_courses_polos(&$categories, &$polos) {
+    foreach($categories AS $cat) {
+        print html_writer::start_tag('LI', array('class'=>'category'));
+        print "<label for=\"category{$cat->id}\">$cat->name</label>";
+        print "<input type=\"checkbox\" checked id=\"category{$cat->id}\" />\n";
+
+        print html_writer::start_tag('OL');
+
+        if(count($cat->courses) > 0) {
+            $count=0;
+            foreach($cat->courses AS $c) {
+
+                $count++;
+                $class= $count%2==1 ? 'normalcolor' : 'alternatecolor';
+
+                print html_writer::start_tag('LI', array('class'=>$class));
+                print html_writer::tag('SPAN', $c->name);
+                $poloid = empty($c->polo_id) ? 0 : $c->polo_id;
+                print html_writer::select($polos, "map_polos[{$c->id}]", $poloid);
+                print html_writer::end_tag('LI');
+            }
+        }
+
+        if(!empty($cat->subs)) {
+            saas_show_category_tree_map_courses_polos($cat->subs, $polos);
+        }
+
+        print html_writer::end_tag('OL');
+        print html_writer::end_tag('LI');
+        print html_writer::tag('LI', ''); // incluido para clear:both
+    }
+}
+
+function saas_get_category_tree_map_categories_polos() {
+    global $DB;
+
+    $sql = "SELECT DISTINCT ccp.id, ccp.depth, ccp.path, ccp.name, smcp.polo_id
+              FROM {course} c
+              JOIN {saas_map_course} smc ON (smc.courseid = c.id)
+              JOIN {course_categories} cc ON (cc.id = c.category)
+              JOIN {course_categories} ccp ON (ccp.id = cc.id OR cc.path LIKE CONCAT('%/',ccp.id,'/%'))
+         LEFT JOIN {saas_map_catcourses_polos} smcp ON (smcp.instanceid = ccp.id AND smcp.type = 'category')
+          ORDER BY ccp.depth, ccp.name";
+    $categories = $DB->get_records_sql($sql);
+
+    foreach($categories AS $cat) {
+        $cat->subs = array();
+        if($cat->depth > 1) {
+            $path = explode('/', $cat->path);
+            $superid = $path[count($path)-2];
+            $categories[$superid]->subs[$cat->id] = $cat;
+        }
+    }
+
+    foreach(array_keys($categories) AS $catid) {
+        if($categories[$catid]->depth > 1) {
+            unset($categories[$catid]);
+        }
+    }
+
+    return $categories;
+}
+
+function saas_show_category_tree_map_categories_polos(&$categories, &$polos) {
+    foreach($categories AS $cat) {
+        print html_writer::start_tag('LI', array('class'=>'category'));
+        print "<span>";
+        print "<label for=\"category{$cat->id}\">$cat->name</label>";
+        print "<input type=\"checkbox\" checked id=\"category{$cat->id}\" />\n";
+        print "</span>";
+
+        $poloid = empty($cat->polo_id) ? 0 : $cat->polo_id;
+        print html_writer::select($polos, "map_polos[{$cat->id}]", $poloid);
+
+        print html_writer::start_tag('OL');
+
+        if(!empty($cat->subs)) {
+            saas_show_category_tree_map_categories_polos($cat->subs, $polos);
+        }
+
+        print html_writer::end_tag('OL');
+        print html_writer::end_tag('LI');
+        print html_writer::tag('LI', ''); // incluido para clear:both
+    }
+}
 ?>

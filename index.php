@@ -183,6 +183,9 @@ switch ($action) {
             case 'category_to_polo':
                 include('map_categories_to_polos.php');
                 break;
+            case 'course_to_polo':
+                include('map_courses_to_polos.php');
+                break;
             default:
                 print $OUTPUT->heading('Mapeamento ainda não implementado: ' . $polo_mapping_type);
         }
@@ -223,6 +226,9 @@ switch ($action) {
                     break;
                 case 'category_to_polo':
                     $saas->show_overview_categories_polos($ocid, $poloid);
+                    break;
+                case 'course_to_polo':
+                    $saas->show_overview_courses_polos($ocid, $poloid);
                     break;
                 default:
                     print $OUTPUT->heading('Mapeamento ainda não implementado: ' . $polo_mapping_type);
