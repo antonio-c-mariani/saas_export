@@ -56,12 +56,16 @@ class saas {
        $hourdiff = round(($now - $lastupdated)/3600, 1);
        if ($hourdiff > 1 || $force_reload) {
            try {
+               $this->load_disciplinas_saas();
                $this->load_ofertas_cursos_saas();
                $this->load_ofertas_disciplinas_saas();
                $this->load_polos_saas();
                set_config('lastupdated', $now, 'report_saas_export');
+           } catch (dml_write_exception $e){
+               print_error('bd_error', 'report_saas_export', '', $e->debuginfo);
            } catch (Exception $e){
-               print_error($e->getMessage());
+               $url = new moodle_url('/report/saas_export/index.php', array('action'=>'settings'));
+               print_error('ws_error', 'report_saas_export', $url);
            }
        }
     }
@@ -71,7 +75,26 @@ class saas {
     }
 
     function load_disciplinas_saas(){
-        return $this->get_ws('disciplinas');
+        global $DB;
+
+        $local = $DB->get_records('saas_disciplinas', null, null ,'uid, id, enable');
+
+        foreach ($this->get_ws('disciplinas') as $dis) {
+            $dis->enable = 1;
+            if (isset($local[$dis->uid])){
+                $dis->id = $local[$dis->uid]->id;
+                $DB->update_record('saas_disciplinas', $dis);
+                unset($local[$dis->uid]);
+            } else {
+                $DB->insert_record('saas_disciplinas', $dis);
+            }
+        }
+
+        foreach($local AS $uid=>$dis) {
+            if($dis->enable){
+                $DB->set_field('saas_disciplinas', 'enable', 0, array('id'=>$dis->id));
+            }
+        }
     }
 
     function load_ofertas_cursos_saas(){
@@ -114,29 +137,21 @@ class saas {
         global $DB;
 
         $local = $DB->get_records('saas_ofertas_disciplinas', null, null ,'uid, id, enable');
+        foreach ($this->get_ws('ofertas/disciplinas') as $oferta_disciplina){
+            $record = new stdClass();
+            $record->uid = $oferta_disciplina->uid;
+            $record->disciplina_uid = $oferta_disciplina->disciplina->uid;
+            $record->inicio = $oferta_disciplina->inicio;
+            $record->fim = $oferta_disciplina->fim;
+            $record->oferta_curso_uid = $oferta_disciplina->ofertaCurso->uid;
+            $record->enable = 1;
 
-        $disciplinas_saas = $this->load_disciplinas_saas();
-        $ofertas_disciplinas_saas = $this->get_ws('ofertas/disciplinas');
-
-        foreach ($disciplinas_saas as $disciplina) {
-            foreach ($ofertas_disciplinas_saas as $oferta_disciplina){
-                if ($disciplina->uid == $oferta_disciplina->disciplina->uid) {
-                    $record = new stdClass();
-                    $record->nome = $disciplina->nome;
-                    $record->inicio = $oferta_disciplina->inicio;
-                    $record->fim = $oferta_disciplina->fim;
-                    $record->oferta_curso_uid = $oferta_disciplina->ofertaCurso->uid;
-                    $record->enable = 1;
-
-                    if (isset($local[$oferta_disciplina->uid])){
-                        $record->id = $local[$oferta_disciplina->uid]->id;
-                        $DB->update_record('saas_ofertas_disciplinas', $record);
-                        unset($local[$oferta_disciplina->uid]);
-                    } else {
-                        $record->uid = $oferta_disciplina->uid;
-                        $DB->insert_record('saas_ofertas_disciplinas', $record);
-                    }
-                }
+            if (isset($local[$oferta_disciplina->uid])){
+                $record->id = $local[$oferta_disciplina->uid]->id;
+                $DB->update_record('saas_ofertas_disciplinas', $record);
+                unset($local[$oferta_disciplina->uid]);
+            } else {
+                $DB->insert_record('saas_ofertas_disciplinas', $record);
             }
         }
 
@@ -145,14 +160,6 @@ class saas {
                 $DB->set_field('saas_ofertas_disciplinas', 'enable', 0, array('id'=>$rec->id));
             }
         }
-    }
-
-    function get_disciplinas_saas() {
-        $disciplinas = array();
-        foreach($this->get_ws('disciplinas') AS $d) {
-            $disciplinas[$d->uid] = $d->nome;
-        }
-        return $disciplinas;
     }
 
     function load_polos_saas() {
@@ -200,7 +207,12 @@ class saas {
     function get_ofertas_disciplinas_salvas() {
         global $DB;
 
-        return $DB->get_records('saas_ofertas_disciplinas', array('enable'=>1));
+        $sql = "SELECT od.*, d.nome
+                  FROM {saas_ofertas_disciplinas} od
+                  JOIN {saas_disciplinas} d ON (d.uid = od.disciplina_uid)
+                 WHERE od.enable = 1
+                   AND d.enable = 1";
+        return $DB->get_records_sql($sql);
     }
 
     function get_mapeamento_cursos() {
@@ -446,12 +458,13 @@ class saas {
 
         $ofertas = $DB->get_records('saas_ofertas_cursos', array('enable'=>1), 'nome, ano, periodo');
 
-        $sql = "SELECT DISTINCT od.*, oc.id as oc_id, cm.id IS NOT NULL AS mapped
+        $sql = "SELECT DISTINCT od.*, d.nome, oc.id as oc_id, cm.id IS NOT NULL AS mapped
                   FROM {saas_ofertas_cursos} oc
              LEFT JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1)
+             LEFT JOIN {saas_disciplinas} d ON (d.uid = od.disciplina_uid AND d.enable = 1)
              LEFT JOIN {saas_map_course} cm ON (cm.oferta_disciplina_id = od.id)
                  WHERE oc.enable = 1
-              ORDER BY od.nome";
+              ORDER BY d.nome";
         $recs = $DB->get_recordset_sql($sql);
         foreach($recs as $rec) {
             if(empty($rec->id)) {
@@ -1376,6 +1389,21 @@ class saas {
         return json_decode($resp);
     }
 
+    function post_ws($functionname, $data = array()) {
+        $curl = new curl();
+        $curl->setHeader('Content-Type: application/json');
+        $response = $curl->post($this->make_ws_url($functionname), json_encode($data));
+
+        if(is_array($curl->info) && isset($curl->info['http_code']) && $curl->info['http_code'] != '200') {
+            throw new Exception('Erro de acesso ao SAAS: ' . $curl->info['http_code']);
+        }
+        if (!empty($curl->error)) {
+            throw new Exception($curl->error, $curl->info);
+        }
+
+        return json_decode($response);
+    }
+
     function put_ws($functionname, $data = array()) {
         $curl = new curl();
         $curl->count = 0;
@@ -1497,4 +1525,34 @@ class saas {
         return  $userfields;
     }
 
+    static function get_estados() {
+        return array(
+                    'AC'=>'Acre',
+                    'AL'=>'Alagoas',
+                    'AM'=>'Amazonas',
+                    'AP'=>'Amapá',
+                    'BA'=>'Bahia',
+                    'CE'=>'Ceará',
+                    'DF'=>'Distrito Federal',
+                    'ES'=>'Espírito Santo',
+                    'GO'=>'Goiás',
+                    'MA'=>'Maranhão',
+                    'MT'=>'Mato Grosso',
+                    'MS'=>'Mato Grosso do Sul',
+                    'MG'=>'Minas Gerais',
+                    'PA'=>'Pará',
+                    'PB'=>'Paraíba',
+                    'PR'=>'Paraná',
+                    'PE'=>'Pernambuco',
+                    'PI'=>'Piauí',
+                    'RJ'=>'Rio de Janeiro',
+                    'RN'=>'Rio Grande do Norte',
+                    'RS'=>'Rio Grande do Sul',
+                    'RO'=>'Rondônia',
+                    'RR'=>'Roraima',
+                    'SC'=>'Santa Catarina',
+                    'SE'=>'Sergipe',
+                    'SP'=>'São Paulo',
+                    'TO'=>'Tocantins');
+    }
 }

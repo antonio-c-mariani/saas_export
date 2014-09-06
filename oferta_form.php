@@ -28,6 +28,8 @@ require_once("{$CFG->libdir}/formslib.php");
 class oferta_form extends moodleform {
 
     function definition() {
+        global $DB;
+
         $mform = $this->_form;
 
         $saas = $this->_customdata['saas'];
@@ -36,13 +38,10 @@ class oferta_form extends moodleform {
             $ofertas_cursos[$oc->id] = "{$oc->nome} {$oc->ano}/{$oc->periodo}";
         }
 
-        $disciplinas = $saas->get_disciplinas_saas();
-
-        // ----------------------------------------------------------------------------------------------
-        $mform->addElement('header', 'add_oferta', get_string('add_oferta', 'report_saas_export'));
+        $disciplinas = $DB->get_records_menu('saas_disciplinas', array('enable'=>1), 'nome', 'id, nome');
 
         $mform->addElement('select', 'oferta_curso_id', get_string('oferta_curso', 'report_saas_export'), $ofertas_cursos);
-        $mform->addElement('select', 'disciplinas_uid', get_string('disciplina', 'report_saas_export'), $disciplinas);
+        $mform->addElement('select', 'disciplina_id', get_string('disciplina', 'report_saas_export'), $disciplinas);
 
         $year = date('Y');
         $attributes = array(
@@ -63,9 +62,15 @@ class oferta_form extends moodleform {
 
         $errors = parent::validation($data, $files);
 
-        // todo: validar: não pode haver duas ofertas da mesma disciplina numa oferta de curso
-
-
+        $sql = "SELECT 1
+                  FROM {saas_ofertas_cursos} oc
+                  JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid)
+                  JOIN {saas_disciplinas} d ON (d.uid = od.disciplina_uid)
+                 WHERE oc.id = :ocid
+                   AND d.id = :disciplinaid";
+        if($DB->record_exists_sql($sql, array('ocid'=>$data['oferta_curso_id'], 'disciplinaid'=>$data['disciplina_id']))) {
+            $errors['disciplina_id'] = get_string('duplicated_disciplina', 'report_saas_export');
+        }
         return $errors;
     }
 }

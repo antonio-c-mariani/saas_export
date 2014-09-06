@@ -43,6 +43,7 @@ $string['cpf_settings'] = 'Configurações de CPF (opcional)';
 $string['role_settings'] = 'Configurações de papeis/funções';
 
 $string['duplicated_role'] = 'Há papeis selecionados em outro perfil de usuário';
+$string['duplicated_disciplina'] = 'Disciplina já disponível na oferta de curso selecionada';
 $string['no_course_mapping'] = 'Não há cursos Moodle mapeados para ofertas de disciplinas do SAAS';
 $string['no_no_ofertas_disciplinas'] = 'Não há ofertas de disciplinas ativas registradas no SAAS';
 
@@ -174,7 +175,10 @@ $string['no_class_offer_from_ws'] = 'Não foi localizada nenhuma oferta de disci
 
 $string['no_mapped_classes_offer'] = 'Não há ofertas de disciplinas mapeadas.';
 $string['no_mapped_courses_offer'] = 'Não há ofertas de cursos mapeadas mapeadas.';
-$string['ws_error'] = 'Houve falha na comunicação com o SAAS: \'{$a}\'<BR>Verifique se a chave da instituição e a url do webservice foram cadastradas corretamente.';
+$string['bd_error'] = 'Falha de acesso ao banco de dados: {$a}';
+$string['ws_error'] = 'Houve falha na comunicação com o servidor do SAAS.<BR>
+    Verifique se os campos \'URL SAAS\' e \'Chave da instituição\' estão corretos na aba de configurações.<BR>
+    Entre em contato com a equipe do SAAS caso tenhas alguma dúvida.';
 $string['update_data_error'] = 'Erro ao atualizar base de dados {$a}';
 $string['get_data_error'] = 'Erro ao acessar base de dados {$a}';
 

@@ -91,13 +91,19 @@ switch ($action) {
     case 'saas_data':
         $saas->load_saas_data();
 
-        $saas_data_tab_items = array('ofertas', 'polos', 'reload');
+        $saas_data_tab_items = array('ofertas'    => false,
+                                     'add_oferta' => 'report/saas_export:export',
+                                     'polos'      => false,
+                                     'add_polo'   => 'report/saas_export:export',
+                                     'reload'     => false);
         $saas_data_tabs = array();
-        foreach($saas_data_tab_items AS $act) {
-            $url = clone($baseurl);
-            $url->param('action', $action);
-            $url->param('data', $act);
-            $saas_data_tabs[$act] = new tabobject($act, $url, get_string($act, 'report_saas_export'));
+        foreach($saas_data_tab_items AS $act=>$capability) {
+            if(!$capability || has_capability($capability, $syscontext)) {
+                $url = clone($baseurl);
+                $url->param('action', $action);
+                $url->param('data', $act);
+                $saas_data_tabs[$act] = new tabobject($act, $url, get_string($act, 'report_saas_export'));
+            }
         }
         $saas_data_action = optional_param('data', 'ofertas' , PARAM_TEXT);
         $saas_data_action = isset($saas_data_tabs[$saas_data_action]) ? $saas_data_action : 'ofertas';
@@ -107,24 +113,40 @@ switch ($action) {
         $url->param('data', $saas_data_action);
 
         if(has_capability('report/saas_export:export', $syscontext)) {
-            if($saas_data_action == 'ofertas') {
-                $oferta_form = new oferta_form($url, array('saas'=>$saas));
-                if ($oferta_form->is_cancelled()) {
-                    redirect($url);
-                } else if ($oferta = $oferta_form->get_data()) {
-                    // todo: Cadastrar oferta no SAAS
-                    $saas->load_ofertas_disciplinas_saas();
-                    redirect($url);
-                }
-            } else if($saas_data_action == 'polos') {
-                $polo_form = new polo_form($url);
-                if ($polo_form->is_cancelled()) {
-                    redirect($url);
-                } else if ($polo = $polo_form->get_data()) {
-                    // todo: Cadastrar polo no SAAS
-                    $saas->load_polos_saas();
-                    redirect($url);
-                }
+            switch($saas_data_action) {
+                case 'add_oferta':
+                    $oferta_form = new oferta_form($url, array('saas'=>$saas));
+                    if ($oferta_form->is_cancelled()) {
+                        redirect($url);
+                    } else if ($oferta = $oferta_form->get_data()) {
+                        $new_oferta = new stdClass();
+                        $new_oferta->disciplina = new stdClass();
+                        $new_oferta->disciplina->uid = $DB->get_field('saas_disciplinas', 'uid', array('id'=>$oferta->disciplina_id), MUST_EXIST);
+                        $new_oferta->ofertaCurso = new stdClass();
+                        $new_oferta->ofertaCurso->uid = $DB->get_field('saas_ofertas_cursos', 'uid', array('id'=>$oferta->oferta_curso_id), MUST_EXIST);
+                        $new_oferta->inicio = $oferta->inicio;
+                        $new_oferta->fim = $oferta->fim;
+                        $saas->post_ws('ofertas/disciplinas', $new_oferta);
+                        $saas->load_ofertas_disciplinas_saas();
+                        $url->param('data', 'ofertas');
+                        redirect($url);
+                    }
+                    break;
+                case 'add_polo':
+                    $polo_form = new polo_form($url);
+                    if ($polo_form->is_cancelled()) {
+                        redirect($url);
+                    } else if ($polo = $polo_form->get_data()) {
+                        $new_polo = new stdClass();
+                        $new_polo->nome = trim($polo->nome);
+                        $new_polo->cidade = trim($polo->cidade);
+                        $new_polo->estado = $polo->estado;
+                        $saas->post_ws('polos', $new_polo);
+                        $saas->load_polos_saas();
+                        $url->param('data', 'polos');
+                        redirect($url);
+                    }
+                    break;
             }
         }
 
@@ -133,29 +155,39 @@ switch ($action) {
         print_tabs(array($tabs), $action);
         print_tabs(array($saas_data_tabs), $saas_data_action);
 
-        if($saas_data_action == 'ofertas') {
-            $saas->show_table_ofertas_curso_disciplinas(false);
-            if(has_capability('report/saas_export:export', $syscontext)) {
+        switch($saas_data_action) {
+            case 'ofertas':
+                $saas->show_table_ofertas_curso_disciplinas(false);
+                break;
+            case 'add_oferta':
+                if(has_capability('report/saas_export:export', $syscontext)) {
+                    print html_writer::start_tag('DIV', array('align'=>'center'));
+                    print $OUTPUT->box_start('generalbox boxwidthnormal');
+                    print $OUTPUT->heading(get_string('add_oferta', 'report_saas_export'));
+                    $oferta_form->display();
+                    print $OUTPUT->box_end();
+                    print html_writer::end_tag('DIV');
+                }
+                break;
+            case 'polos':
+                $saas->show_table_polos();
+                break;
+            case 'add_polo':
+                if(has_capability('report/saas_export:export', $syscontext)) {
+                    print html_writer::start_tag('DIV', array('align'=>'center'));
+                    print $OUTPUT->box_start('generalbox boxwidthnormal');
+                    print $OUTPUT->heading(get_string('add_polo', 'report_saas_export'));
+                    $polo_form->display();
+                    print $OUTPUT->box_end();
+                    print html_writer::end_tag('DIV');
+                }
+                break;
+            default:
+                $saas->load_saas_data(true);
                 print html_writer::start_tag('DIV', array('align'=>'center'));
-                print $OUTPUT->box_start('generalbox boxwidthnormal');
-                $oferta_form->display();
-                print $OUTPUT->box_end();
+                print $OUTPUT->heading(get_string('reloaded', 'report_saas_export'));
                 print html_writer::end_tag('DIV');
-            }
-        } else if($saas_data_action == 'polos') {
-            $saas->show_table_polos();
-            if(has_capability('report/saas_export:export', $syscontext)) {
-                print html_writer::start_tag('DIV', array('align'=>'center'));
-                print $OUTPUT->box_start('generalbox boxwidthnormal');
-                $polo_form->display();
-                print $OUTPUT->box_end();
-                print html_writer::end_tag('DIV');
-            }
-        } else {
-            $saas->load_saas_data(true);
-            print html_writer::start_tag('DIV', array('align'=>'center'));
-            print $OUTPUT->heading(get_string('reloaded', 'report_saas_export'));
-            print html_writer::end_tag('DIV');
+                break;
         }
 
         echo $OUTPUT->footer();
