@@ -54,7 +54,7 @@
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" NEXT="uid"/>
         <FIELD NAME="uid" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="id" NEXT="nome"/>
-        <FIELD NAME="nome" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="uid" NEXT="inicio"/>
+        <FIELD NAME="disciplina_uid" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="uid" NEXT="inicio"/>
         <FIELD NAME="inicio" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="nome" NEXT="fim"/>
         <FIELD NAME="fim" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="inicio" NEXT="oferta_curso_uid"/>
         <FIELD NAME="oferta_curso_uid" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="fim" NEXT="enable"/>
