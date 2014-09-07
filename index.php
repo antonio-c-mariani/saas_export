@@ -32,23 +32,27 @@ require_capability('report/saas_export:view', $syscontext);
 admin_externalpage_setup('report_saas_export', '', null, '', array('pagelayout'=>'report'));
 
 $baseurl = new moodle_url('/report/saas_export/index.php');
-$api_key = get_config('report_saas_export', 'api_key');
 
-$tab_items = array('guidelines'     => array('needs_config'=>false, 'capability'=>false),
-                   'settings'       => array('needs_config'=>false, 'capability'=>false),
-                   'saas_data'      => array('needs_config'=>true,  'capability'=>false),
-                   'course_mapping' => array('needs_config'=>true,  'capability'=>false),
-                   'polo_mapping'   => array('needs_config'=>true,  'capability'=>false),
-                   'overview'       => array('needs_config'=>true,  'capability'=>false),
-                   'export'         => array('needs_config'=>true,  'capability'=>'report/saas_export:export'));
+$api_key = get_config('report_saas_export', 'api_key');
+$polo_mapping = get_config('report_saas_export', 'polo_mapping');
+$may_export = has_capability('report/saas_export:export', $syscontext);
+
+$tab_items = array('guidelines', 'settings');
+if($api_key) {
+    $tab_items[] = 'saas_data';
+    $tab_items[] = 'course_mapping';
+    if($polo_mapping != 'no_polo') {
+        $tab_items[] = 'polo_mapping';
+    }
+    $tab_items[] = 'overview';
+    if($may_export) {
+        $tab_items[] = 'export';
+    }
+}
 
 $tabs = array();
-foreach($tab_items AS $act=>$params) {
-    if(!$params['capability'] || has_capability($params['capability'], $syscontext)) {
-        if(!$params['needs_config'] || !empty($api_key)) {
-            $tabs[$act] = new tabobject($act, new moodle_url('/report/saas_export/index.php', array('action'=>$act)), get_string($act, 'report_saas_export'));
-        }
-    }
+foreach($tab_items AS $act) {
+    $tabs[$act] = new tabobject($act, new moodle_url('/report/saas_export/index.php', array('action'=>$act)), get_string($act, 'report_saas_export'));
 }
 
 $action = optional_param('action', 'guidelines' , PARAM_TEXT);
@@ -92,10 +96,13 @@ switch ($action) {
         $saas->load_saas_data();
 
         $saas_data_tab_items = array('ofertas'    => false,
-                                     'add_oferta' => 'report/saas_export:export',
-                                     'polos'      => false,
-                                     'add_polo'   => 'report/saas_export:export',
-                                     'reload'     => false);
+                                     'add_oferta' => 'report/saas_export:export');
+        if($polo_mapping != 'no_polo') {
+            $saas_data_tab_items['polos'] = false;
+            $saas_data_tab_items['add_polo'] = 'report/saas_export:export';
+        }
+        $saas_data_tab_items['reload'] = false;
+
         $saas_data_tabs = array();
         foreach($saas_data_tab_items AS $act=>$capability) {
             if(!$capability || has_capability($capability, $syscontext)) {
@@ -228,7 +235,10 @@ switch ($action) {
         echo $OUTPUT->header();
         print_tabs(array($tabs), $action);
 
-        $saas_data_tab_items = array('ofertas', 'polos');
+        $saas_data_tab_items = array('ofertas');
+        if($polo_mapping != 'no_polo') {
+            $saas_data_tab_items[] = 'polos';
+        }
         $saas_data_tabs = array();
         foreach($saas_data_tab_items AS $act) {
             $url = clone($baseurl);
@@ -275,7 +285,9 @@ switch ($action) {
         if(has_capability('report/saas_export:export', $syscontext)) {
             // $count = $saas->send_users();
             // $saas->send_users_by_oferta_disciplina();
-            $saas->send_users_by_polo();
+            if($polo_mapping != 'no_polo') {
+                $saas->send_users_by_polo();
+            }
         } else {
             print_error('no_permission_to_export', 'report_saas_export');
         }
@@ -287,5 +299,5 @@ switch ($action) {
         print $OUTPUT->box_start('generalbox boxwidthormal');
         print $OUTPUT->heading('Ainda estamos trabalhando. Disponível em breve ...');
         print $OUTPUT->box_end();
-        echo $OUTPUT->footer();
+        print $OUTPUT->footer();
 }
