@@ -53,9 +53,9 @@
     <TABLE NAME="saas_ofertas_disciplinas" COMMENT="Table that will save the relation between moodle courses and saas courses" PREVIOUS="saas_ofertas_cursos" NEXT="saas_polos">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" NEXT="uid"/>
-        <FIELD NAME="uid" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="id" NEXT="nome"/>
+        <FIELD NAME="uid" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="id" NEXT="disciplina_uid"/>
         <FIELD NAME="disciplina_uid" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="uid" NEXT="inicio"/>
-        <FIELD NAME="inicio" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="nome" NEXT="fim"/>
+        <FIELD NAME="inicio" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="disciplina_uid" NEXT="fim"/>
         <FIELD NAME="fim" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="inicio" NEXT="oferta_curso_uid"/>
         <FIELD NAME="oferta_curso_uid" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="fim" NEXT="enable"/>
         <FIELD NAME="enable" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" SEQUENCE="false" PREVIOUS="oferta_curso_uid"/>
@@ -84,7 +84,7 @@
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" NEXT="type"/>
         <FIELD NAME="type" TYPE="char" LENGTH="10" NOTNULL="true" SEQUENCE="false" PREVIOUS="id" NEXT="instanceid"/>
         <FIELD NAME="instanceid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" PREVIOUS="type" NEXT="polo_id"/>
-        <FIELD NAME="polo_id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" PREVIOUS="categoryid"/>
+        <FIELD NAME="polo_id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" PREVIOUS="instanceid"/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id" NEXT="saas_map_inst_polo_unique"/>
@@ -93,7 +93,7 @@
     </TABLE>
     <TABLE NAME="saas_disciplinas" COMMENT="" PREVIOUS="saas_map_catcourses_polos">
       <FIELDS>
-        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" NEXT="type"/>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" NEXT="uid"/>
         <FIELD NAME="uid" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="id" NEXT="nome"/>
         <FIELD NAME="nome" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="uid" NEXT="enable"/>
         <FIELD NAME="enable" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" SEQUENCE="false" PREVIOUS="nome"/>
