@@ -67,52 +67,54 @@ if(isset($_POST['map_polos']) && isset($_POST['save']) && $may_export) {
     $message = $saved  ? get_string('saved', 'report_saas_export') : get_string('no_changes', 'report_saas_export');
 }
 
-print html_writer::start_tag('DIV', array('align'=>'center'));
+print html_writer::start_tag('div', array('align'=>'center'));
 print $OUTPUT->heading(get_string('category_to_polo', 'report_saas_export'));
 print $OUTPUT->box_start('generalbox boxwidthwide');
-print html_writer::tag('P', get_string('category_to_polo_msg1', 'report_saas_export'), array('class'=>'justifiedalign'));
-print html_writer::tag('P', get_string('category_to_polo_msg2', 'report_saas_export'), array('class'=>'justifiedalign'));
+print html_writer::tag('P', get_string('category_to_polo_msg1', 'report_saas_export'), array('class'=>'saas_justifiedalign'));
+print html_writer::tag('P', get_string('category_to_polo_msg2', 'report_saas_export'), array('class'=>'saas_justifiedalign'));
 print $OUTPUT->box_end();
-print html_writer::end_tag('DIV');
+print html_writer::end_tag('div');
 
 if(!empty($errors)) {
-    print html_writer::start_tag('DIV', array('align'=>'center'));
+    print html_writer::start_tag('div', array('align'=>'center'));
     print $OUTPUT->box_start('generalbox boxwidthnormal');
-    print html_writer::start_tag('UL');
+    print html_writer::start_tag('ul');
     foreach($errors AS $err) {
         print html_writer::tag('LI', $err, array('class'=>'saas_export_error'));
     }
-    print html_writer::end_tag('UL');
+    print html_writer::end_tag('ul');
     print $OUTPUT->box_end();
-    print html_writer::end_tag('DIV');
+    print html_writer::end_tag('div');
 } else if($message) {
-    print html_writer::start_tag('DIV', array('align'=>'center'));
+    print html_writer::start_tag('div', array('align'=>'center'));
     print $OUTPUT->box_start('generalbox boxwidthnormal');
     print $OUTPUT->heading($message, 4, 'saas_export_message');
     print $OUTPUT->box_end();
-    print html_writer::end_tag('DIV');
+    print html_writer::end_tag('div');
 }
 
 $categories = saas_get_category_tree_map_categories_polos();
 $polos = saas_get_polos_menu();
 
-print html_writer::start_tag('DIV', array('class'=>'saas_category_tree'));
+print html_writer::start_tag('div', array('class'=>'saas_category_tree'));
 if(empty($categories)) {
     print $OUTPUT->heading('Não foram encontrados mapeamentos de cursos Moodle para ofertas de disciplinas');
 } else {
-    print html_writer::start_tag('DIV');
-    print html_writer::tag('DIV', get_string('moodle_categories', 'report_saas_export'), array('class'=>'lefttitle'));
-    print html_writer::tag('DIV', get_string('polos_title', 'report_saas_export'), array('class'=>'righttitle'));
-    print html_writer::end_tag('DIV');
+    print html_writer::start_tag('div');
+    print html_writer::tag('div', get_string('moodle_categories', 'report_saas_export'), array('class'=>'lefttitle'));
+    print html_writer::tag('div', get_string('polos_title', 'report_saas_export'), array('class'=>'righttitle'));
+    print html_writer::end_tag('div');
+
+    print html_writer::tag('div', '', array('class'=>'clearfix'));
 
     print html_writer::start_tag('form', array('method'=>'post', 'action'=>'index.php'));
     print html_writer::empty_tag('input', array('type'=>'hidden', 'name'=>'action', 'value'=>'polo_mapping'));
 
-    print html_writer::start_tag('UL');
-    saas_show_category_tree_map_categories_polos($categories, $polos);
-    print html_writer::end_tag('UL');
+    echo '<table id="saas_category_table">';
+    echo saas_show_category_tree_map_categories_polos($categories, $polos);
+    echo '</table>';
 
     print html_writer::empty_tag('input', array('type'=>'submit', 'name'=>'save', 'value'=>s(get_string('save', 'admin'))));
     print html_writer::end_tag('form');
 }
-print html_writer::end_tag('DIV');
+print html_writer::end_tag('div');

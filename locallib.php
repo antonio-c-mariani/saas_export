@@ -208,10 +208,10 @@ function saas_get_category_tree_map_courses_polos() {
 
 function saas_show_category_tree_map_courses_polos(&$categories, &$polos) {
     foreach($categories AS $cat) {
-        print html_writer::start_tag('LI', array('class'=>'category'));
+        print html_writer::start_tag('li', array('class'=>'category'));
         print html_writer::tag('label', $cat->name);
 
-        print html_writer::start_tag('UL');
+        print html_writer::start_tag('ul');
 
         if(count($cat->courses) > 0) {
             $count=0;
@@ -219,11 +219,11 @@ function saas_show_category_tree_map_courses_polos(&$categories, &$polos) {
                 $count++;
                 $class= $count%2==1 ? 'normalcolor' : 'alternatecolor';
 
-                print html_writer::start_tag('LI', array('class'=>$class));
-                print html_writer::tag('DIV', $c->name, array('class'=>'leftalign'));
+                print html_writer::start_tag('li', array('class'=>$class));
+                print html_writer::tag('div', $c->name, array('class'=>'leftalign'));
                 $poloid = empty($c->polo_id) ? 0 : $c->polo_id;
-                print html_writer::tag('DIV', html_writer::select($polos, "map_polos[{$c->id}]", $poloid), array('class'=>'rightalign'));
-                print html_writer::end_tag('LI');
+                print html_writer::tag('div', html_writer::select($polos, "map_polos[{$c->id}]", $poloid), array('class'=>'rightalign'));
+                print html_writer::end_tag('li');
             }
         }
 
@@ -231,8 +231,8 @@ function saas_show_category_tree_map_courses_polos(&$categories, &$polos) {
             saas_show_category_tree_map_courses_polos($cat->subs, $polos);
         }
 
-        print html_writer::end_tag('UL');
-        print html_writer::end_tag('LI');
+        print html_writer::end_tag('ul');
+        print html_writer::end_tag('li');
     }
 }
 
@@ -266,24 +266,36 @@ function saas_get_category_tree_map_categories_polos() {
     return $categories;
 }
 
-function saas_show_category_tree_map_categories_polos(&$categories, &$polos) {
+function saas_show_category_tree_map_categories_polos($categories, &$polos) {
+    global $OUTPUT;
     foreach($categories AS $cat) {
-        print html_writer::start_tag('LI', array('class'=>'category'));
-        $lable = html_writer::tag('label', $cat->name);
-        print html_writer::tag('DIV', $lable, array('class'=>'leftalign'));
+        echo '<tr class="category">';
+
+        $o .= '<td class="saas_category_name">';
+        $depth = $cat->depth*2;
+        $o .= '<img class="saas_category_pix" style="padding-left: '.$depth.'%;"src="'.$OUTPUT->pix_url('i/course').'" />';
+        $o .= '<label class="saas_category_label" for="map_polos['.$cat->id.']" >'.$cat->name.'</label>';
+        $o .= '</td>';
 
         $poloid = empty($cat->polo_id) ? 0 : $cat->polo_id;
-        $select = html_writer::select($polos, "map_polos[{$cat->id}]", $poloid);
-        print html_writer::tag('DIV', $select, array('class'=>'rightalign'));
-
-        print html_writer::start_tag('UL');
+        $o .= '<td class="saas_polo_select">';
+        $o .= '<select id="map_polos['.$cat->id.']" name="map_polos['.$cat->id.']">';
+        $o .= '<option value="0" '.$selected.'>Escolher...</option>';
+        foreach ($polos as $pid => $p) {
+            if ($poloid == $pid) {
+                $selected = 'selected="selected"';
+            } else {
+                $selected = '';
+            }
+            $o .= '<option value="'.$pid.'" '.$selected.'>'.$p.'</option>';
+        }
+        $o .= '</select>';
+        $o .= '</td>';
+        $o .= '</tr>';
 
         if(!empty($cat->subs)) {
-            saas_show_category_tree_map_categories_polos($cat->subs, $polos);
+            $o .= saas_show_category_tree_map_categories_polos($cat->subs, $polos);
         }
-
-        print html_writer::end_tag('UL');
-        print html_writer::end_tag('LI');
     }
+    return $o;
 }
-?>
