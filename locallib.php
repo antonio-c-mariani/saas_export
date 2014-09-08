@@ -207,33 +207,53 @@ function saas_get_category_tree_map_courses_polos() {
 }
 
 function saas_show_category_tree_map_courses_polos(&$categories, &$polos) {
-    foreach($categories AS $cat) {
-        print html_writer::start_tag('li', array('class'=>'category'));
-        print html_writer::tag('label', $cat->name);
+    global $OUTPUT;
 
-        print html_writer::start_tag('ul');
+    foreach($categories AS $cat) {
+        $o .= '<tr class="category">';
+        $o .= '<td class="saas_category_name">';
+        $depth = $cat->depth*2;
+        $o .= '<img class="saas_category_pix" style="padding-left: '.$depth.'%;"src="'.$OUTPUT->pix_url('i/course').'" />';
+        $o .= '<label class="saas_category_label" for="map_polos['.$cat->id.']" >'.$cat->name.'</label>';
+        $o .= '</td>';
 
         if(count($cat->courses) > 0) {
             $count=0;
+            $depth += 2;
             foreach($cat->courses AS $c) {
                 $count++;
                 $class= $count%2==1 ? 'normalcolor' : 'alternatecolor';
 
-                print html_writer::start_tag('li', array('class'=>$class));
-                print html_writer::tag('div', $c->name, array('class'=>'leftalign'));
+                $o .= '<tr class="category '.$class.'">';
+                $o .= '<td class="saas_category_name">';
+                $o .= '<img class="saas_category_pix" style="padding-left: '.$depth.'%;"src="'.$OUTPUT->pix_url('i/course').'" />';
+                $o .= '<label class="saas_category_label" for="map_polos['.$c->id.']" >'.$c->name.'</label>';
+                $o .= '</td>';
+
                 $poloid = empty($c->polo_id) ? 0 : $c->polo_id;
-                print html_writer::tag('div', html_writer::select($polos, "map_polos[{$c->id}]", $poloid), array('class'=>'rightalign'));
-                print html_writer::end_tag('li');
+                $o .= '<td class="saas_polo_select">';
+                $o .= '<select id="map_polos['.$c->id.']" name="map_polos['.$c->id.']">';
+                $o .= '<option value="0" '.$selected.'>Escolher...</option>';
+                foreach ($polos as $pid => $p) {
+                    if ($poloid == $pid) {
+                        $selected = 'selected="selected"';
+                    } else {
+                        $selected = '';
+                    }
+                    $o .= '<option value="'.$pid.'" '.$selected.'>'.$p.'</option>';
+                }
+                $o .= '</select>';
+                $o .= '</td>';
+                $o .= '</tr>';
             }
         }
 
         if(!empty($cat->subs)) {
-            saas_show_category_tree_map_courses_polos($cat->subs, $polos);
+            $o .= saas_show_category_tree_map_courses_polos($cat->subs, $polos);
         }
 
-        print html_writer::end_tag('ul');
-        print html_writer::end_tag('li');
     }
+    return $o;
 }
 
 function saas_get_category_tree_map_categories_polos() {
@@ -269,8 +289,7 @@ function saas_get_category_tree_map_categories_polos() {
 function saas_show_category_tree_map_categories_polos($categories, &$polos) {
     global $OUTPUT;
     foreach($categories AS $cat) {
-        echo '<tr class="category">';
-
+        $o .= '<tr class="category">';
         $o .= '<td class="saas_category_name">';
         $depth = $cat->depth*2;
         $o .= '<img class="saas_category_pix" style="padding-left: '.$depth.'%;"src="'.$OUTPUT->pix_url('i/course').'" />';

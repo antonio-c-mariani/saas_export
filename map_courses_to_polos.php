@@ -66,12 +66,14 @@ if(empty($categories)) {
     print html_writer::tag('DIV', get_string('polos_title', 'report_saas_export'), array('class'=>'righttitle'));
     print html_writer::end_tag('DIV');
 
+    print html_writer::tag('div', '', array('class'=>'clearfix'));
+
     print html_writer::start_tag('form', array('method'=>'post', 'action'=>'index.php'));
     print html_writer::empty_tag('input', array('type'=>'hidden', 'name'=>'action', 'value'=>'polo_mapping'));
 
-    print html_writer::start_tag('UL');
-    saas_show_category_tree_map_courses_polos($categories, $polos);
-    print html_writer::end_tag('UL');
+    echo '<table id="saas_category_table">';
+    echo saas_show_category_tree_map_courses_polos($categories, $polos);
+    echo '</table>';
 
     print html_writer::empty_tag('input', array('type'=>'submit', 'name'=>'save', 'value'=>s(get_string('save', 'admin'))));
     print html_writer::end_tag('form');
