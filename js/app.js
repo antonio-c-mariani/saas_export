@@ -1,4 +1,5 @@
-$(document).ready(function(){
+jQuery.noConflict();
+jQuery( document ).ready(function( $ ) {
 
     //Recarrega a página ao fechar a Modal (fix this)
     $('.saas-bt-close').click(function() {
@@ -44,6 +45,8 @@ $(document).ready(function(){
     //Controles da Modal da árvore de categorias do Moodle.
     $('.moodle_map_bt').click(function(saas) {
 
+        saas.preventDefault();
+
         //Mostra a modal
         $('#cursos_moodle_modal').modal('show');
 
@@ -86,9 +89,13 @@ $(document).ready(function(){
                 );
             }
         });
+        return false;
     });
 
     $('.saas_map_bt').click(function(saas) {
+
+        saas.preventDefault();
+
         var oc_uid = saas.target.getAttribute('id_da_modal');
         $('#' + oc_uid).modal('show');
         
@@ -103,6 +110,8 @@ $(document).ready(function(){
                 }
             });
         });
+
+        return false;
     });
 
 });
