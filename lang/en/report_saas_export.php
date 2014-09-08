@@ -42,7 +42,7 @@ $string['user_settings'] = 'Configurações de usuários';
 $string['cpf_settings'] = 'Configurações de CPF (opcional)';
 $string['role_settings'] = 'Configurações de papeis/funções';
 
-$string['duplicated_role'] = 'Há papeis selecionados em outro perfil de usuário';
+$string['duplicated_role'] = 'Há papel já selecionado em outro perfil de usuário';
 $string['duplicated_disciplina'] = 'Disciplina já disponível na oferta de curso selecionada';
 $string['no_course_mapping'] = 'Não há cursos Moodle mapeados para ofertas de disciplinas do SAAS';
 $string['no_no_ofertas_disciplinas'] = 'Não há ofertas de disciplinas ativas registradas no SAAS';

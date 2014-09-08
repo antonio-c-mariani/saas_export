@@ -282,12 +282,9 @@ switch ($action) {
     case 'export':
         echo $OUTPUT->header();
         print_tabs(array($tabs), $action);
+
         if(has_capability('report/saas_export:export', $syscontext)) {
-            // $count = $saas->send_users();
-            // $saas->send_users_by_oferta_disciplina();
-            if($polo_mapping != 'no_polo') {
-                $saas->send_users_by_polo();
-            }
+            $saas->send_data();
         } else {
             print_error('no_permission_to_export', 'report_saas_export');
         }

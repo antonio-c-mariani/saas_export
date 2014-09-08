@@ -190,18 +190,17 @@ class saas_export_settings_form extends moodleform {
         $errors = parent::validation($data, $files);
 
         $roles = array();
-        foreach(saas::$role_names AS $r) {
+        foreach(saas::$role_types AS $r=>$rname) {
             $role = 'roles_' . $r;
             if(isset($data[$role])) {
                 foreach($data[$role] AS $roleid) {
-                    if(isset($roles[$roleid])) {
+                    if(!empty($roleid) && isset($roles[$roleid])) {
                         $errors[$role] = get_string('duplicated_role', 'report_saas_export');
                     }
                     $roles[$roleid] = true;
                 }
             }
         }
-
         return $errors;
     }
 }
