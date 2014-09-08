@@ -165,9 +165,6 @@ class saas_export_settings_form extends moodleform {
         $select_student->setSize(3);
         $mform->addHelpButton('roles_student', 'roles_student', 'report_saas_export');
 
-        $mform->addElement('checkbox', 'suspended_as_evaded', get_string('suspended_as_evaded','report_saas_export'), null, $attributes);
-        $mform->addHelpButton('suspended_as_evaded', 'suspended_as_evaded', 'report_saas_export');
-
         $select_tutor_polo =& $mform->addElement('select', 'roles_tutor_polo', get_string('roles_tutor_polo', 'report_saas_export'), $other_roles_menu, $attributes);
         $select_tutor_polo->setMultiple(true);
         $select_tutor_polo->setSize(5);
@@ -177,6 +174,10 @@ class saas_export_settings_form extends moodleform {
         $select_tutor_inst->setMultiple(true);
         $select_tutor_inst->setSize(5);
         $mform->addHelpButton('roles_tutor_inst', 'roles_tutor_inst', 'report_saas_export');
+
+        $mform->addElement('header', 'suspended_settings', get_string('suspended_settings', 'report_saas_export'));
+        $mform->addElement('checkbox', 'suspended_as_evaded', get_string('suspended_as_evaded','report_saas_export'), null, $attributes);
+        $mform->addHelpButton('suspended_as_evaded', 'suspended_as_evaded', 'report_saas_export');
 
         $saas = new saas();
         $this->set_data($saas->config);
