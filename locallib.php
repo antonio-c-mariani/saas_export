@@ -143,7 +143,7 @@ function show_saas_offers($oferta_de_curso_uid, $repeat_allowed = true) {
 
   $modal = "";
   
-  $ofertas_de_disciplinas = $DB->get_records('saas_ofertas_disciplinas', array('oferta_curso_uid'=>$oferta_de_curso_uid));
+  $ofertas_de_disciplinas = saas::get_ofertas_disciplinas($oferta_de_curso_uid);
 
   $modal .= html_writer::start_tag('div', array('style'=>'display:block;', 'id'=>$oferta_de_curso_uid,
                                    'class'=>'lista_de_ofertas'));
@@ -158,7 +158,7 @@ function show_saas_offers($oferta_de_curso_uid, $repeat_allowed = true) {
 }
 
 // ----------------------------------------------------------------------------------------------
-// Rotinas auxiliara para mapeamento de cursos para categoriasA
+// Rotinas auxiliara para mapeamento de cursos para categorias
 
 function saas_get_polos_menu() {
     global $DB;
@@ -209,22 +209,20 @@ function saas_get_category_tree_map_courses_polos() {
 function saas_show_category_tree_map_courses_polos(&$categories, &$polos) {
     foreach($categories AS $cat) {
         print html_writer::start_tag('LI', array('class'=>'category'));
-        print "<label for=\"category{$cat->id}\">$cat->name</label>";
-        print "<input type=\"checkbox\" checked id=\"category{$cat->id}\" />\n";
+        print html_writer::tag('label', $cat->name);
 
-        print html_writer::start_tag('OL');
+        print html_writer::start_tag('UL');
 
         if(count($cat->courses) > 0) {
             $count=0;
             foreach($cat->courses AS $c) {
-
                 $count++;
                 $class= $count%2==1 ? 'normalcolor' : 'alternatecolor';
 
                 print html_writer::start_tag('LI', array('class'=>$class));
-                print html_writer::tag('SPAN', $c->name);
+                print html_writer::tag('DIV', $c->name, array('class'=>'leftalign'));
                 $poloid = empty($c->polo_id) ? 0 : $c->polo_id;
-                print html_writer::select($polos, "map_polos[{$c->id}]", $poloid);
+                print html_writer::tag('DIV', html_writer::select($polos, "map_polos[{$c->id}]", $poloid), array('class'=>'rightalign'));
                 print html_writer::end_tag('LI');
             }
         }
@@ -233,9 +231,8 @@ function saas_show_category_tree_map_courses_polos(&$categories, &$polos) {
             saas_show_category_tree_map_courses_polos($cat->subs, $polos);
         }
 
-        print html_writer::end_tag('OL');
+        print html_writer::end_tag('UL');
         print html_writer::end_tag('LI');
-        print html_writer::tag('LI', ''); // incluido para clear:both
     }
 }
 
@@ -272,23 +269,21 @@ function saas_get_category_tree_map_categories_polos() {
 function saas_show_category_tree_map_categories_polos(&$categories, &$polos) {
     foreach($categories AS $cat) {
         print html_writer::start_tag('LI', array('class'=>'category'));
-        print "<span>";
-        print "<label for=\"category{$cat->id}\">$cat->name</label>";
-        print "<input type=\"checkbox\" checked id=\"category{$cat->id}\" />\n";
-        print "</span>";
+        $lable = html_writer::tag('label', $cat->name);
+        print html_writer::tag('DIV', $lable, array('class'=>'leftalign'));
 
         $poloid = empty($cat->polo_id) ? 0 : $cat->polo_id;
-        print html_writer::select($polos, "map_polos[{$cat->id}]", $poloid);
+        $select = html_writer::select($polos, "map_polos[{$cat->id}]", $poloid);
+        print html_writer::tag('DIV', $select, array('class'=>'rightalign'));
 
-        print html_writer::start_tag('OL');
+        print html_writer::start_tag('UL');
 
         if(!empty($cat->subs)) {
             saas_show_category_tree_map_categories_polos($cat->subs, $polos);
         }
 
-        print html_writer::end_tag('OL');
+        print html_writer::end_tag('UL');
         print html_writer::end_tag('LI');
-        print html_writer::tag('LI', ''); // incluido para clear:both
     }
 }
 ?>

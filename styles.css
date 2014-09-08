@@ -1,5 +1,10 @@
+.saas_table {
+    width: 80%;
+}
+
 .saas_export_message {color: green;}
 .saas_export_warning {color: darkblue; font-weight: bold;}
+.saas_export_error {color: red;}
 
 .leftalign {text-align: left;}
 .rightalign {text-align: right;}
@@ -8,63 +13,52 @@
 
 .centerimg {display: block; margin-left: 20%; margin-right: auto;}
 
-/* CSS Tree menu styles */
-
-.category_tree {
+.saas_category_tree {
+    width: 90%;
     margin-left: auto;
     margin-right: auto;
-    width: 80%;
+    background-color: Lavender;
 }
-.category_tree ol.tree {
-	padding: 0 0 0 30px;
-	width: 90%;
+
+.saas_category_tree .lefttitle {
+    font-size: medium;
+    float: left;
+    margin-left: 10%;
+    margin-right: auto;
 }
-.category_tree li {
-    position: relative;
-    margin-left: -20px;
-    list-style: none;
+
+.saas_category_tree .righttitle {
+    font-size: medium;
+    float: right;
+    margin-left: auto;
+    margin-right: 10%;
+}
+
+.saas_category_tree LI {
     clear: both;
+    height: 2em;
 }
-.category_tree li.course {
-    margin-left: -1px !important;
-}
-.category_tree li input {
-    position: absolute;
-    left: 0;
-    margin-left: 0;
-    opacity: 0;
-    z-index: 2;
-    cursor: pointer;
-    height: 1.0em;
-    width: 1em;
-    top: 0;
-}
-.category_tree li input + ol {
-    background: url("../report/saas_export/img/toggle-small-expand.png") 40px 0 no-repeat;
-    margin: -0.938em 0 0 -44px; /* 15px */
-    height: 1em;
-}
-.category_tree li input + ol > li { display: none; margin-left: -14px !important; padding-left: 1px; }
-.category_tree li label {
-    background: url("../report/saas_export/img/folder-horizontal.png") 15px 1px no-repeat;
-    cursor: pointer;
-    display: block;
-    padding-left: 37px;
-}
-.category_tree li input:checked + ol {
-    background: url("../report/saas_export/img/toggle-small.png") 40px 5px no-repeat;
-    margin: -1.25em 0 0 -44px; /* 20px */
-    padding: 1.563em 0 0 80px;
-    height: auto;
-}
-.category_tree li input:checked + ol > li { display: block; margin: 0 0 0.125em;  /* 2px */}
-.category_tree li input:checked + ol > li:last-child { margin: 0 0 0.063em; /* 1px */ }
 
-.category_tree li span {float: left; margin-left: 5px; margin-right: auto;}
-.category_tree li select {float: right; margin-left: auto;}
+.saas_category_tree LI.category {
+    list-style-image: url('../pix/i/course.png');
+}
 
-.category_tree li.normalcolor {background-color: #E8E8E8;}
-.category_tree li.alternatecolor {background-color:#D4D4D4;}
+.saas_category_tree .normalcolor {
+    background-color: #D0D0D0;
+}
 
-.category_tree .titleleft {font-size: 1.3em; float: left; margin-left: 10%; margin-right: auto;}
-.category_tree .titleright {font-size: 1.3em; float: right; margin-left: auto; margin-right: 10%;}
+.saas_category_tree .alternatecolor {
+    background-color: #E8E8E8;
+}
+
+.saas_category_tree .leftalign {
+    float: left;
+    margin-left: 0px;
+    margin-right: auto;
+}
+
+.saas_category_tree .rightalign {
+    float: right;
+    margin-left: auto;
+    margin-right: 0px;
+}

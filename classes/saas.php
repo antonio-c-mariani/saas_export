@@ -209,27 +209,42 @@ class saas {
         return $DB->get_records('saas_ofertas_cursos', array('enable'=>1), 'nome, ano, periodo');
     }
 
-    function get_oferta_disciplina($odid = 0) {
+    function get_oferta_disciplina($oferta_disciplina_id = 0) {
         global $DB;
 
+        if(empty($oferta_disciplina_id)) {
+            $where = '';
+            $params = array();
+        } else {
+            $where = 'AND od.id = :odid';
+            $params = array('odid' => $oferta_disciplina_id);
+        }
         $sql = "SELECT od.*, d.nome
                   FROM {saas_ofertas_disciplinas} od
                   JOIN {saas_disciplinas} d ON (d.uid = od.disciplina_uid)
                  WHERE od.enable = 1
                    AND d.enable = 1
-                   AND od.id = :odid";
-        return $DB->get_record_sql($sql, array('odid'=>$odid));
+                   {$where}";
+        return $DB->get_record_sql($sql, $params);
     }
 
-    function get_ofertas_disciplinas_salvas() {
+    static function get_ofertas_disciplinas($oferta_de_curso_uid='') {
         global $DB;
 
+        if(empty($oferta_de_curso_uid)) {
+            $where = '';
+            $params = array();
+        } else {
+            $where = 'AND oferta_curso_uid = :oferta_curso_uid';
+            $params = array('oferta_curso_uid' => $oferta_de_curso_uid);
+        }
         $sql = "SELECT od.*, d.nome
                   FROM {saas_ofertas_disciplinas} od
                   JOIN {saas_disciplinas} d ON (d.uid = od.disciplina_uid)
                  WHERE od.enable = 1
-                   AND d.enable = 1";
-        return $DB->get_records_sql($sql);
+                   AND d.enable = 1
+                   {$where}";
+        return $DB->get_records_sql($sql, $params);
     }
 
     function get_mapeamento_cursos() {
@@ -274,6 +289,7 @@ class saas {
         $table->head = array(get_string('nome_polo', 'report_saas_export'),
                              get_string('cidade', 'report_saas_export'),
                              get_string('estado', 'report_saas_export'));
+        $table->attributes = array('class'=>'saas_table');
         $table->data = array();
         foreach($polos as $pl) {
             $table->data[] = array($pl->nome, $pl->cidade, $pl->estado);
@@ -289,30 +305,27 @@ class saas {
                   JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1)
                   JOIN {saas_map_course} cm ON (cm.oferta_disciplina_id = od.id)
                   JOIN {course} c ON (c.id = cm.courseid)
-                  JOIN {saas_map_catcourses_polos} smcp ON (smcp.type = 'courses' AND smcp.instanceid = c.id)
+                  JOIN {saas_map_catcourses_polos} smcp ON (smcp.type = 'course' AND smcp.instanceid = c.id)
                   JOIN {saas_polos} sp ON (sp.id = smcp.polo_id AND sp.enable = 1)
                  WHERE oc.enable = 1
               ORDER BY oc.id, sp.nome";
         $this->show_table_overview_polos($sql);
 
         if($ocid && $poloid) {
-            list($sql, $params) = $this->get_sql_users_by_oferta_curso_polo_categories($ocid, $poloid, false);
+            list($sql, $params) = $this->get_sql_users_by_oferta_curso_polo_courses($ocid, $poloid, false);
             $this->show_users_oferta_curso_polo($ocid, $poloid, $sql, $params);
         }
     }
 
     function show_overview_categories_polos($ocid, $poloid) {
-        // todo: faltam as subcategorias
         $sql = "SELECT DISTINCT oc.id AS oc_id, sp.*
                   FROM {saas_ofertas_cursos} oc
                   JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1)
                   JOIN {saas_map_course} cm ON (cm.oferta_disciplina_id = od.id)
                   JOIN {course} c ON (c.id = cm.courseid)
-
                   JOIN {course_categories} cc ON (cc.id = c.category)
-                  -- JOIN {course_categories} cc ON (cc.id = c.category)
-                  JOIN {saas_map_catcourses_polos} smcp ON (smcp.type = 'category' AND smcp.instanceid = cc.id)
-
+                  JOIN {course_categories} ccp ON (ccp.id = cc.id OR cc.path LIKE CONCAT('%/',ccp.id,'/%'))
+                  JOIN {saas_map_catcourses_polos} smcp ON (smcp.type = 'category' AND smcp.instanceid = ccp.id)
                   JOIN {saas_polos} sp ON (sp.id = smcp.polo_id AND sp.enable = 1)
                  WHERE oc.enable = 1
               ORDER BY oc.id, sp.nome";
@@ -429,6 +442,7 @@ class saas {
             $table->head[] = get_string($r, 'report_saas_export');
         }
 
+        $table->attributes = array('class'=>'saas_table');
         $table->data = $data;
         print html_writer::table($table);
 
@@ -444,11 +458,11 @@ class saas {
 
         print html_writer::start_tag('DIV', array('align'=>'center'));
 
-        $rs = $DB->get_recordset_sql($sql, $params);
         $data = array();
         foreach(self::$role_names_polos AS $role) {
             $data[$role] = array();
         }
+        $rs = $DB->get_recordset_sql($sql, $params);
         foreach($rs AS $rec) {
             $user = $this->get_user($rec->role, $rec->userid, $rec->uid);
             $data[$rec->role][] = array((count($data[$rec->role])+1) . '.', $user->uid, $user->nome, $user->email, $user->cpf);
@@ -461,6 +475,7 @@ class saas {
 
                 $table = new html_table();
                 $table->head = array('', get_string('username', 'report_saas_export'), get_string('name'), get_string('email'), get_string('cpf', 'report_saas_export'));
+                $table->attributes = array('class'=>'saas_table');
                 $table->data = $data[$role];
                 print html_writer::table($table);
                 print $OUTPUT->box_end();
@@ -544,13 +559,10 @@ class saas {
                   JOIN {saas_config_roles} scr ON (scr.roleid = ra.roleid AND scr.role IN ('student', 'tutor_polo'))
                   JOIN {user} u ON (u.id = ue.userid AND u.deleted = 0 AND u.suspended = 0)
                   {$join_user_info_data}
-
                   JOIN {course_categories} cc ON (cc.id = c.category)
-                  -- JOIN {course_categories} cc ON (cc.id = c.category)
-                  JOIN {saas_map_catcourses_polos} smcp ON (smcp.type = 'category' AND smcp.instanceid = cc.id)
-
-                  JOIN {saas_map_groups_polos} spm ON (spm.polo_id = smcp.polo_id)
-                  JOIN {saas_polos} sp ON (sp.id = spm.polo_id AND sp.enable = 1)
+                  JOIN {course_categories} ccp ON (ccp.id = cc.id OR cc.path LIKE CONCAT('%/',ccp.id,'/%'))
+                  JOIN {saas_map_catcourses_polos} smcp ON (smcp.type = 'category' AND smcp.instanceid = ccp.id)
+                  JOIN {saas_polos} sp ON (sp.id = smcp.polo_id AND sp.enable = 1)
                  WHERE oc.enable = 1
                    {$condition}
               {$group_by}
@@ -610,8 +622,7 @@ class saas {
                   JOIN {user} u ON (u.id = ue.userid AND u.deleted = 0 AND u.suspended = 0)
                   {$join_user_info_data}
                   JOIN {saas_map_catcourses_polos} smcp ON (smcp.type = 'course' AND smcp.instanceid = c.id)
-                  JOIN {saas_map_groups_polos} spm ON (spm.polo_id = smcp.polo_id)
-                  JOIN {saas_polos} sp ON (sp.id = spm.polo_id AND sp.enable = 1)
+                  JOIN {saas_polos} sp ON (sp.id = smcp.polo_id AND sp.enable = 1)
                  WHERE oc.enable = 1
                    {$condition}
               {$group_by}
@@ -823,6 +834,7 @@ class saas {
                     $table->colclasses[] = 'centeralign';
                     $table->colclasses[] = 'rightalign';
                 }
+                $table->attributes = array('class'=>'saas_table');
                 $table->data = $data[$role];
                 print html_writer::table($table);
                 print $OUTPUT->box_end();
@@ -847,8 +859,12 @@ class saas {
             case 'lastname': $user->nome = $dbuser->lastname; break;
             default: $user->nome = $dbuser->firstname . ' ' . $dbuser->lastname;
         }
-        if($name_regexp =  $this->get_config('name_regexp')) {
-            // todo: tratar expressão regular
+        $name_regexp =  $this->get_config('name_regexp');
+        if(!empty($name_regexp)) {
+            if(preg_match($name_regexp, $user->nome, $matches)) {
+                unset($matches[0]);
+                $user->nome = implode('', $matches);
+            }
         }
 
         $cpf_field = $this->get_config('cpf_field_' . $role);
@@ -1022,6 +1038,7 @@ class saas {
                 $table->head[] = get_string($r, 'report_saas_export');
             }
         }
+        $table->attributes = array('class'=>'saas_table');
         $table->data = $data;
         print html_writer::table($table);
         print html_writer::end_tag('DIV');
@@ -1184,7 +1201,7 @@ class saas {
     function send_users_by_oferta_disciplina() {
         global $DB;
 
-        $ofertas = $this->get_ofertas_disciplinas_salvas();
+        $ofertas = $this->get_ofertas_disciplinas();
 
         list($sql, $params) = $this->get_sql_users_by_oferta_disciplina();
         $rs = $DB->get_recordset_sql($sql, $params);

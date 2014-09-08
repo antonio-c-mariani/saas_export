@@ -61,21 +61,27 @@ $string['category_to_polo'] = 'Os polos são identificados por categorias no Moo
 $string['course_to_polo'] = 'Os polos são identificados por cursos no Moodle';
 $string['title_no_polo'] = 'A configuração atual indica que não há no Moodle forma de agrupar estudantes por polo';
 
-$string['group_to_polo_msg1'] = 'Estão listados abaixo todos os grupos existentes nos cursos Moodle que foram mapeados na aba \'Mapeamento de disciplinas\'.
-   Estes grupos podem, agora, ser mapeados para polos registrados no SAAS, sendo possível mapear mais de um grupo para o mesmo polo.
-   Os grupos não mapeados são ignorados pois considera-se que eles não correspondem a polos.';
-$string['group_to_polo_msg2'] = 'Os estudantes e tutores pertencentes aos grupos mapeados serão associados aos polos correspondentes no SAAS.
-   Por sua vez, os polos serão associados às ofertas de curso em função do mapeamento dos cursos Moodle para as ofertas de disciplinas (ver aba \'Mapeamento de disciplinas\')';
+$string['group_to_polo_msg1'] = 'Estão listados abaixo (à esquerda) os grupos existentes nos cursos Moodle que
+    foram mapeados na aba \'Mapeamento de disciplinas\'.
+    A cada grupo pode ser associado um polo do SAAS, fato que indica que neste grupo estão inscritos apenas
+    estudantes e tutores deste polo.';
+$string['group_to_polo_msg2'] = 'Este mapeamento define a relação de estudantes e tutores com seus respectivos polos a serem
+    exportados para o SAAS, conforme descrito no \'Cenário A\' da aba de orientações.';
 
-$string['category_to_polo_msg1'] = 'Estão listados abaixo os polos registrados no SAAS. A cada polo podem ser associadas uma ou mais categorias do Moodle,
-   fato que indica que nos cursos Moodle que estejam nestas categorias (ou em suas sub-categorias) estão inscritos apenas estudantes e tutores desse polo.';
-$string['category_to_polo_msg2'] = 'Os estudantes e tutores inscritos em cursos Moodle que tenham sido mapeados na aba \'Mapeamento de disciplinas\' serão associados aos polos do SAAS
-   correspondentes à categoria na qual esteja esse curso Moodle, na oferta de curso do SAAS identificada no mapeamento realizado na aba supra citada.';
+$string['category_to_polo_msg1'] = 'É apresentada abaixo (à esquerda) a hierarquia de categorias do Moodle para as quais
+    há algum curso que tenha sido mapeado na aba \'Mapeamento de disciplinas\'.
+    A cada categoria (uma por ramo da hierarquia) pode ser associado um polo do SAAS, fato que indica que nos cursos Moodle
+    que estejam nesta categoria (ou em suas sub-categorias) estão inscritos apenas estudantes e tutores desse polo.';
+$string['category_to_polo_msg2'] = 'Este mapeamento define a relação de estudantes e tutores com seus respectivos polos a serem
+    exportados para o SAAS, conforme descrito no \'Cenário B\' da aba de orientações.';
 
-$string['course_to_polo_msg1'] = 'Estão listados abaixo os polos registrados no SAAS. A cada polo podem ser associadas um ou mais cursos do Moodle,
-   fato que indica que nos cursos mapeados estão inscritos apenas estudantes e tutores desse polo.';
-$string['course_to_polo_msg2'] = 'Os estudantes e tutores inscritos em cursos Moodle que tenham sido mapeados na aba \'Mapeamento de disciplinas\' serão associados aos polos do SAAS
-   correspondentes aos cursos Moodle, na oferta de curso do SAAS identificada no mapeamento realizado na aba supra citada.';
+$string['course_to_polo_msg1'] = 'É apresentada abaixo (à esquerda) a hierarquia de categorias e cursos do Moodle para as quais
+    haja algum curso que tenha sido mapeado na aba \'Mapeamento de disciplinas\'.
+    A cada um dos curso listados pode ser associado um polo do SAAS, fato que indica que neste curso Moodle estão inscritos apenas
+    estudantes e tutores desse polo.';
+$string['course_to_polo_msg2'] = 'Este mapeamento define a relação de estudantes e tutores com seus respectivos polos a serem
+    exportados para o SAAS, conforme descrito no \'Cenário C\' da aba de orientações.';
+
 //------------------------------------------------------------------
 
 $string['student'] = 'Estudante';

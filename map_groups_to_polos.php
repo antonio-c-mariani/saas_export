@@ -66,17 +66,20 @@ foreach($map AS $groupname=>$m) {
     $data[] = array($m->groupname, $select);
 }
 
-echo html_writer::start_tag('form', array('method'=>'post', 'action'=>'index.php'));
-echo html_writer::empty_tag('input', array('type'=>'hidden', 'name'=>'action', 'value'=>'polo_mapping'));
+print html_writer::start_tag('form', array('method'=>'post', 'action'=>'index.php'));
+print html_writer::empty_tag('input', array('type'=>'hidden', 'name'=>'action', 'value'=>'polo_mapping'));
 
 $table = new html_table();
 $table->head  = array(get_string('moodle_group', 'report_saas_export'), get_string('polo_saas', 'report_saas_export'));
+$table->attributes = array('class'=>'saas_table');
+$table->colclasses = array('leftalign', 'leftalign');
+$table->size = array('60%', '40%');
 $table->data = $data;
-echo html_writer::table($table);
+print html_writer::table($table);
 
 if($may_export) {
-    echo html_writer::empty_tag('input', array('type'=>'submit', 'name'=>'save', 'value'=>s(get_string('save', 'admin'))));
+    print html_writer::empty_tag('input', array('type'=>'submit', 'name'=>'save', 'value'=>s(get_string('save', 'admin'))));
 }
-echo html_writer::end_tag('form');
+print html_writer::end_tag('form');
 
 print html_writer::end_tag('DIV');

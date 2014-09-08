@@ -28,7 +28,7 @@
   if ($saas->config->course_mapping == 'one_to_many') {
     $modais = "";
 
-    $ofertas_de_disciplina = $saas->get_ofertas_disciplinas_salvas();
+    $ofertas_de_disciplina = $saas->get_ofertas_disciplinas();
     
     $cursos_moodle_com_ofertas = array();
 
@@ -50,10 +50,10 @@
         
         //Para cada curso Moodle já mapeado, busca todas as ofertas de disciplina do SAAS que mapeiam para ele.    
         foreach ($cursos_mapeados as $cm) {
-            $sql_od = "SELECT *
+            $sql_od = "SELECT od.*,  map.*, dis.nome
                          FROM {saas_ofertas_disciplinas} as od
-                         JOIN {saas_map_course} map
-                           ON (od.id = map.oferta_disciplina_id 
+                         JOIN {saas_disciplinas} dis ON (dis.uid = od.disciplina_uid)
+                         JOIN {saas_map_course} map ON (od.id = map.oferta_disciplina_id
                           AND map.courseid = :map_courseid)
                         WHERE od.enable = 1";
 
@@ -129,7 +129,7 @@
 
   //Mapeamento de uma oferta do SAAS para 1 ou mais cursos Moodle.
   } else {
-    $ofertas_de_disciplina = $saas->get_ofertas_disciplinas_salvas();
+    $ofertas_de_disciplina = $saas->get_ofertas_disciplinas();
 
     $ofertas_mapeadas_com_cursos = array();
 
