@@ -1,51 +1,50 @@
-<P>Este módulo possibilita a exportação de dados do Moodle para o SAAS (Sistema de Acompanhamento e Avaliação dos Cursos da Rede e-Tec Brasil).
-    Os dados exportados incluem:
+<p>Este módulo possibilita a exportação de dados do Moodle para o SAAS (Sistema de Acompanhamento e Avaliação dos Cursos da Rede e-Tec Brasil).
+    Os dados exportados incluem:</p>
 <UL>
 <LI>Identificador, nome, email e CPF de professores, estudantes e tutores vinculados às ofertas de disciplinas;</LI>
 <LI>Relacionamento de professores, estudantes e tutores a distância com ofertas as de disciplinas;</LI>
 <LI>Relacionamento de estudantes e tutores presenciais (polos) com os polos.</LI>
 </UL>
-</P>
 
-<P>Como há diversas formas (pedagógicas e técnicas) de estruturar as ofertas de cursos, de disciplinas e polos no Moodle, é necessário definir um mapeamento
-entre as entidades do Moodle (categorias, cursos e polos) para as entidades do SAAS (ofertas de disciplinas, ofertas de cursos e polos) de forma a ser possível
-a exportação dos dados mencionados acima do Moodle para o SAAS. Para tal, são apresentados abaixo cenários de uso deste mapeamento.</P>
+<p>Como há diversas formas (pedagógicas e técnicas) de estruturar as ofertas de cursos, de disciplinas e polos no Moodle, é necessário definir um mapeamento
+entre as entidades do Moodle (categorias, cursos e grupos) para as entidades do SAAS (ofertas de disciplinas, ofertas de cursos e polos) de forma a ser possível
+a exportação dos dados mencionados acima do Moodle para o SAAS. Para tal, são apresentados abaixo cenários de uso deste mapeamento.</p>
 
-<HR>
-<H1 class="centeralign">Cenários relativos ao mapeamento de cursos Moodle para ofertas de disciplinas do SAAS</H1>
+<hr>
+<h1 class="centeralign">Cenários relativos ao mapeamento de cursos Moodle para ofertas de disciplinas do SAAS</h1>
 
 <div>
-<H2>Cenário 1: um curso Moodle para cada oferta de disciplina</H2>
-<P>Neste cenário, há uma relação de um para um entre cursos Moodle e ofertas de disciplinas, ou seja, cada curso Moodle corresponde a uma e somente uma oferta disciplina.
-Desta forma, quando forem exporados os dados do Moodle para o SAAS, os professores, tutores a distância e estudantes inscritos num curso Moodle
-serão automaticamente associados à correspondente oferta de disciplina do SAAS.</P>
+<h2>Cenário 1: um curso Moodle para cada oferta de disciplina</h2>
+<p>Neste cenário, há uma relação de um para um entre cursos Moodle e ofertas de disciplinas, ou seja, cada curso Moodle corresponde a uma e somente uma oferta de disciplina.
+Desta forma, quando forem exportados os dados do Moodle para o SAAS, os professores, tutores a distância e estudantes inscritos num curso Moodle
+serão automaticamente associados à correspondente oferta de disciplina do SAAS.</p>
 <img src="img/disciplinas_cenario1.png" class="centerimg"/>
 </div>
 
 <div>
-<H2>Cenário 2: um curso Moodle comporta mais de uma oferta de disciplina</H2>
-<P>Neste cenário um curso Moodle comporta mais de uma ofertas de disciplinas, estando os conteúdos distribuídos em tópico, seções etc.
-Assim, quando forem exporados os dados do Moodle para o SAAS, os professores, tutores a distância e estudantes inscritos num curso Moodle
-serão automaticamente associados (replicados) a todas as ofertas de disciplina do SAAS às quais ele estiver relacionado.</P>
+<h2>Cenário 2: um curso Moodle para mais de uma oferta de disciplina</h2>
+<p>Neste cenário um curso Moodle comporta mais de uma oferta de disciplina, estando os conteúdos distribuídos em tópicos, seções etc.
+Assim, quando forem exportados os dados do Moodle para o SAAS, os professores, tutores a distância e estudantes inscritos num curso Moodle
+serão automaticamente associados (replicados) a todas as ofertas de disciplina do SAAS às quais o curso Moodle estiver relacionado.</p>
 <img src="img/disciplinas_cenario2.png" class="centerimg"/>
 </div>
 
 
 <div>
-<H2>Cenário 3: mais de um curso Moodle para cada oferta de disciplina</H2>
-<P>Neste cenário pode haver mais de um curso Moodle associado a uma mesma oferta de disciplina, ou seja,
+<h2>Cenário 3: mais de um curso Moodle para uma oferta de disciplina</h2>
+<p>Neste cenário pode haver mais de um curso Moodle associado a uma mesma oferta de disciplina, ou seja,
 pode haver diversas versões ou cópias da mesma disciplina no Moodle, como, por exemplo, uma para cada polo.
 Quando forem exportados os dados do Moodle para o SAAS, os professores, tutores a distância e estudantes que serão associados a uma oferta de disciplina do SAAS correspondem
-a uma união de conjuntos (para cada papel) entre as pessoas inscritas nos cursos Moodle que estiverem mapeados para esta oferta de disciplina.</P>
+a uma união de conjuntos (para cada papel) entre as pessoas inscritas nos cursos Moodle que estiverem mapeados para esta oferta de disciplina.</p>
 <img src="img/disciplinas_cenario3.png" class="centerimg"/>
 </div>
 
 <HR>
-<H1 class="centeralign">Cenários relativos ao mapeamento de polos do SAAS</H1>
+<h1 class="centeralign">Cenários relativos ao mapeamento de polos do SAAS</h1>
 
 <div>
-<H2>Cenário A: são utilizados grupos no Moodle para representar polos</H2>
-<P>Este cenário considera que tutores presenciais (de polo) e estudantes encontram-se agrupados no Moodle, ou seja,
+<h2>Cenário A: são utilizados grupos no Moodle para representar polos</h2>
+<p>Este cenário considera que tutores presenciais (de polo) e estudantes encontram-se agrupados no Moodle, ou seja,
 que haja grupos no contexto de um curso Moodle correspondentes aos polos registrados no SAAS (note que é possível mapear mais um grupo do Moodle
 para um mesmo polo do SAAS). O resultado é que quando forem exportados os dados, os tutores presenciais (de polo) e os estudantes pertencentes a um grupo
 serão automaticamente associados ao correspondente polo no SAAS. Por sua vez, no SAAS os polos são automaticamente associado às ofertas de curso em função do
@@ -53,28 +52,28 @@ mapeamento entre cursos Moodle e ofertas de disciplina descrito nos cenários 1,
 
 <img src="img/polos_cenarioA.png" class="centerimg"/>
 
-<P>O mapeamento de grupos para polos é feito com base no nome do grupo, não importando o curso onde o grupo esteja inserido ou a oferta de curso ao qual o polo esteja vinculado.
+<p>O mapeamento de grupos para polos é feito com base no nome do grupo, não importando o curso onde o grupo esteja inserido ou a oferta de curso ao qual o polo esteja vinculado.
 Este mapeamento é feito uma única vez, passando a ser reconhecido em todos os cursos Moodle que tenham sido mapeados conforme descrito acima. É importante, portanto, que não
-sejam utilizados nomes idênticos de grupos no Moodle que representem polos distintos.</P>
+sejam utilizados nomes idênticos de grupos no Moodle que representem polos distintos.</p>
 </div>
 
 <div>
-<H2>Cenário B: os polos são mapeados para categorias no Moodle</H2>
-<P>Neste cenário em cada curso Moodle estão inscritos tutores presenciais (de polo) e estudantes de um único polo, sendo utilizadas categorias no Moodle para reunir cursos Moodle ofertados em um mesmo polo.
-Ou seja, em cada categoria há cursos Moodle correspondentes às ofertas de disciplinas de um polo em particular. Note que é possível mapear mais de uma categoria para um mesmo polo.</P>
+<h2>Cenário B: são utilizadas categorias no Moodle para representar polos</h2>
+<p>Neste cenário, em cada curso Moodle estão inscritos tutores presenciais (de polo) e estudantes de um único polo, sendo utilizadas categorias no Moodle para reunir cursos Moodle ofertados em um mesmo polo.
+Ou seja, em cada categoria há cursos Moodle correspondentes às ofertas de disciplinas de um polo em particular. Note que é possível mapear mais de uma categoria para um mesmo polo.</p>
 
-<P>Quando forem exportados os dados do Moodle para o SAAS, o conjunto de tutores presenciais (de polo) e estudantes que serão associados a um polo corresponde à união de conjuntos (por papel)
-dentre os inscritos nos cursos Moodle pertentencentes a uma categoria, sendo considerados apenas os cursos Moodle que tenham sido mapeados (ver cenários 1, 2 e 3).</P>
+<p>Quando forem exportados os dados do Moodle para o SAAS, o conjunto de tutores presenciais (de polo) e estudantes que serão associados a um polo corresponde à união de conjuntos (por papel)
+dentre os inscritos nos cursos Moodle pertentencentes a uma categoria, sendo considerados apenas os cursos Moodle que tenham sido mapeados (ver cenários 1, 2 e 3).</p>
 
-<P>A exemplo do descrito no cenário A, no SAAS os polos são automaticamente associado às ofertas de curso em função do mapeamento entre cursos Moodle e ofertas de disciplina (ver cenários 1, 2 e 3).<p>
+<p>A exemplo do descrito no cenário A, no SAAS os polos são automaticamente associado às ofertas de curso em função do mapeamento entre cursos Moodle e ofertas de disciplina (ver cenários 1, 2 e 3).<p>
 <img src="img/polos_cenarioB.png" class="centerimg"/>
 </div>
 
 <div>
-<H2>Cenário C: os polos correspondem a cursos no Moodle</H2>
-<P>Neste cenário em cada curso Moodle estão inscritos tutores presenciais (de polo) e estudantes de um único polo. Este cenário é muito similar ao cenário B, mas considera
+<h2>Cenário C: são utilizados cursos no Moodle para representar polos</h2>
+<p>Neste cenário, em cada curso Moodle estão inscritos tutores presenciais (de polo) e estudantes de um único polo. Este cenário é muito similar ao Cenário B, mas considera
 que os cursos Moodle não estejam agrupados em categorias. Assim, é necessário relizar mapeamento individual curso a curso Moodle para o polo correspondente.
-Quanto à exportação de dados, o comportamento é o mesmo daquele descrito no cenário B.</P>
+Quanto à exportação de dados, o comportamento é o mesmo daquele descrito no cenário B.</p>
 <img src="img/polos_cenarioC.png" class="centerimg"/>
 </div>
-<HR>
+<hr>
