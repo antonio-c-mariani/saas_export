@@ -209,6 +209,7 @@ function saas_get_category_tree_map_courses_polos() {
 function saas_show_category_tree_map_courses_polos(&$categories, &$polos) {
     global $OUTPUT;
 
+    $o = '';
     foreach($categories AS $cat) {
         $o .= '<tr class="category">';
         $o .= '<td class="saas_category_name">';
@@ -233,13 +234,11 @@ function saas_show_category_tree_map_courses_polos(&$categories, &$polos) {
                 $poloid = empty($c->polo_id) ? 0 : $c->polo_id;
                 $o .= '<td class="saas_polo_select">';
                 $o .= '<select id="map_polos['.$c->id.']" name="map_polos['.$c->id.']">';
+
+                $selected = $poloid == 0 ? 'selected="selected"' : '';
                 $o .= '<option value="0" '.$selected.'>Escolher...</option>';
                 foreach ($polos as $pid => $p) {
-                    if ($poloid == $pid) {
-                        $selected = 'selected="selected"';
-                    } else {
-                        $selected = '';
-                    }
+                    $selected = $poloid == $pid ? 'selected="selected"' : '';
                     $o .= '<option value="'.$pid.'" '.$selected.'>'.$p.'</option>';
                 }
                 $o .= '</select>';
@@ -288,6 +287,8 @@ function saas_get_category_tree_map_categories_polos() {
 
 function saas_show_category_tree_map_categories_polos($categories, &$polos) {
     global $OUTPUT;
+
+    $o = '';
     foreach($categories AS $cat) {
         $o .= '<tr class="category">';
         $o .= '<td class="saas_category_name">';
@@ -299,13 +300,11 @@ function saas_show_category_tree_map_categories_polos($categories, &$polos) {
         $poloid = empty($cat->polo_id) ? 0 : $cat->polo_id;
         $o .= '<td class="saas_polo_select">';
         $o .= '<select id="map_polos['.$cat->id.']" name="map_polos['.$cat->id.']">';
+
+        $selected = $poloid == 0 ? 'selected="selected"' : '';
         $o .= '<option value="0" '.$selected.'>Escolher...</option>';
         foreach ($polos as $pid => $p) {
-            if ($poloid == $pid) {
-                $selected = 'selected="selected"';
-            } else {
-                $selected = '';
-            }
+            $selected = $poloid == $pid ? 'selected="selected"' : '';
             $o .= '<option value="'.$pid.'" '.$selected.'>'.$p.'</option>';
         }
         $o .= '</select>';
