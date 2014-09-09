@@ -1,4 +1,5 @@
 <?php
+
 /**
  * RESTful cURL class
  *
@@ -23,6 +24,9 @@
  * @copyright  Dongsheng Cai {@see http://dongsheng.org}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU Public License
  */
+
+namespace report_saas_export;
+
 class response {
     public $headers = array();
     public $status_code;
@@ -68,7 +72,7 @@ class curl {
      */
     public function __construct($options = array()) {
         if (!function_exists('curl_init')) {
-            throw new Exception('cURL module must be enabled!');
+            throw new \Exception('cURL module must be enabled!');
         }
         // the options of curl should be init here.
         $this->initialize_default_options();
@@ -84,7 +88,7 @@ class curl {
         }
         if (!empty($options['cache'])) {
             if (class_exists('curl_cache')) {
-                $this->cache = new curl_cache();
+                $this->cache = new \report_saas_export\curl_cache();
             }
         }
     }
@@ -359,10 +363,10 @@ class curl {
 
         curl_close($curl);
 
-        $response = new response($this->info['http_code'], $this->response_headers, $httpbody);
+        $response = new \report_saas_export\response($this->info['http_code'], $this->response_headers, $httpbody);
 
         if (!empty($this->error)) {
-            throw new Exception($this->error);
+            throw new \Exception($this->error);
         }
         return $response;
     }
@@ -495,6 +499,25 @@ class curl {
         $ret = $this->request($url, $options);
         fclose($fp);
         return $ret;
+    }
+
+    /**
+     * HTTP PUT method
+     *
+     * @param string $url
+     * @param array $params
+     * @param array $options
+     * @return bool
+     */
+    public function put_json($url, $json, $options = array()) {
+        $options['CURLOPT_HTTPHEADER']    = array('Content-Type: application/json', 'Content-Length: ' . strlen($json));
+        $options['CURLOPT_CUSTOMREQUEST'] = "PUT";
+        $options['CURLOPT_POSTFIELDS']    = $json;
+
+        if (!isset($this->options['CURLOPT_USERPWD'])){
+            $this->set_options(array('CURLOPT_USERPWD'=>'anonymous: noreply@moodle.org'));
+        }
+        return $this->request($url, $options);
     }
 
     /**
