@@ -1190,7 +1190,7 @@ class saas {
     }
 
     //envia os usuários com os seus devidos papéis em cada oferta de disciplina.
-    function send_users_by_oferta_disciplina() {
+    function send_users_by_ofertas_disciplinas() {
         global $DB;
 
         $ofertas = $this->get_ofertas_disciplinas();
@@ -1202,57 +1202,60 @@ class saas {
         $users_by_roles = array();
         $errors = 0;
         foreach($rs AS $rec) {
-                /*
-                  public 'od_id' => string '1' (length=1)
-                  public 'role' => string 'student' (length=7)
-                  public 'userid' => string '332' (length=3)
-                  public 'uid' => string '07407008' (length=8)
-                  public 'suspended' => string '0' (length=1)
-                  public 'currentlogin' => string '1404432620' (length=10)
-                  public 'lastaccess' => string '1402676191' (length=10)
-                */
-
             $this->send_user($rec);
 
             if($rec->od_id != $odid) {
                 if($odid !== 0) {
-                    foreach($users_by_roles AS $r=>$users) {
-                        try {
-                            $this->put_ws('ofertas/disciplinas/' . $ofertas[$odid]->uid .'/'. self::$role_types[$r], $users);
-                        } catch(Exception $e) {
-                            $errors++;
-                        }
-                    }
-                    unset($ofertas[$odid]);
+                    $errors += $this->send_users_by_oferta_disciplina($ofertas[$odid], $users_by_roles, $lastaccess);
                 }
                 foreach($role_types AS $r) {
                     $users_by_roles[$r] = array();
                 }
+                $lastaccess = array();
                 $odid = $rec->od_id;
             }
-            $users_by_roles[$rec->role][] = $rec->uid;
+
+            $users_by_roles[$rec->role][$rec->userid] = $rec->uid;
+            if(!empty($rec->lastaccess)) {
+                $lastaccess[$rec->userid] = $rec->lastaccess;
+            }
         }
 
         //send the last one
         if($odid !== 0) {
-            foreach($users_by_roles AS $r=>$users) {
-                try {
-                    $this->put_ws('ofertas/disciplinas/' . $ofertas[$odid]->uid .'/'. self::$role_types[$r], $users);
-                } catch(Exception $e) {
-                    $errors++;
-                    var_dump($e);
-                }
-            }
-            unset($ofertas[$odid]);
+            $errors += $this->send_users_by_oferta_disciplina($ofertas[$odid], $users_by_roles, $lastaccess);
         }
 
-        foreach($ofertas AS $od) {
-            foreach($role_types AS $r) {
-                try {
-                    $this->put_ws('ofertas/disciplinas/' . $od->uid .'/'. self::$role_types[$r], array());
-                } catch(Exception $e) {
-                    $errors++;
+        return $errors;
+    }
+
+    function send_users_by_oferta_disciplina($oferta_disciplina, $users_by_roles, $lastaccess) {
+        $errors = 0;
+        $oferta_uid_encoded = urlencode($oferta_disciplina->uid);
+        foreach($users_by_roles AS $r=>$users) {
+            try {
+                $this->put_ws('ofertas/disciplinas/' . $oferta_disciplina->uid .'/'. self::$role_types[$r], array_values($users));
+                if($r == 'student') {
+                    $grades = $this->get_grades($oferta_disciplina->id);
+                    $obj_nota = new stdClass();
+                    $obj_lastaccess = new stdClass();
+                    foreach($users AS $userid=>$uid) {
+                        if(!empty($uid)) {
+                            $user_uid_encoded = urlencode($uid);
+                            if(isset($grades[$userid])) {
+                                $obj_nota->nota = $grades[$userid];
+                                $this->post_ws("ofertas/disciplinas/{$oferta_uid_encoded}/estudantes/{$uid_encoded}/nota", $obj_nota);
+                            }
+
+                            if(isset($lastaccess[$userid])) {
+                                $obj_lastaccess->ultimoAcesso = $lastaccess[$userid];
+                                $this->post_ws("ofertas/disciplinas/{$oferta_uid_encoded}/estudantes/{$uid_encoded}/ultimoAcesso", $obj_lastaccess);
+                            }
+                        }
+                    }
                 }
+            } catch(Exception $e) {
+                $errors++;
             }
         }
         return $errors;
@@ -1264,6 +1267,13 @@ class saas {
                 $this->sent_users[$rec->userid] = true;
                 $this->post_ws('pessoas',  $this->get_user($rec->role, $rec->userid, $rec->uid));
                 $this->count_sent_users[$rec->role]++;
+                if($rec->role == 'student' && !empty($rec->uid) && !empty($rec->currentlogin)) {
+                    $obj = new stdClass();
+                    $obj->ultimoAcesso = $rec->currentlogin;
+                    $user_uid_encoded = urlencode($rec->uid);
+                    $this->post_ws("pessoas/{$uid_encoded}/ultimoAcesso", $obj);
+                }
+
             } catch (Exception $e) {
                 $this->count_sent_users['errors']++;
             }
