@@ -182,8 +182,7 @@ $string['no_class_offer_from_ws'] = 'Não foi localizada nenhuma oferta de disci
 $string['no_mapped_classes_offer'] = 'Não há ofertas de disciplinas mapeadas.';
 $string['no_mapped_courses_offer'] = 'Não há ofertas de cursos mapeadas mapeadas.';
 $string['bd_error'] = 'Falha de acesso ao banco de dados: {$a}';
-$string['ws_error'] = 'Houve falha na comunicação com o servidor do SAAS.<BR>
-    Verifique se os campos \'URL SAAS\' e \'Chave da instituição\' estão corretos na aba de configurações.<BR>
+$string['ws_error'] = '{$a}<BR>Verifique se os campos \'URL SAAS\' e \'Chave da instituição\' estão corretos na aba de configurações.<BR>
     Entre em contato com a equipe do SAAS caso tenhas alguma dúvida.';
 $string['update_data_error'] = 'Erro ao atualizar base de dados {$a}';
 $string['get_data_error'] = 'Erro ao acessar base de dados {$a}';
