@@ -547,7 +547,7 @@ function saas_show_users_oferta_disciplina($ofer_disciplina_id) {
 
     print html_writer::start_tag('DIV', array('align'=>'center'));
 
-    list($sql, $params) =  $saas->get_sql_users_by_oferta_disciplina($ofer_disciplina_id);
+    list($sql, $params) =  $saas->get_sql_users_by_oferta_disciplina(0, $ofer_disciplina_id);
     $rs = $DB->get_recordset_sql($sql, $params);
     $data = array();
     $role_types = $saas->get_role_types('disciplinas');
@@ -601,7 +601,7 @@ function saas_show_table_ofertas_curso_disciplinas($show_counts=false) {
     $color = '#E0E0E0';
 
     if($show_counts) {
-        list($sql, $params) =  $saas->get_sql_users_by_oferta_disciplina(0, true);
+        list($sql, $params) =  $saas->get_sql_users_by_oferta_disciplina(0, 0, true);
         $rs = $DB->get_recordset_sql($sql, $params);
         $ofertas_disciplinas_counts = array();
         foreach($rs AS $rec) {
@@ -701,5 +701,104 @@ function saas_show_table_ofertas_curso_disciplinas($show_counts=false) {
     $table->attributes = array('class'=>'saas_table');
     $table->data = $data;
     print html_writer::table($table);
+    print html_writer::end_tag('DIV');
+}
+
+function saas_show_export_options($url, $selected_ocs=true, $selected_ods=true, $selected_polos=true) {
+    global $DB, $saas;
+
+    $data = array();
+    $color = '#E0E0E0';
+
+    list($sql, $params) =  $saas->get_sql_users_by_oferta_disciplina(0, 0, true);
+    $rs = $DB->get_recordset_sql($sql, $params);
+    $od_counts = array();
+    foreach($rs AS $rec) {
+        $od_counts[$rec->od_id] = true;
+    }
+
+    $polos = $saas->get_polos();
+    $polos_count = $saas->get_polos_count();
+
+    $ofertas = $saas->get_ofertas();
+    foreach($ofertas AS $oc_id=>$oc) {
+        foreach(array_keys($oc->ofertas_disciplinas) AS $od_id) {
+            if(!isset($od_counts[$od_id])) {
+                unset($ofertas[$oc_id]->ofertas_disciplinas[$od_id]);
+            }
+        }
+
+        $ofertas[$oc_id]->polos = array();
+        if(isset($polos_count[$oc_id])) {
+            foreach($polos_count[$oc_id] AS $poloid=>$counts) {
+                $ofertas[$oc_id]->polos[$poloid] = $polos[$poloid];
+            }
+        }
+    }
+
+
+    $rows = array();
+    foreach($ofertas AS $oc_id=>$oc) {
+        if(!empty($oc->ofertas_disciplinas) || !empty($oc->polos)) {
+            $color = $color == '#C0C0C0' ? '#E0E0E0 ' : '#C0C0C0';
+
+            $row = new html_table_row();
+
+            $cell = new html_table_cell();
+            $checked = $selected_ocs===true || isset($selected_ocs[$oc_id]);
+            $checkbox = html_writer::checkbox("oc[{$oc_id}]", $oc_id, $checked);
+            $cell->text = $checkbox . $oc->nome;
+            $cell->style = "vertical-align: middle; background-color: {$color};";
+            $row->cells[] = $cell;
+
+            $cell = new html_table_cell();
+            $cell->text = $oc->ano. '/'.$oc->periodo;
+            $cell->style = "vertical-align: middle; background-color: {$color};";
+            $row->cells[] = $cell;
+
+            $cell = new html_table_cell();
+            if(!empty($oc->ofertas_disciplinas)) {
+                $cell->text = html_writer::start_tag('UL', array('style'=>'list-style-type: none;'));
+                foreach($oc->ofertas_disciplinas AS $od) {
+                    $checked = $selected_ocs===true || isset($selected_ods[$oc_id][$od->id]);
+                    $checkbox = html_writer::checkbox("od[{$oc_id}][{$od->id}]", $oc_id, $checked);
+                    $text = $checkbox . $od->nome . ' (' . $saas->format_date($od->inicio, $od->fim) . ')';
+                    $cell->text .= html_writer::tag('LI', $text);
+                }
+                $cell->text .= html_writer::end_tag('UL');
+            }
+            $cell->style = "vertical-align: middle; background-color: {$color};";
+            $row->cells[] = $cell;
+
+            $cell = new html_table_cell();
+            if(!empty($oc->polos)) {
+                $cell->text = html_writer::start_tag('UL', array('style'=>'list-style-type: none;'));
+                foreach($oc->polos AS $pl) {
+                    $checked = $selected_ocs===true || isset($selected_polos[$oc_id][$pl->id]);
+                    $checkbox = html_writer::checkbox("polo[{$oc_id}][{$pl->id}]", $oc_id, $checked);
+                    $text = $checkbox . $pl->nome;
+                    $cell->text .= html_writer::tag('LI', $text);
+                }
+                $cell->text .= html_writer::end_tag('UL');
+            }
+            $cell->style = "vertical-align: middle; background-color: {$color};";
+            $row->cells[] = $cell;
+
+            $rows[] = $row;
+        }
+    }
+
+    print html_writer::start_tag('DIV', array('align'=>'center'));
+    print html_writer::start_tag('form', array('method'=>'post', 'action'=>$url));
+
+    $table = new html_table();
+    $table->head = array('Oferta de Curso', 'Período', 'Ofertas de disciplina', 'Polos');
+    $table->attributes = array('class'=>'saas_table');
+    $table->colclasses = array('leftalign', 'leftalign', 'leftalign', 'leftalign');
+    $table->data = $rows;
+    print html_writer::table($table);
+
+    print html_writer::empty_tag('input', array('type'=>'submit', 'name'=>'export', 'value'=>s(get_string('saas_export:export', 'report_saas_export'))));
+    print html_writer::end_tag('form');
     print html_writer::end_tag('DIV');
 }

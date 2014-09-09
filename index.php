@@ -285,7 +285,16 @@ switch ($action) {
         print_tabs(array($tabs), $action);
 
         if(has_capability('report/saas_export:export', $syscontext)) {
-            $saas->send_data();
+            $ocs = optional_param_array('oc', array(), PARAM_INT);
+            $ods = isset($_POST['od']) ? $_POST['od'] : array();
+            $polos = isset($_POST['polo']) ? $_POST['polo'] : array();
+            $baseurl->param('action', $action);
+            if(optional_param('export', false, PARAM_TEXT)) {
+                $saas->send_data($ocs, $ods, $polos);
+                saas_show_export_options($baseurl, $ocs, $ods, $polos);
+            } else {
+                saas_show_export_options($baseurl);
+            }
         } else {
             print_error('no_permission_to_export', 'report_saas_export');
         }

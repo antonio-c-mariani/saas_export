@@ -519,7 +519,7 @@ class saas {
         return $polo_counts;
     }
 
-    function get_sql_users_by_oferta_disciplina($id_oferta_disciplina=0, $only_count=false) {
+    function get_sql_users_by_oferta_disciplina($id_oferta_curso=0, $id_oferta_disciplina=0, $only_count=false) {
         global $DB;
 
         $params = array('contextlevel'=>CONTEXT_COURSE, 'enable'=>ENROL_INSTANCE_ENABLED);
@@ -557,7 +557,10 @@ class saas {
 
         $condition = '';
         if($id_oferta_disciplina) {
-            $condition = "AND od.id = {$id_oferta_disciplina}";
+            $condition .= " AND od.id = {$id_oferta_disciplina}";
+        }
+        if($id_oferta_curso) {
+            $condition .= " AND oc.id = {$id_oferta_curso}";
         }
 
         $sql = "SELECT od.id AS od_id, scr.role, {$fields}
@@ -694,7 +697,7 @@ class saas {
     //----------------------------------------------------------------------------------------------------------
 
     //envia os usuários com seus devidos papéis nos pólos.
-    function send_users_by_polo() {
+    function send_users_by_polo($id_oferta_curso=0, $id_polo=0) {
         global $DB;
 
         $role_types = $this->get_role_types('polos');
@@ -710,13 +713,13 @@ class saas {
         $polo_mapping_type = $this->get_config('polo_mapping');
         switch ($polo_mapping_type) {
             case 'group_to_polo':
-                list($sql, $params) = $this->get_sql_users_by_oferta_curso_polo_groups();
+                list($sql, $params) = $this->get_sql_users_by_oferta_curso_polo_groups($id_oferta_curso, $id_polo);
                 break;
             case 'category_to_polo':
-                list($sql, $params) = $this->get_sql_users_by_oferta_curso_polo_categories();
+                list($sql, $params) = $this->get_sql_users_by_oferta_curso_polo_categories($id_oferta_curso, $id_polo);
                 break;
             case 'course_to_polo':
-                list($sql, $params) = $this->get_sql_users_by_oferta_curso_polo_courses();
+                list($sql, $params) = $this->get_sql_users_by_oferta_curso_polo_courses($id_oferta_curso, $id_polo);
                 break;
         }
         $rs = $DB->get_recordset_sql($sql, $params);
@@ -756,13 +759,13 @@ class saas {
     }
 
     //envia os usuários com os seus devidos papéis em cada oferta de disciplina.
-    function send_users_by_ofertas_disciplinas() {
+    function send_users_by_ofertas_disciplinas($id_oferta_curso=0, $id_oferta_disciplina=0) {
         global $DB;
 
         $ofertas = $this->get_ofertas_disciplinas();
         $role_types = $this->get_role_types('disciplinas');
 
-        list($sql, $params) = $this->get_sql_users_by_oferta_disciplina();
+        list($sql, $params) = $this->get_sql_users_by_oferta_disciplina($id_oferta_curso, $id_oferta_disciplina);
         $rs = $DB->get_recordset_sql($sql, $params);
         $odid = 0;
         $users_by_roles = array();
@@ -832,7 +835,7 @@ class saas {
         }
     }
 
-    function send_data() {
+    function send_data($selected_ocs=array(), $selected_ods=array(), $selected_polos=array()) {
         try {
             $this->sent_users = array();
             $this->count_sent_users = array();
@@ -840,11 +843,29 @@ class saas {
                 $this->count_sent_users[$r] = 0;
             }
 
-            $this->send_users_by_ofertas_disciplinas();
+            $ofertas_cursos = $this->get_ofertas_curso();
+
+            foreach($ofertas_cursos AS $oc_id=>$oc) {
+                if(isset($selected_ocs[$oc_id])) {
+                    $this->send_users_by_ofertas_disciplinas($oc_id);
+                } else if(isset($selected_ods[$oc_id])) {
+                    foreach($selected_ods[$oc_id] AS $od_id=>$i) {
+                        $this->send_users_by_ofertas_disciplinas(0, $od_id);
+                    }
+                }
+            }
 
             $polo_mapping_type = $this->get_config('polo_mapping');
             if($polo_mapping_type != 'no_polo') {
-                $this->send_users_by_polo();
+                foreach($ofertas_cursos AS $oc_id=>$oc) {
+                    if(isset($selected_ocs[$oc_id])) {
+                        $this->send_users_by_polo($oc_id);
+                    } else if(isset($selected_polos[$oc_id])) {
+                        foreach($selected_polos[$oc_id] AS $polo_id=>$i) {
+                            $this->send_users_by_polo($oc_id, $polo_id);
+                        }
+                    }
+                }
             }
         } catch (dml_write_exception $e){
             print_error('bd_error', 'report_saas_export', '', $e->debuginfo);
