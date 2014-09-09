@@ -34,7 +34,7 @@ class oferta_form extends moodleform {
 
         $saas = $this->_customdata['saas'];
         $ofertas_cursos = array();
-        foreach($saas->get_ofertas_curso_salvas() AS $oc) {
+        foreach($saas->get_ofertas_curso() AS $oc) {
             $ofertas_cursos[$oc->id] = "{$oc->nome} {$oc->ano}/{$oc->periodo}";
         }
 

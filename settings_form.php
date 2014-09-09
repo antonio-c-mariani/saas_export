@@ -29,7 +29,7 @@ require_once("{$CFG->dirroot}/report/saas_export/classes/saas.php");
 class saas_export_settings_form extends moodleform {
 
     function definition() {
-        global $DB, $CFG, $OUTPUT;
+        global $DB, $CFG, $OUTPUT, $saas;
 
         $mform = $this->_form;
 
@@ -84,7 +84,7 @@ class saas_export_settings_form extends moodleform {
 
         $userid_options = array('username' => get_string('username'),
                                 'idnumber' => get_string('idnumber') );
-        $userid_options = array_merge($userid_options, saas::get_user_info_fields());
+        $userid_options = array_merge($userid_options, $saas->get_user_info_fields());
         $mform->addElement('select', 'userid_field', get_string('userid_field', 'report_saas_export'), $userid_options, $attributes);
         $mform->setDefault('userid_field', 'fullname');
         $mform->addHelpButton('userid_field', 'userid_field', 'report_saas_export');
@@ -124,7 +124,7 @@ class saas_export_settings_form extends moodleform {
                              'username' => get_string('username'),
                              'idnumber' => get_string('idnumber'),
                              'lastname' => get_string('lastname') );
-        $cpf_options = array_merge($cpf_options, saas::get_user_info_fields());
+        $cpf_options = array_merge($cpf_options, $saas->get_user_info_fields());
 
         $mform->addElement('select', 'cpf_field_teacher', get_string('cpf_field_teacher', 'report_saas_export'), $cpf_options, $attributes);
         $mform->setDefault('cpf_field_teacher', 'none');
@@ -150,8 +150,8 @@ class saas_export_settings_form extends moodleform {
         // ----------------------------------------------------------------------------------------------
         $mform->addElement('header', 'role_settings', get_string('role_settings', 'report_saas_export'));
 
-        $student_roles_menu = array(0=>get_string('none')) + saas::get_student_roles_menu();
-        $other_roles_menu = array(0=>get_string('none')) + saas::get_other_roles_menu();
+        $student_roles_menu = array(0=>get_string('none')) + $saas->get_student_roles_menu();
+        $other_roles_menu = array(0=>get_string('none')) + $saas->get_other_roles_menu();
 
         $select_teacher =& $mform->addElement('select', 'roles_teacher', get_string('roles_teacher', 'report_saas_export'), $other_roles_menu, $attributes);
         $select_teacher->setMultiple(true);
@@ -188,6 +188,8 @@ class saas_export_settings_form extends moodleform {
     }
 
     public function validation($data, $files) {
+        global $saas;
+
         $errors = parent::validation($data, $files);
 
         $roles = array();

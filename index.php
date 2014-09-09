@@ -25,6 +25,7 @@ require_once($CFG->libdir . '/adminlib.php');
 require_once($CFG->dirroot . '/report/saas_export/classes/saas.php');
 require_once($CFG->dirroot . '/report/saas_export/polo_form.php');
 require_once($CFG->dirroot . '/report/saas_export/oferta_form.php');
+require('./locallib.php');
 
 require_login();
 $syscontext = context_system::instance();
@@ -77,7 +78,7 @@ switch ($action) {
             if ($mform->is_cancelled()) {
                 redirect($baseurl);
             } else if ($data = $mform->get_data()) {
-                saas::save_settings($data);
+                $saas->save_settings($data);
                 redirect($baseurl);
             }
         }
@@ -164,7 +165,7 @@ switch ($action) {
 
         switch($saas_data_action) {
             case 'ofertas':
-                $saas->show_table_ofertas_curso_disciplinas(false);
+                saas_show_table_ofertas_curso_disciplinas(false);
                 break;
             case 'add_oferta':
                 if(has_capability('report/saas_export:export', $syscontext)) {
@@ -177,7 +178,7 @@ switch ($action) {
                 }
                 break;
             case 'polos':
-                $saas->show_table_polos();
+                saas_show_table_polos();
                 break;
             case 'add_polo':
                 if(has_capability('report/saas_export:export', $syscontext)) {
@@ -251,9 +252,9 @@ switch ($action) {
         print_tabs(array($saas_data_tabs), $saas_data_action);
 
         if($saas_data_action == 'ofertas') {
-            $saas->show_table_ofertas_curso_disciplinas(true);
+            saas_show_table_ofertas_curso_disciplinas(true);
             if($odid = optional_param('odid', 0 , PARAM_INT)) {
-                $saas->show_users_oferta_disciplina($odid);
+                saas_show_users_oferta_disciplina($odid);
             }
         } else {
             $polo_mapping_type = $saas->get_config('polo_mapping');
@@ -264,13 +265,13 @@ switch ($action) {
                     print $OUTPUT->heading(get_string('title_no_polo', 'report_saas_export'));
                     break;
                 case 'group_to_polo':
-                    $saas->show_overview_groups_polos($ocid, $poloid);
+                    saas_show_overview_groups_polos($ocid, $poloid);
                     break;
                 case 'category_to_polo':
-                    $saas->show_overview_categories_polos($ocid, $poloid);
+                    saas_show_overview_categories_polos($ocid, $poloid);
                     break;
                 case 'course_to_polo':
-                    $saas->show_overview_courses_polos($ocid, $poloid);
+                    saas_show_overview_courses_polos($ocid, $poloid);
                     break;
                 default:
                     print $OUTPUT->heading('Mapeamento ainda não implementado: ' . $polo_mapping_type);
