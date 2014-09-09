@@ -211,3 +211,4 @@ $string['saved'] = 'Os dados foram salvos';
 $string['no_changes'] = 'Os dados não foram salvos pois não houve alterações';
 $string['moodle_group'] = 'Grupo Moodle';
 $string['polo_saas'] = 'Polo SAAS';
+$string['suspended_settings'] = 'Inscrições suspensas';

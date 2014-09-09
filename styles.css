@@ -2,6 +2,18 @@
     width: 80%;
 }
 
+#saas_category_table {
+    width: 100%;
+}
+
+.saas_category_name {
+    width: 50%;
+}
+
+.saas_category_label {
+    margin-left: 1%;
+}
+
 .saas_export_message {color: green;}
 .saas_export_warning {color: darkblue; font-weight: bold;}
 .saas_export_error {color: red;}
@@ -9,7 +21,7 @@
 .leftalign {text-align: left;}
 .rightalign {text-align: right;}
 .centeralign {text-align: center;}
-.justifiedalign {text-align: justify;}
+.saas_justifiedalign {text-align: justify;}
 
 .centerimg {display: block; margin-left: 20%; margin-right: auto;}
 
@@ -37,10 +49,6 @@
 .saas_category_tree LI {
     clear: both;
     height: 2em;
-}
-
-.saas_category_tree LI.category {
-    list-style-image: url('../pix/i/course.png');
 }
 
 .saas_category_tree .normalcolor {

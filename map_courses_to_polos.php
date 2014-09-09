@@ -45,8 +45,8 @@ if(isset($_POST['map_polos']) && isset($_POST['save']) && $may_export) {
 print html_writer::start_tag('DIV', array('align'=>'center'));
 print $OUTPUT->heading(get_string('course_to_polo', 'report_saas_export'));
 print $OUTPUT->box_start('generalbox boxwidthwide');
-print html_writer::tag('P', get_string('course_to_polo_msg1', 'report_saas_export'), array('class'=>'justifiedalign'));
-print html_writer::tag('P', get_string('course_to_polo_msg2', 'report_saas_export'), array('class'=>'justifiedalign'));
+print html_writer::tag('P', get_string('course_to_polo_msg1', 'report_saas_export'), array('class'=>'saas_justifiedalign'));
+print html_writer::tag('P', get_string('course_to_polo_msg2', 'report_saas_export'), array('class'=>'saas_justifiedalign'));
 print $OUTPUT->box_end();
 print html_writer::end_tag('DIV');
 
@@ -66,12 +66,14 @@ if(empty($categories)) {
     print html_writer::tag('DIV', get_string('polos_title', 'report_saas_export'), array('class'=>'righttitle'));
     print html_writer::end_tag('DIV');
 
+    print html_writer::tag('div', '', array('class'=>'clearfix'));
+
     print html_writer::start_tag('form', array('method'=>'post', 'action'=>'index.php'));
     print html_writer::empty_tag('input', array('type'=>'hidden', 'name'=>'action', 'value'=>'polo_mapping'));
 
-    print html_writer::start_tag('UL');
-    saas_show_category_tree_map_courses_polos($categories, $polos);
-    print html_writer::end_tag('UL');
+    echo '<table id="saas_category_table">';
+    echo saas_show_category_tree_map_courses_polos($categories, $polos);
+    echo '</table>';
 
     print html_writer::empty_tag('input', array('type'=>'submit', 'name'=>'save', 'value'=>s(get_string('save', 'admin'))));
     print html_writer::end_tag('form');
