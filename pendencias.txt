@@ -1,14 +1,15 @@
 
 
 - como serão as permissões para quem vai exportar
-OK    - talvez duas permissões distintas, para configurar e outra para mapear e exportar
+
+OK (três permissões: view, config, export)   - talvez duas permissões distintas, para configurar e outra para mapear e exportar
    - definir em nível global? tem como definir em outro contexto?
 
-- algumas ofertas de disciplinas (antigas) pode não ter data de início e fim
+OK (aparece em branco) - algumas ofertas de disciplinas (antigas) pode não ter data de início e fim
 
 - novo plugin via atualização de versão (upgrade)
 
-- problemas de duplicação de dados (cadastradas manualmente ou via csv e depois via plugin)
+OK (deve ser tratado pelo pessoal do SAAS) - problemas de duplicação de dados (cadastradas manualmente ou via csv e depois via plugin)
 
 OK    - usar sobrenome e idnumber como opção para cpf
 
@@ -20,8 +21,8 @@ OK    - incluir 0 (zeros) à esquerda no caso de cpf como identificador a usuár
 -----------------------------------------------------------------------------------------
 Resultado de conversa com equipe saas em 29/08
 
-- utilizar POST em vez de PUT
-- enviar pessoas uma a uma em vez de lote, incluindo data do último acesso (a ser definido na especificação do WS)
+OK (independente) - utilizar POST em vez de PUT
+OK - enviar pessoas uma a uma em vez de lote, incluindo data do último acesso (a ser definido na especificação do WS)
 
 OK    - opção de configuração (check box) que mapeia "enrol suspended" para evadido
 

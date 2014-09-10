@@ -386,6 +386,8 @@ function saas_show_overview_categories_polos($ocid, $poloid) {
 }
 
 function saas_show_overview_groups_polos($ocid, $poloid) {
+    global $saas;
+
     $sql = "SELECT DISTINCT oc.id AS oc_id, sp.*
               FROM {saas_ofertas_cursos} oc
               JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1)
@@ -400,7 +402,7 @@ function saas_show_overview_groups_polos($ocid, $poloid) {
 
     if($ocid && $poloid) {
         list($sql, $params) = $saas->get_sql_users_by_oferta_curso_polo_groups($ocid, $poloid, false);
-        $saas->show_users_oferta_curso_polo($ocid, $poloid, $sql, $params);
+        saas_show_users_oferta_curso_polo($ocid, $poloid, $sql, $params);
     }
 }
 

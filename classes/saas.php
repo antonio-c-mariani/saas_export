@@ -770,32 +770,37 @@ class saas {
         $odid = 0;
         $users_by_roles = array();
         foreach($rs AS $rec) {
+            var_dump($rec); exit;
             $this->send_user($rec);
 
             if($rec->od_id != $odid) {
                 if($odid !== 0) {
-                    $this->send_users_by_oferta_disciplina($ofertas[$odid], $users_by_roles, $lastaccess);
+                    $this->send_users_by_oferta_disciplina($ofertas[$odid], $users_by_roles, $users_lastaccess, $users_suspended);
                 }
                 foreach($role_types AS $r) {
                     $users_by_roles[$r] = array();
                 }
-                $lastaccess = array();
+                $users_lastaccess = array();
+                $users_suspended = array();
                 $odid = $rec->od_id;
             }
 
             $users_by_roles[$rec->role][$rec->userid] = $rec->uid;
             if(!empty($rec->lastaccess)) {
-                $lastaccess[$rec->userid] = $rec->lastaccess;
+                $users_lastaccess[$rec->userid] = $rec->lastaccess;
+            }
+            if(!empty($rec->suspended)) {
+                $users_suspended[] = $rec->userid;
             }
         }
 
         //send the last one
         if($odid !== 0) {
-            $this->send_users_by_oferta_disciplina($ofertas[$odid], $users_by_roles, $lastaccess);
+            $this->send_users_by_oferta_disciplina($ofertas[$odid], $users_by_roles, $users_lastaccess, $users_suspended);
         }
     }
 
-    function send_users_by_oferta_disciplina($oferta_disciplina, $users_by_roles, $lastaccess) {
+    function send_users_by_oferta_disciplina($oferta_disciplina, $users_by_roles, $users_lastaccess, $users_suspended) {
         $oferta_uid_encoded = urlencode($oferta_disciplina->uid);
         foreach($users_by_roles AS $r=>$users) {
 //todo            $this->put_ws("ofertas/disciplinas/{$oferta_uid_encoded}/". self::$role_types[$r], array_values($users));
@@ -803,6 +808,7 @@ class saas {
                 $grades = $this->get_grades($oferta_disciplina->id);
                 $obj_nota = new stdClass();
                 $obj_lastaccess = new stdClass();
+                $obj_suspended = new stdClass();
                 foreach($users AS $userid=>$uid) {
                     if(!empty($uid)) {
                         $user_uid_encoded = urlencode($uid);
@@ -811,10 +817,16 @@ class saas {
 //todo                            $this->post_ws("ofertas/disciplinas/{$oferta_uid_encoded}/estudantes/{$user_uid_encoded}/nota", $obj_nota);
                         }
 
-                        if(isset($lastaccess[$userid])) {
-                            $obj_lastaccess->ultimoAcesso = $lastaccess[$userid];
+                        if(isset($users_lastaccess[$userid])) {
+                            $obj_lastaccess->ultimoAcesso = $users_lastaccess[$userid];
 //todo                            $this->post_ws("ofertas/disciplinas/{$oferta_uid_encoded}/estudantes/{$user_uid_encoded}/ultimoAcesso", $obj_lastaccess);
                         }
+
+                        if(isset($users_suspended[$userid])) {
+                            $obj_suspended->suspended = 1;
+//todo                            $this->post_ws("ofertas/disciplinas/{$oferta_uid_encoded}/estudantes/{$user_uid_encoded}/suspended", $obj_suspended);
+                        }
+
                     }
                 }
             }
@@ -1012,10 +1024,10 @@ class saas {
     }
 
     function format_date($saas_timestamp_inicio, $saas_timestamp_fim=false, $separador=' / ') {
-        $result = date("d-m-Y", substr($saas_timestamp_inicio, 0, 10));
-        if($saas_timestamp_fim) {
+        $result = empty($saas_timestamp_inicio) ? '' : date("d-m-Y", substr($saas_timestamp_inicio, 0, 10));
+        if($saas_timestamp_fim !== false) {
             $result .= $separador;
-            $result .= date("d-m-Y", substr($saas_timestamp_fim, 0, 10));
+            $result .= empty($saas_timestamp_fim) ? '' : date("d-m-Y", substr($saas_timestamp_fim, 0, 10));
         }
         return $result;
     }
