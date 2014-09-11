@@ -2,19 +2,7 @@
     width: 80%;
 }
 
-#saas_category_table {
-    width: 100%;
-}
-
-.saas_category_name {
-    width: 50%;
-}
-
-.saas_category_label {
-    margin-left: 1%;
-}
-
-.saas_export_message {color: green;}
+.saas_export_message {color: green; text-align: center; margin-top: 1em; margin-bottom: 1em;}
 .saas_export_warning {color: darkblue; font-weight: bold;}
 .saas_export_error {color: red;}
 
@@ -29,27 +17,13 @@
     width: 90%;
     margin-left: auto;
     margin-right: auto;
-    background-color: Lavender;
 }
 
-.saas_category_tree .lefttitle {
-    font-size: medium;
-    float: left;
-    margin-left: 10%;
-    margin-right: auto;
-}
-
-.saas_category_tree .righttitle {
-    font-size: medium;
-    float: right;
-    margin-left: auto;
-    margin-right: 10%;
-}
-
-.saas_category_tree LI {
-    clear: both;
-    height: 2em;
-}
+.saas_category_tree .level1 {background-color: #C0C0C0;}
+.saas_category_tree .level2 {background-color: #D0D0D0;}
+.saas_category_tree .level3 {background-color: #E0E0E0;}
+.saas_category_tree .level4 {background-color: #F0F0F0;}
+.saas_category_tree .level5 {background-color: #FFFFFF;}
 
 .saas_category_tree .normalcolor {
     background-color: #D0D0D0;
@@ -59,14 +33,6 @@
     background-color: #E8E8E8;
 }
 
-.saas_category_tree .leftalign {
-    float: left;
-    margin-left: 0px;
-    margin-right: auto;
-}
-
-.saas_category_tree .rightalign {
-    float: right;
-    margin-left: auto;
-    margin-right: 0px;
+.saas_category_tree .saas_pix {
+    padding-right: 0.3em;
 }

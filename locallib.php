@@ -207,53 +207,52 @@ function saas_get_category_tree_map_courses_polos() {
     return $categories;
 }
 
-function saas_show_category_tree_map_courses_polos(&$categories, &$polos) {
+function saas_mount_category_tree_map_courses_polos(&$categories, &$polos, &$rows) {
     global $OUTPUT;
 
-    $o = '';
     foreach($categories AS $cat) {
-        $o .= '<tr class="category">';
-        $o .= '<td class="saas_category_name">';
+        $row = new html_table_row();
+
+        $cell = new html_table_cell();
+        $cell->attributes['class'] = 'level' . $cat->depth;
         $depth = $cat->depth*2;
-        $o .= '<img class="saas_category_pix" style="padding-left: '.$depth.'%;"src="'.$OUTPUT->pix_url('i/course').'" />';
-        $o .= '<label class="saas_category_label" for="map_polos['.$cat->id.']" >'.$cat->name.'</label>';
-        $o .= '</td>';
+        $cell->text = html_writer::empty_tag('img', array('src'=> $OUTPUT->pix_url('i/folder'), 'class'=>'saas_pix', 'style'=>"padding-left: {$depth}%;"));
+        $cell->text .= $cat->name;
+        $row->cells[] = $cell;
+
+        $cell = new html_table_cell();
+        $cell->attributes['class'] = 'level' . $cat->depth;
+        $row->cells[] = $cell;
+
+        $rows[] = $row;
 
         if(count($cat->courses) > 0) {
-            $count=0;
             $depth += 2;
             foreach($cat->courses AS $c) {
-                $count++;
-                $class= $count%2==1 ? 'normalcolor' : 'alternatecolor';
+                $row = new html_table_row();
 
-                $o .= '<tr class="category '.$class.'">';
-                $o .= '<td class="saas_category_name">';
-                $o .= '<img class="saas_category_pix" style="padding-left: '.$depth.'%;"src="'.$OUTPUT->pix_url('i/course').'" />';
-                $o .= '<label class="saas_category_label" for="map_polos['.$c->id.']" >'.$c->name.'</label>';
-                $o .= '</td>';
+                $cell = new html_table_cell();
+                $cell->attributes['class'] = 'level' . $cat->depth;
+                $depth = ($cat->depth+2)*2;
+                $cell->text = html_writer::empty_tag('img', array('src'=> $OUTPUT->pix_url('i/course'), 'class'=>'saas_pix', 'style'=>"padding-left: {$depth}%;"));
+                $cell->text .= $c->name;
+                $row->cells[] = $cell;
 
                 $poloid = empty($c->polo_id) ? 0 : $c->polo_id;
-                $o .= '<td class="saas_polo_select">';
-                $o .= '<select id="map_polos['.$c->id.']" name="map_polos['.$c->id.']">';
+                $cell = new html_table_cell();
+                $cell->attributes['class'] = 'level' . $cat->depth;
+                $cell->text = html_writer::select($polos, "map_polos[{$c->id}]", $poloid);
 
-                $selected = $poloid == 0 ? 'selected="selected"' : '';
-                $o .= '<option value="0" '.$selected.'>Escolher...</option>';
-                foreach ($polos as $pid => $p) {
-                    $selected = $poloid == $pid ? 'selected="selected"' : '';
-                    $o .= '<option value="'.$pid.'" '.$selected.'>'.$p.'</option>';
-                }
-                $o .= '</select>';
-                $o .= '</td>';
-                $o .= '</tr>';
+                $row->cells[] = $cell;
+
+                $rows[] = $row;
             }
         }
 
         if(!empty($cat->subs)) {
-            $o .= saas_show_category_tree_map_courses_polos($cat->subs, $polos);
+            saas_mount_category_tree_map_courses_polos($cat->subs, $polos, $rows);
         }
-
     }
-    return $o;
 }
 
 function saas_get_category_tree_map_categories_polos() {
@@ -286,37 +285,31 @@ function saas_get_category_tree_map_categories_polos() {
     return $categories;
 }
 
-function saas_show_category_tree_map_categories_polos($categories, &$polos) {
+function saas_mount_category_tree_map_categories_polos($categories, &$polos, &$rows) {
     global $OUTPUT;
 
-    $o = '';
     foreach($categories AS $cat) {
-        $o .= '<tr class="category">';
-        $o .= '<td class="saas_category_name">';
+        $row = new html_table_row();
+
+        $cell = new html_table_cell();
+        $cell->attributes['class'] = 'level' . $cat->depth;
         $depth = $cat->depth*2;
-        $o .= '<img class="saas_category_pix" style="padding-left: '.$depth.'%;"src="'.$OUTPUT->pix_url('i/course').'" />';
-        $o .= '<label class="saas_category_label" for="map_polos['.$cat->id.']" >'.$cat->name.'</label>';
-        $o .= '</td>';
+        $cell->text = html_writer::empty_tag('img', array('src'=> $OUTPUT->pix_url('i/course'), 'class'=>'saas_pix', 'style'=>"padding-left: {$depth}%;"));
+        $cell->text .= $cat->name;
+        $row->cells[] = $cell;
 
+        $cell = new html_table_cell();
+        $cell->attributes['class'] = 'level' . $cat->depth;
         $poloid = empty($cat->polo_id) ? 0 : $cat->polo_id;
-        $o .= '<td class="saas_polo_select">';
-        $o .= '<select id="map_polos['.$cat->id.']" name="map_polos['.$cat->id.']">';
+        $cell->text = html_writer::select($polos, "map_polos[{$cat->id}]", $poloid);
+        $row->cells[] = $cell;
 
-        $selected = $poloid == 0 ? 'selected="selected"' : '';
-        $o .= '<option value="0" '.$selected.'>Escolher...</option>';
-        foreach ($polos as $pid => $p) {
-            $selected = $poloid == $pid ? 'selected="selected"' : '';
-            $o .= '<option value="'.$pid.'" '.$selected.'>'.$p.'</option>';
-        }
-        $o .= '</select>';
-        $o .= '</td>';
-        $o .= '</tr>';
+        $rows[] = $row;
 
         if(!empty($cat->subs)) {
-            $o .= saas_show_category_tree_map_categories_polos($cat->subs, $polos);
+            saas_mount_category_tree_map_categories_polos($cat->subs, $polos, $rows);
         }
     }
-    return $o;
 }
 
 // Criação de tabelas para visualização dos dados.
@@ -326,6 +319,7 @@ function saas_show_table_polos() {
     global $DB, $OUTPUT;
 
     $polos = $DB->get_records('saas_polos', array('enable'=>1), 'nome');
+    $color = '#E0E0E0';
 
     print html_writer::start_tag('DIV', array('align'=>'center'));
 
@@ -333,10 +327,21 @@ function saas_show_table_polos() {
     $table->head = array(get_string('nome_polo', 'report_saas_export'),
                          get_string('cidade', 'report_saas_export'),
                          get_string('estado', 'report_saas_export'));
+    $table->colclasses = array('leftalign', 'leftalign', 'leftalign');
     $table->attributes = array('class'=>'saas_table');
     $table->data = array();
     foreach($polos as $pl) {
-        $table->data[] = array($pl->nome, $pl->cidade, $pl->estado);
+        $color = $color == '#C0C0C0' ? '#E0E0E0 ' : '#C0C0C0';
+        $row = new html_table_row();
+
+        foreach(array('nome', 'cidade', 'estado') AS $field) {
+            $cell = new html_table_cell();
+            $cell->text = $pl->$field;
+            $cell->style = "background-color: {$color};";
+            $row->cells[] = $cell;
+        }
+
+        $table->data[] = $row;
     }
     print html_writer::table($table);
 
@@ -489,8 +494,10 @@ function saas_show_table_overview_polos($sql) {
     $table->head = array(get_string('oferta_curso', 'report_saas_export'),
                          get_string('periodo', 'report_saas_export'),
                          get_string('nome_polo', 'report_saas_export'));
+    $table->colclasses = array('leftalign', 'leftalign', 'leftalign');
     foreach($role_types AS $r) {
         $table->head[] = get_string($r, 'report_saas_export');
+        $table->colclasses[] = 'rightalign';
     }
 
     $table->attributes = array('class'=>'saas_table');
@@ -695,9 +702,11 @@ function saas_show_table_ofertas_curso_disciplinas($show_counts=false) {
     print html_writer::start_tag('DIV', array('align'=>'center'));
     $table = new html_table();
     $table->head = array('Oferta de Curso', 'Período', 'Oferta de disciplina', 'Início', 'Fim');
+    $table->colclasses = array('leftalign', 'leftalign', 'leftalign', 'leftalign', 'leftalign');
     if($show_counts) {
         foreach($role_types AS $r) {
             $table->head[] = get_string($r, 'report_saas_export');
+            $table->colclasses[] = 'rightalign';
         }
     }
     $table->attributes = array('class'=>'saas_table');

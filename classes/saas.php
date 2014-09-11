@@ -1,6 +1,7 @@
 <?php
 
 require_once($CFG->libdir . '/gradelib.php');
+require_once(dirname(__FILE__) . '/curl.php');
 
 class saas {
 
@@ -770,7 +771,16 @@ class saas {
         $odid = 0;
         $users_by_roles = array();
         foreach($rs AS $rec) {
-            var_dump($rec); exit;
+            /*
+               public 'od_id' => string '1' (length=1)
+               public 'role' => string 'student' (length=7)
+               public 'userid' => string '335' (length=3)
+               public 'uid' => string '07407053' (length=8)
+               public 'suspended' => string '0' (length=1)
+               public 'currentlogin' => string '1404168189' (length=10)
+               public 'lastaccess' => string '1397606103' (length=10)
+            */
+
             $this->send_user($rec);
 
             if($rec->od_id != $odid) {
@@ -814,17 +824,17 @@ class saas {
                         $user_uid_encoded = urlencode($uid);
                         if(isset($grades[$userid])) {
                             $obj_nota->nota = $grades[$userid];
-//todo                            $this->post_ws("ofertas/disciplinas/{$oferta_uid_encoded}/estudantes/{$user_uid_encoded}/nota", $obj_nota);
+//todo                            $this->put_ws("ofertas/disciplinas/{$oferta_uid_encoded}/estudantes/{$user_uid_encoded}/nota", $obj_nota);
                         }
 
                         if(isset($users_lastaccess[$userid])) {
                             $obj_lastaccess->ultimoAcesso = $users_lastaccess[$userid];
-//todo                            $this->post_ws("ofertas/disciplinas/{$oferta_uid_encoded}/estudantes/{$user_uid_encoded}/ultimoAcesso", $obj_lastaccess);
+//todo                            $this->put_ws("ofertas/disciplinas/{$oferta_uid_encoded}/estudantes/{$user_uid_encoded}/ultimoAcesso", $obj_lastaccess);
                         }
 
                         if(isset($users_suspended[$userid])) {
-                            $obj_suspended->suspended = 1;
-//todo                            $this->post_ws("ofertas/disciplinas/{$oferta_uid_encoded}/estudantes/{$user_uid_encoded}/suspended", $obj_suspended);
+                            $obj_suspended->suspenso = true;
+//todo                            $this->put_ws("ofertas/disciplinas/{$oferta_uid_encoded}/estudantes/{$user_uid_encoded}/suspenso", $obj_suspended);
                         }
 
                     }
@@ -835,15 +845,13 @@ class saas {
 
     function send_user($rec) {
         if(!isset($this->sent_users[$rec->userid])) {
-            $this->sent_users[$rec->userid] = true;
-            $this->post_ws('pessoas',  $this->get_user($rec->role, $rec->userid, $rec->uid));
-            $this->count_sent_users[$rec->role]++;
+            $user_uid_encoded = urlencode($rec->uid);
+//todo            $this->put_ws("pessoas/{$user_uid_encoded}",  $this->get_user($rec->role, $rec->userid, $rec->uid));
             if($rec->role == 'student' && !empty($rec->uid) && !empty($rec->currentlogin)) {
-                $obj = new stdClass();
-                $obj->ultimoAcesso = $rec->currentlogin;
-                $user_uid_encoded = urlencode($rec->uid);
-//todo                $this->post_ws("pessoas/{$user_uid_encoded}/ultimoAcesso", $obj);
+//todo                $this->put_ws("pessoas/{$user_uid_encoded}/ultimoLogin", array('ultimoLogin'=>$rec->currentlogin));
             }
+            $this->sent_users[$rec->userid] = true;
+            $this->count_sent_users[$rec->role]++;
         }
     }
 

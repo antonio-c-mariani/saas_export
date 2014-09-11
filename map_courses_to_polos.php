@@ -50,6 +50,7 @@ print html_writer::tag('P', get_string('course_to_polo_msg2', 'report_saas_expor
 print $OUTPUT->box_end();
 print html_writer::end_tag('DIV');
 
+print html_writer::start_tag('DIV', array('class'=>'saas_category_tree'));
 if($message) {
     print $OUTPUT->heading($message, 4, 'saas_export_message');
 }
@@ -57,23 +58,21 @@ if($message) {
 $categories = saas_get_category_tree_map_courses_polos();
 $polos = saas_get_polos_menu();
 
-print html_writer::start_tag('DIV', array('class'=>'saas_category_tree'));
 if(empty($categories)) {
     print $OUTPUT->heading('Não foram encontrados mapeamentos de cursos Moodle para ofertas de disciplinas');
 } else {
-    print html_writer::start_tag('DIV');
-    print html_writer::tag('DIV', get_string('moodle_courses', 'report_saas_export'), array('class'=>'lefttitle'));
-    print html_writer::tag('DIV', get_string('polos_title', 'report_saas_export'), array('class'=>'righttitle'));
-    print html_writer::end_tag('DIV');
-
-    print html_writer::tag('div', '', array('class'=>'clearfix'));
-
     print html_writer::start_tag('form', array('method'=>'post', 'action'=>'index.php'));
     print html_writer::empty_tag('input', array('type'=>'hidden', 'name'=>'action', 'value'=>'polo_mapping'));
 
-    echo '<table id="saas_category_table">';
-    echo saas_show_category_tree_map_courses_polos($categories, $polos);
-    echo '</table>';
+    $table = new html_table();
+    $table->head = array(get_string('moodle_courses', 'report_saas_export'),
+                         get_string('polos_title', 'report_saas_export'));
+    $table->size = array('60%', '40%');
+    $table->colclasses = array('leftalign', 'leftalign');
+    $rows = array();
+    saas_mount_category_tree_map_courses_polos($categories, $polos, $rows);
+    $table->data = $rows;
+    print html_writer::table($table);
 
     print html_writer::empty_tag('input', array('type'=>'submit', 'name'=>'save', 'value'=>s(get_string('save', 'admin'))));
     print html_writer::end_tag('form');
