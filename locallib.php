@@ -559,19 +559,43 @@ function saas_show_users_oferta_disciplina($ofer_disciplina_id) {
     list($sql, $params) =  $saas->get_sql_users_by_oferta_disciplina(0, $ofer_disciplina_id);
     $rs = $DB->get_recordset_sql($sql, $params);
     $data = array();
+    $suspended = array();
     $role_types = $saas->get_role_types('disciplinas');
     foreach($role_types AS $r) {
         $data[$r] = array();
     }
     foreach($rs AS $rec) {
-        $user = $saas->get_user($rec->role, $rec->userid, $rec->uid);
-        $row = array((count($data[$rec->role])+1) . '.', $user->uid, $user->nome, $user->email, $user->cpf);
-        if($rec->role == 'student') {
-            $row[] = $rec->suspended == 1 ? html_writer::tag('span', get_string('yes'), array('class'=>'saas_export_warning')) : get_string('no');
-            $row[] = empty($rec->currentlogin) ? '-' : date('d-m-Y H:i', $rec->currentlogin);
-            $row[] = empty($rec->lastaccess) ? '-' : date('d-m-Y H:i', $rec->lastaccess);
-            $row[] = isset($grades[$rec->userid]) && $grades[$rec->userid] >= 0 ? $grades[$rec->userid] : '-';
+        if(empty($rec->suspended)) {
+            $user = $saas->get_user($rec->role, $rec->userid, $rec->uid);
+            $row = array((count($data[$rec->role])+1) . '.', $user->uid, $user->nome, $user->email, $user->cpf);
+            if($rec->role == 'student') {
+                $row[] = get_string('no');
+                $row[] = empty($rec->currentlogin) ? '-' : date('d-m-Y H:i', $rec->currentlogin);
+                $row[] = empty($rec->lastaccess) ? '-' : date('d-m-Y H:i', $rec->lastaccess);
+                $row[] = isset($grades[$rec->userid]) && $grades[$rec->userid] >= 0 ? $grades[$rec->userid] : '-';
+            }
+            $data[$rec->role][] = $row;
+        } else {
+            $suspended[] = $rec;
         }
+    }
+
+    $color = '#D0D0D0';
+    foreach($suspended AS $rec) {
+        $user = $saas->get_user($rec->role, $rec->userid, $rec->uid);
+        $row = new html_table_row();
+
+        $row->style = "background-color: {$color};";
+        $row->cells[] = (count($data[$rec->role])+1) . '.';
+        $row->cells[] = $user->uid;
+        $row->cells[] = $user->nome;
+        $row->cells[] = $user->email;
+        $row->cells[] = $user->cpf;
+        $row->cells[] = html_writer::tag('span', get_string('yes'), array('class'=>'saas_export_warning'));
+        $row->cells[] = empty($rec->currentlogin) ? '-' : date('d-m-Y H:i', $rec->currentlogin);
+        $row->cells[] = empty($rec->lastaccess) ? '-' : date('d-m-Y H:i', $rec->lastaccess);
+        $row->cells[] = isset($grades[$rec->userid]) && $grades[$rec->userid] >= 0 ? $grades[$rec->userid] : '-';
+
         $data[$rec->role][] = $row;
     }
 
@@ -593,8 +617,8 @@ function saas_show_users_oferta_disciplina($ofer_disciplina_id) {
                 $table->colclasses[] = 'centeralign';
                 $table->colclasses[] = 'rightalign';
             }
-            $table->attributes = array('class'=>'saas_table');
             $table->data = $data[$r];
+            $table->attributes = array('class'=>'saas_table');
             print html_writer::table($table);
             print $OUTPUT->box_end();
         }

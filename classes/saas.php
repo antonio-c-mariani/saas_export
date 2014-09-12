@@ -532,7 +532,7 @@ class saas {
         $params = array('contextlevel'=>CONTEXT_COURSE, 'enable'=>ENROL_INSTANCE_ENABLED);
         $group_by = 'GROUP BY od_id, scr.role';
 
-        if($this->get_config('suspended_as_evaded')) {
+        if($this->get_config('suspended_as_evaded') && !$only_count) {
             $user_enrol_condition = "AND (ue.status = :active OR scr.role = 'student')";
         } else {
             $user_enrol_condition = 'AND ue.status = :active';
@@ -803,12 +803,13 @@ class saas {
                 $odid = $rec->od_id;
             }
 
-            $users_by_roles[$rec->role][$rec->userid] = $rec->uid;
-            if(!empty($rec->lastaccess)) {
-                $users_lastaccess[$rec->userid] = $rec->lastaccess;
-            }
-            if(!empty($rec->suspended)) {
-                $users_suspended[$rec->userid] = true;
+            if(empty($rec->suspended)) {
+                $users_by_roles[$rec->role][$rec->userid] = $rec->uid;
+                if(!empty($rec->lastaccess)) {
+                    $users_lastaccess[$rec->userid] = $rec->lastaccess;
+                }
+            } else {
+                $users_suspended[$rec->userid] = $rec->uid;
             }
         }
 
@@ -826,7 +827,6 @@ class saas {
                 $grades = $this->get_grades($oferta_disciplina->id);
                 $obj_nota = new stdClass();
                 $obj_lastaccess = new stdClass();
-                $obj_suspended = new stdClass();
                 foreach($users AS $userid=>$uid) {
                     if(!empty($uid)) {
                         $user_uid_encoded = urlencode($uid);
@@ -840,11 +840,15 @@ class saas {
                             $this->put_ws("ofertas/disciplinas/{$oferta_uid_encoded}/estudantes/{$user_uid_encoded}/ultimoAcesso", $obj_lastaccess);
                         }
 
-                        if(isset($users_suspended[$userid])) {
-                            $obj_suspended->suspenso = true;
-//todo                            $this->put_ws("ofertas/disciplinas/{$oferta_uid_encoded}/estudantes/{$user_uid_encoded}/suspenso", $obj_suspended);
-                        }
+                    }
+                }
 
+                $obj_suspended = new stdClass();
+                foreach($users_suspended AS $userid=>$uid) {
+                    if(!empty($uid)) {
+                        $user_uid_encoded = urlencode($uid);
+                        $obj_suspended->suspenso = true;
+//todo                        $this->put_ws("ofertas/disciplinas/{$oferta_uid_encoded}/estudantes/{$user_uid_encoded}/suspenso", $obj_suspended);
                     }
                 }
             }
