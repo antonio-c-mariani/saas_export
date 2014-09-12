@@ -899,12 +899,13 @@ class saas {
                     }
                 }
             }
-        } catch (dml_write_exception $e){
-            print_error('bd_error', 'report_saas_export', '', $e->debuginfo);
+        } catch (dml_exception $e){
+            $debuginfo = empty($e->debuginfo) ? '' : '<BR>'.$e->debuginfo;
+            return get_string('bd_error', 'report_saas_export', $e->getMessage() . $debuginfo);
         } catch (Exception $e){
-            $url = new moodle_url('/report/saas_export/index.php', array('action'=>'settings'));
-            print_error('ws_error', 'report_saas_export', $url, $e->getMessage());
+            return get_string('ws_error', 'report_saas_export', $e->getMessage());
         }
+        return true;
     }
 
 

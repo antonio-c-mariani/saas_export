@@ -97,6 +97,7 @@ $string['success'] = 'Todos os dados foram enviados com sucesso.';
 $string['config'] = 'Configurações';
 $string['no_groups_found'] = 'Não foram encontrados grupos no Moodle para relacionar como polos.';
 $string['no_data_to_export'] = 'Não há dados a serem exportados.';
+$string['export_ok'] = 'Os dados foram exportados para o SAAS.';
 
 $string['name_field_teacher'] = 'Nome de professores';
 $string['name_field_teacher_help'] = 'Campo(s) do perfil de professores que define(m) seu nome completo.';

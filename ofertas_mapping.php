@@ -112,7 +112,7 @@ if ($saas->get_config('course_mapping') == 'one_to_many') {
         $modais .= html_writer::end_tag('div');
 
         $modais .= html_writer::start_tag('div', array('class'=>'modal-body'));
-        $modais .= show_saas_offers($oferta_de_curso->uid, true);
+        $modais .= saas_show_offers($oferta_de_curso->uid, true);
         $modais .= html_writer::end_tag('div');
 
         $modais .= html_writer::start_tag('div', array('class'=>'modal-footer'));

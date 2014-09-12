@@ -290,7 +290,16 @@ switch ($action) {
             $polos = isset($_POST['polo']) ? $_POST['polo'] : array();
             $baseurl->param('action', $action);
             if(optional_param('export', false, PARAM_TEXT)) {
-                $saas->send_data($ocs, $ods, $polos);
+                $result = $saas->send_data($ocs, $ods, $polos);
+                print html_writer::start_tag('DIV', array('align'=>'center'));
+                print $OUTPUT->box_start('generalbox boxwidthormal');
+                if($result === true) {
+                    print html_writer::tag('SPAN', get_string('export_ok', 'report_saas_export'), array('class'=>'saas_export_message'));
+                } else {
+                    print html_writer::tag('SPAN', $result, array('class'=>'saas_export_error'));
+                }
+                print $OUTPUT->box_end();
+                print html_writer::end_tag('DIV');
                 saas_show_export_options($baseurl, $ocs, $ods, $polos);
             } else {
                 saas_show_export_options($baseurl);

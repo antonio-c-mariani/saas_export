@@ -140,8 +140,8 @@ function saas_show_categories($catids, $categories, $first_category = false){
     }
 }
 
-function saas_show_saas_offers($oferta_de_curso_uid, $repeat_allowed = true) {
-    global $DB;
+function saas_show_offers($oferta_de_curso_uid, $repeat_allowed = true) {
+    global $DB, $saas;
 
     $modal = "";
 
@@ -777,12 +777,12 @@ function saas_show_export_options($url, $selected_ocs=true, $selected_ods=true, 
         if(!empty($oc->ofertas_disciplinas) || !empty($oc->polos)) {
             $color = $color == '#C0C0C0' ? '#E0E0E0 ' : '#C0C0C0';
 
+            $tag_checkbox = 'saas_oc_' . $oc_id;
             $row = new html_table_row();
 
             $cell = new html_table_cell();
             $checked = $selected_ocs===true || isset($selected_ocs[$oc_id]);
-            $checkbox = html_writer::checkbox("oc[{$oc_id}]", $oc_id, $checked);
-            $cell->text = $checkbox . $oc->nome;
+            $cell->text = html_writer::checkbox("oc[{$oc_id}]", $oc_id, $checked, $oc->nome, array('id'=>$tag_checkbox, 'class'=>'saas_oc_checkbox'));
             $cell->style = "vertical-align: middle; background-color: {$color};";
             $row->cells[] = $cell;
 
@@ -796,10 +796,14 @@ function saas_show_export_options($url, $selected_ocs=true, $selected_ods=true, 
                 $cell->text = html_writer::start_tag('UL', array('style'=>'list-style-type: none;'));
                 foreach($oc->ofertas_disciplinas AS $od) {
                     $checked = $selected_ocs===true || isset($selected_ods[$oc_id][$od->id]);
-                    $checkbox = html_writer::checkbox("od[{$oc_id}][{$od->id}]", $oc_id, $checked);
-                    $text = $checkbox . $od->nome . ' (' . $saas->format_date($od->inicio, $od->fim) . ')';
-                    $cell->text .= html_writer::tag('LI', $text);
+                    $label = $od->nome . ' (' . $saas->format_date($od->inicio, $od->fim) . ')';
+                    $checkbox = html_writer::checkbox("od[{$oc_id}][{$od->id}]", $oc_id, $checked, $label, array('class'=>$tag_checkbox));
+                    $cell->text .= html_writer::tag('LI', $checkbox);
                 }
+
+                $cell->text .= html_writer::empty_tag('img', array('src'=>'img/arrow_ltr.png'));
+                $cell->text .= html_writer::checkbox('', 0, false, 'todos/nenhum', array('class'=>'od_checkall_button', 'id_oc'=>$tag_checkbox));
+
                 $cell->text .= html_writer::end_tag('UL');
             }
             $cell->style = "vertical-align: middle; background-color: {$color};";
@@ -810,10 +814,12 @@ function saas_show_export_options($url, $selected_ocs=true, $selected_ods=true, 
                 $cell->text = html_writer::start_tag('UL', array('style'=>'list-style-type: none;'));
                 foreach($oc->polos AS $pl) {
                     $checked = $selected_ocs===true || isset($selected_polos[$oc_id][$pl->id]);
-                    $checkbox = html_writer::checkbox("polo[{$oc_id}][{$pl->id}]", $oc_id, $checked);
-                    $text = $checkbox . $pl->nome;
-                    $cell->text .= html_writer::tag('LI', $text);
+                    $checkbox = html_writer::checkbox("polo[{$oc_id}][{$pl->id}]", $oc_id, $checked, $pl->nome, array('class'=>$tag_checkbox));
+                    $cell->text .= html_writer::tag('LI', $checkbox);
                 }
+                $cell->text .= html_writer::empty_tag('img', array('src'=>'img/arrow_ltr.png'));
+                $cell->text .= html_writer::checkbox('', 0, false, 'todos/nenhum', array('class'=>'polo_checkall_button', 'id_oc'=>$tag_checkbox));
+
                 $cell->text .= html_writer::end_tag('UL');
             }
             $cell->style = "vertical-align: middle; background-color: {$color};";
