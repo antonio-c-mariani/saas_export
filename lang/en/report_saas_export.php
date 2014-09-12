@@ -104,8 +104,8 @@ $string['name_field_student'] = 'Nome de estudantes';
 $string['name_field_student_help'] = 'Campo(s) do perfil de estudantes que define(m) seu nome completo.';
 $string['name_field_tutor_polo'] = 'Nome de tutores polo';
 $string['name_field_tutor_polo_help'] = 'Campo(s) do perfil de tutores polo que define(m) seu nome completo.';
-$string['name_field_tutor_inst'] = 'Nome de tutores instituição';
-$string['name_field_tutor_inst_help'] = 'Campo(s) do perfil de tutores da instituição (a distância) que define(m) seu nome completo.';
+$string['name_field_tutor_inst'] = 'Nome de tutores a distância';
+$string['name_field_tutor_inst_help'] = 'Campo(s) do perfil de tutores a distância (da instituição) que define(m) seu nome completo.';
 
 $string['name_regexp'] = 'Filtro para Nome';
 $string['name_regexp_help'] = 'Expressão regular aplicada sobre o nome do usuário que possibilita filtrar o valor';
@@ -116,8 +116,8 @@ $string['cpf_field_student'] = 'CPF de estudantes';
 $string['cpf_field_student_help'] = 'Campo do perfil de estudantes que contém seu CPF.';
 $string['cpf_field_tutor_polo'] = 'CPF de tutores polo';
 $string['cpf_field_tutor_polo_help'] = 'Campo do perfil de tutores polo que contém seu CPF.';
-$string['cpf_field_tutor_inst'] = 'CPF de tutores instituição';
-$string['cpf_field_tutor_inst_help'] = 'Campo do perfil de tutores da institução (a distância) que contém seu CPF.';
+$string['cpf_field_tutor_inst'] = 'CPF de tutores a distância';
+$string['cpf_field_tutor_inst_help'] = 'Campo do perfil de tutores a distância (da institução) que contém seu CPF.';
 
 $string['cpf_regexp'] = 'Filtro para CPF';
 $string['cpf_regexp_help'] = 'Expressão regular aplicada sobre o valor de CPF que possibilita filtrar o valor';
@@ -131,8 +131,8 @@ $string['roles_student_help'] = 'Papeis com os quais estudantes são inscritos n
 $string['roles_tutor_polo'] = 'Papeis de tutores polo';
 $string['roles_tutor_polo_help'] = 'Papeis com os quais tutores de polo (presenciais) são inscritos nos cursos Moodle correspondentes às ofertas de disciplinas. <BR>
                             Utilize <ctrl\> + click para selecionar múltiplos papeis ou para desmarcar uma opção.';
-$string['roles_tutor_inst'] = 'Papeis de tutores instituição';
-$string['roles_tutor_inst_help'] = 'Papeis com os quais tutores da instituição (a distância) são inscritos nos cursos Moodle correspondentes às ofertas de disciplinas. <BR>
+$string['roles_tutor_inst'] = 'Papeis de tutores a distância';
+$string['roles_tutor_inst_help'] = 'Papeis com os quais tutores a distância (da instituição) são inscritos nos cursos Moodle correspondentes às ofertas de disciplinas. <BR>
                             Utilize <ctrl\> + click para selecionar múltiplos papeis ou para desmarcar uma opção.';
 
 
@@ -172,10 +172,10 @@ $string['roles'] = 'Papéis';
 $string['roles_help'] = 'Papéis com os quais estes usuários são inscritos nos cursos Moodle correspondentes às ofertas de disciplinas.';
 
 $string['home_title'] = 'Sincronização de dados com o SAAS';
-$string['no_course_offer_from_ws'] = 'Não foi localizada nenhuma oferta (edição) de curso cadastrada no SAAS. 
+$string['no_course_offer_from_ws'] = 'Não foi localizada nenhuma oferta (edição) de curso cadastrada no SAAS.
 <BR>Verifique no SAAS se há ofertas de curso sujeitas a avaliação e se a chave da instituição foi corretamente configurada.
 <p>Entre em contato com a administração do SAAS para mais informações.</p>';
-$string['no_class_offer_from_ws'] = 'Não foi localizada nenhuma oferta de disciplina cadastrada no SAAS. 
+$string['no_class_offer_from_ws'] = 'Não foi localizada nenhuma oferta de disciplina cadastrada no SAAS.
 <BR>Verifique no SAAS se há ofertas de disciplinas sujeitas a avaliação e se a chave da instituição foi corretamente configurada.
 <p>Entre em contato com a administração do SAAS para mais informações.</p>';
 
@@ -194,12 +194,12 @@ $string['users_by_class_offer'] = 'Número de usuários por oferta de disciplina
 
 $string['obs_passo1'] = '<p>Este passo possibilita selecionar uma categoria do Moodle onde estão os cursos Moodle correspondentes às ofertas de disciplina
     de uma oferta (edição) de curso registrada no SAAS. Os cursos Moodle podem estar nesta categoria ou em qualquer de suas sub-categorias.</p>
-    <p>Este relacionamento não é obrigatório, mas facilita o mapeamento de cursos Moodle com as ofertas de disciplinas do SAAS (passo 2). 
+    <p>Este relacionamento não é obrigatório, mas facilita o mapeamento de cursos Moodle com as ofertas de disciplinas do SAAS (passo 2).
     Assim, é possível restringir a relação de cursos Moodle apresentados. Se nenhuma categoria for selecionada, serão listados, no passo 2, todos os cursos do
-    Moodle como opção de mapeamento.</p> 
-    <p>São apresentadas aqui somente as ofertas de curso que tenham sido previamente cadastradas no SAAS.</p>'; 
+    Moodle como opção de mapeamento.</p>
+    <p>São apresentadas aqui somente as ofertas de curso que tenham sido previamente cadastradas no SAAS.</p>';
 $string['obs_passo2'] = '<p>Neste passo, é definido o mapeamento entre os cursos Moodle e as ofertas de disciplinas do SAAS. Somente dados de professores,
-    estudantes e tutores inscritos nesses cursos mapeados são exportados para o SAAS.</p> 
+    estudantes e tutores inscritos nesses cursos mapeados são exportados para o SAAS.</p>
     <p>São apresentadas abaixo somente as ofertas de disciplinas que tenham sido previamente cadastradas no SAAS e que ainda estejam sujeitas a avaliação.</p>';
 $string['obs_passo3'] = '<p>Neste passo, são indicados quais grupos de cursos Moodle (selecionados no passo 2) representam polos da Instituição.
     Este passo, objetiva definir o relacionamento de estudantes e tutores de polo (presencial) por polo. Este relacionamento é exportado para o SAAS.</p>

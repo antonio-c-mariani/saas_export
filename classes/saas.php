@@ -6,7 +6,7 @@ require_once(dirname(__FILE__) . '/curl.php');
 class saas {
 
     public static $role_types             = array('teacher'=>'professores', 'student'=>'estudantes', 'tutor_polo'=>'tutores', 'tutor_inst'=>'tutores');
-    public static $role_types_disciplinas = array('teacher', 'tutor_inst', 'student');
+    public static $role_types_disciplinas = array('tutor_inst', 'teacher', 'student');
     public static $role_types_polos       = array('tutor_polo', 'student');
 
     public $config;
@@ -326,6 +326,7 @@ class saas {
             $group_by = 'GROUP BY oc.id, sp.id, scr.role';
             $field = 'COUNT(DISTINCT ra.userid) AS count';
             $distinct = '';
+            $orderby = '';
         } else {
             $group_by = '';
             $userid_field = $this->get_config('userid_field');
@@ -341,6 +342,7 @@ class saas {
                 }
             }
             $distinct = 'DISTINCT';
+            $orderby = ', CONCAT(u.firstname, u.lastname)';
         }
 
         $sql = "SELECT {$distinct} oc.id AS oc_id, sp.id AS p_id, scr.role, $field
@@ -365,7 +367,7 @@ class saas {
                  WHERE oc.enable = 1
                    {$condition}
               {$group_by}
-              ORDER BY oc.id, sp.id, scr.role";
+              ORDER BY oc.id, sp.id, scr.role {$orderby}";
         return array($sql, $params);
     }
 
@@ -388,6 +390,7 @@ class saas {
             $group_by = 'GROUP BY oc.id, sp.id, scr.role';
             $field = 'COUNT(DISTINCT ra.userid) AS count';
             $distinct = '';
+            $orderby = '';
         } else {
             $group_by = '';
             $userid_field = $this->get_config('userid_field');
@@ -403,6 +406,7 @@ class saas {
                 }
             }
             $distinct = 'DISTINCT';
+            $orderby = ', CONCAT(u.firstname, u.lastname)';
         }
 
         $sql = "SELECT {$distinct} oc.id AS oc_id, sp.id AS p_id, scr.role, $field
@@ -425,7 +429,7 @@ class saas {
                  WHERE oc.enable = 1
                    {$condition}
               {$group_by}
-              ORDER BY oc.id, sp.id, scr.role";
+              ORDER BY oc.id, sp.id, scr.role {$orderby}";
         return array($sql, $params);
     }
 
@@ -448,6 +452,7 @@ class saas {
             $group_by = 'GROUP BY oc.id, sp.id, scr.role';
             $field = 'COUNT(DISTINCT ra.userid) AS count';
             $distinct = '';
+            $orderby = '';
         } else {
             $group_by = '';
             $userid_field = $this->get_config('userid_field');
@@ -463,6 +468,7 @@ class saas {
                 }
             }
             $distinct = 'DISTINCT';
+            $orderby = ', CONCAT(u.firstname, u.lastname)';
         }
 
         $sql = "SELECT {$distinct} oc.id AS oc_id, sp.id AS p_id, scr.role, $field
@@ -487,7 +493,7 @@ class saas {
                  WHERE oc.enable = 1
                    {$condition}
               {$group_by}
-              ORDER BY oc.id, sp.id, scr.role";
+              ORDER BY oc.id, sp.id, scr.role {$orderby}";
         return array($sql, $params);
     }
 
@@ -537,6 +543,7 @@ class saas {
         $join_user_lastaccess = '';
         if($only_count) {
             $fields = 'COUNT(DISTINCT ra.userid) AS count';
+            $orderby = '';
         } else {
             $userid_field = $this->get_config('userid_field');
             if($userid_field == 'username' || $userid_field == 'idnumber') {
@@ -554,6 +561,7 @@ class saas {
             }
             $join_user_lastaccess = 'LEFT JOIN {user_lastaccess} ul ON (ul.userid = u.id AND ul.courseid = c.id)';
             $fields .= ', MAX(ue.status) as suspended, MAX(u.currentlogin) AS currentlogin, MAX(ul.timeaccess) AS lastaccess';
+            $orderby = ', CONCAT(u.firstname, u.lastname)';
         }
 
         $condition = '';
@@ -584,7 +592,7 @@ class saas {
                    {$condition}
                    {$user_enrol_condition}
               {$group_by}
-              ORDER BY od_id, scr.role";
+              ORDER BY od_id, scr.role {$orderby}";
 
         return array($sql, $params);
     }
@@ -735,7 +743,7 @@ class saas {
                     $encoded_oferta_uid = urlencode($ofertas[$ocid]->uid);
                     $encoded_polo_uid = urlencode($polos[$poloid]->uid);
                     foreach($users_by_roles AS $r=>$users) {
-//todo                        $this->put_ws("ofertas/cursos/{$encoded_oferta_uid}/polos/{$encoded_polo_uid}/".self::$role_types[$r], $users);
+                        $this->put_ws("ofertas/cursos/{$encoded_oferta_uid}/polos/{$encoded_polo_uid}/".self::$role_types[$r], $users);
                     }
                     unset($mapped[$ocid][$poloid]);
                 }
@@ -753,7 +761,7 @@ class saas {
             $encoded_oferta_uid = urlencode($ofertas[$ocid]->uid);
             $encoded_polo_uid = urlencode($polos[$poloid]->uid);
             foreach($users_by_roles AS $r=>$users) {
-//todo                $this->put_ws("ofertas/cursos/{$encoded_oferta_uid}/polos/{$encoded_polo_uid}/".self::$role_types[$r], $users);
+                $this->put_ws("ofertas/cursos/{$encoded_oferta_uid}/polos/{$encoded_polo_uid}/".self::$role_types[$r], $users);
             }
             unset($mapped[$ocid][$poloid]);
         }
@@ -800,7 +808,7 @@ class saas {
                 $users_lastaccess[$rec->userid] = $rec->lastaccess;
             }
             if(!empty($rec->suspended)) {
-                $users_suspended[] = $rec->userid;
+                $users_suspended[$rec->userid] = true;
             }
         }
 
@@ -813,7 +821,7 @@ class saas {
     function send_users_by_oferta_disciplina($oferta_disciplina, $users_by_roles, $users_lastaccess, $users_suspended) {
         $oferta_uid_encoded = urlencode($oferta_disciplina->uid);
         foreach($users_by_roles AS $r=>$users) {
-//todo            $this->put_ws("ofertas/disciplinas/{$oferta_uid_encoded}/". self::$role_types[$r], array_values($users));
+            $this->put_ws("ofertas/disciplinas/{$oferta_uid_encoded}/". self::$role_types[$r], array_values($users));
             if($r == 'student') {
                 $grades = $this->get_grades($oferta_disciplina->id);
                 $obj_nota = new stdClass();
@@ -824,12 +832,12 @@ class saas {
                         $user_uid_encoded = urlencode($uid);
                         if(isset($grades[$userid])) {
                             $obj_nota->nota = $grades[$userid];
-//todo                            $this->put_ws("ofertas/disciplinas/{$oferta_uid_encoded}/estudantes/{$user_uid_encoded}/nota", $obj_nota);
+                            $this->put_ws("ofertas/disciplinas/{$oferta_uid_encoded}/estudantes/{$user_uid_encoded}/nota", $obj_nota);
                         }
 
                         if(isset($users_lastaccess[$userid])) {
                             $obj_lastaccess->ultimoAcesso = $users_lastaccess[$userid];
-//todo                            $this->put_ws("ofertas/disciplinas/{$oferta_uid_encoded}/estudantes/{$user_uid_encoded}/ultimoAcesso", $obj_lastaccess);
+                            $this->put_ws("ofertas/disciplinas/{$oferta_uid_encoded}/estudantes/{$user_uid_encoded}/ultimoAcesso", $obj_lastaccess);
                         }
 
                         if(isset($users_suspended[$userid])) {
@@ -846,7 +854,7 @@ class saas {
     function send_user($rec) {
         if(!isset($this->sent_users[$rec->userid])) {
             $user_uid_encoded = urlencode($rec->uid);
-//todo            $this->put_ws("pessoas/{$user_uid_encoded}",  $this->get_user($rec->role, $rec->userid, $rec->uid));
+            $this->put_ws("pessoas/{$user_uid_encoded}",  $this->get_user($rec->role, $rec->userid, $rec->uid));
             if($rec->role == 'student' && !empty($rec->uid) && !empty($rec->currentlogin)) {
 //todo                $this->put_ws("pessoas/{$user_uid_encoded}/ultimoLogin", array('ultimoLogin'=>$rec->currentlogin));
             }
