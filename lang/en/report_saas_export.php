@@ -49,9 +49,9 @@ $string['no_no_ofertas_disciplinas'] = 'Não há ofertas de disciplinas ativas r
 
 $string['course_mapping'] = 'Mapeamento de disciplinas';
 $string['course_mapping_help'] = 'Indica a forma como os cursos do Moodle são mapeados para disciplinas do SAAS';
-$string['one_to_one'] = 'Cada curso Moodle corresponde a uma e somente uma oferta de disciplina do SAAS';
-$string['one_to_many'] = 'Um curso Moodle contém conteúdo de mais de uma oferta de disciplina do SAAS';
-$string['many_to_one'] = 'O conteúdo de uma oferta de disciplina do SAAS está distribuído em mais de um curso Moodle';
+$string['one_to_one'] = 'Um curso Moodle para cada oferta de disciplina do SAAS';
+$string['one_to_many'] = 'Um curso Moodle para mais de uma oferta de disciplina do SAAS';
+$string['many_to_one'] = 'Mais de um curso Moodle para uma oferta de disciplina do SAAS';
 
 $string['polo_mapping'] = 'Mapeamento de polos';
 $string['polo_mapping_help'] = 'Indica a forma como os polos são mapeados na estrutura de cursos do Moodle';
