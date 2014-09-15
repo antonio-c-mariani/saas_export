@@ -52,7 +52,7 @@ $polos = $DB->get_records_menu('saas_polos', null, 'nome', 'id, nome');
 $sql = "SELECT DISTINCT g.name as groupname, polo.polo_id, polo.nome as saas_polo_nome, spn.id AS polo_id_same_name
           FROM {saas_map_course} scm
           JOIN {course} c ON (c.id = scm.courseid)
-          JOIN {saas_ofertas_disciplinas} sod ON (sod.id = scm.oferta_disciplina_id AND sod.enable = 1)
+          JOIN {saas_ofertas_disciplinas} sod ON (sod.group_map_id = scm.group_map_id AND sod.enable = 1)
           JOIN {groups} g ON (g.courseid = c.id)
      LEFT JOIN (SELECT spm.groupname, spm.polo_id, sp.nome
                   FROM {saas_map_groups_polos} spm
@@ -64,7 +64,7 @@ $map = $DB->get_records_sql($sql);
 $data = array();
 $color_class = '';
 foreach($map AS $groupname=>$m) {
-    $color_class = $color_class == 'normalcolor' ? 'alternatecolor' : 'normalcolor';
+    $color_class = $color_class == 'saas_normalcolor' ? 'saas_alternatecolor' : 'saas_normalcolor';
     $poloid = empty($m->polo_id) ? 0 : $m->polo_id;
     $encoded_groupname = urlencode($groupname);
     $polo_name = empty($m->saas_polo_nome) ? '' : $m->saas_polo_nome;

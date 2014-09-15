@@ -1,5 +1,7 @@
 .saas_table {
     width: 80%;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .saas_export_message {color: green; text-align: center; margin-top: 1em; margin-bottom: 1em;}
@@ -25,11 +27,11 @@
 .saas_category_tree .level4 {background-color: #F0F0F0;}
 .saas_category_tree .level5 {background-color: #FFFFFF;}
 
-.saas_category_tree .normalcolor {
+.saas_normalcolor {
     background-color: #D0D0D0;
 }
 
-.saas_category_tree .alternatecolor {
+.saas_alternatecolor {
     background-color: #E8E8E8;
 }
 

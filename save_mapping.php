@@ -2,46 +2,22 @@
 define('AJAX_SCRIPT', true);
 require_once '../../config.php';
 
-$uid = required_param('uid', PARAM_TEXT);
-$id = required_param('id', PARAM_TEXT);
+$group_map_id = required_param('group_map_id', PARAM_INT);
+$ods = $DB->get_records('saas_ofertas_disciplinas', array('group_map_id'=>$group_map_id));
 
-$mapping_type = get_config('report_saas_export', 'course_mapping');
+$courseid = required_param('courseid', PARAM_INT);
+$course = $DB->get_record('course', array('id'=>$courseid), 'id, category');
 
-switch ($mapping_type) {
-    case 'one_to_one':
-        if ($record = $DB->get_record('saas_map_course', array('oferta_disciplina_id' => $uid))) {
-            $record->courseid = $id;
-            $DB->update_record('saas_map_course', $record);
-        } else {
-            $record = new stdClass();
-            $record->courseid = $id;
-            $record->oferta_disciplina_id = $uid;
-            $DB->insert_record('saas_map_course', $record);
-        }
-
-        break;
-    case 'many_to_one':
-        $record = new stdClass();
-        $record->courseid = $id;
-        $record->oferta_disciplina_id = $uid;
-        $DB->insert_record('saas_map_course', $record);
-        break;
-    case 'one_to_many':
-        if ($uid == -1) {
-            $record = new stdClass();
-            $record->courseid = $id;
-            $record->oferta_disciplina_id = $uid;
-            $DB->insert_record('saas_map_course', $record);
-        } else {
-            if ($record = $DB->get_record('saas_map_course', array('courseid' => $id, 'oferta_disciplina_id' => -1))) {
-                $record->oferta_disciplina_id = $uid;
-                $DB->update_record('saas_map_course', $record);
-            } else {
-                $record = new stdClass();
-                $record->courseid = $id;
-                $record->oferta_disciplina_id = $uid;
-                $DB->insert_record('saas_map_course', $record);
-            }
-        }
-       break;
+if(empty($ods) || empty($course)) {
+    return false;
 }
+$SESSION->last_categoryid = $course->category;
+
+if(!$DB->record_exists('saas_map_course', array('courseid'=>$courseid, 'group_map_id'=>$group_map_id))) {
+    $record = new stdClass();
+    $record->courseid = $courseid;
+    $record->group_map_id = $group_map_id;
+    $DB->insert_record('saas_map_course', $record);
+}
+
+return true;

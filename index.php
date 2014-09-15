@@ -201,10 +201,29 @@ switch ($action) {
         echo $OUTPUT->footer();
         break;
     case 'course_mapping':
+        $syscontext = context_system::instance();
+        $may_export = has_capability('report/saas_export:export', $syscontext);
+
+        $od_id = optional_param('od_id', 0, PARAM_INT);
+        $group_map_id = optional_param('group_map_id', 0, PARAM_INT);
+        if(!empty($od_id) && !empty($group_map_id) && $may_export) {
+            $od = $DB->get_record('saas_ofertas_disciplinas', array('id'=>$od_id), 'id, group_map_id, oferta_curso_uid', MUST_EXIST);
+            if($group_map_id == -1) {
+                $max = $DB->get_field_sql("SELECT MAX(group_map_id) FROM {saas_ofertas_disciplinas}");
+                $od->group_map_id = empty($max) ? 1 : $max+1;
+            } else {
+                $od->group_map_id = $group_map_id;
+            }
+            $DB->update_record('saas_ofertas_disciplinas', $od);
+            $id = $DB->get_field('saas_ofertas_cursos', 'id', array('uid'=>$od->oferta_curso_uid));
+            redirect(new moodle_url('/report/saas_export/index.php', array('action'=>'course_mapping', 'oc_id'=>$id), 'oc'.$id));
+        }
+
         echo $OUTPUT->header();
         print_tabs(array($tabs), $action);
 
-        include('ofertas_mapping.php');
+        // include('ofertas_mapping.php');
+        include('group_ofertas.php');
 
         echo $OUTPUT->footer();
         break;

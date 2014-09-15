@@ -2,30 +2,69 @@
 require_once(dirname(__FILE__) . '/../../config.php');
 
 // ----------------------------------------------------------------------------------------------
-// Rotinas auxiliara para mapeamento de ofertas de disciplina para cursos Moodle
+// Rotinas auxiliares para mapeamento de ofertas de disciplina para cursos Moodle
 
-function saas_build_tree_categories($repeat_allowed = true) {
-    $categories = saas_get_moodle_categories();
+function saas_build_tree_categories() {
+    global $DB, $SESSION;
 
-    foreach($categories as $cat){
-        $cat->sub_ids = array();
-    }
-
-    $topo = array();
-
-    foreach($categories as $cat){
-        if(isset($categories[$cat->parent])){
-            $categories[$cat->parent]->sub_ids[] = $cat->id;
-        } else {
-            $topo[] = $cat->id;
+    // Hierarquia de categorias com cursos a selecionar (não vazias)
+    $sql = "SELECT DISTINCT ccp.id, ccp.depth, ccp.path, ccp.name
+              FROM course_categories ccp
+              JOIN (SELECT DISTINCT cc.id, cc.path
+                      FROM course_categories cc
+                      JOIN course c ON (c.category = cc.id)
+                 LEFT JOIN saas_map_course mc ON (mc.courseid = c.id)
+                     WHERE c.id > 1
+                       AND ISNULL(mc.id)) cat
+                ON (ccp.id = cat.id OR cat.path LIKE CONCAT('%/',ccp.id,'/%'))
+          ORDER BY ccp.depth, ccp.name";
+    $categories = $DB->get_records_sql($sql);
+    foreach($categories AS $cat) {
+        $cat->subs = array();
+        $cat->courses = array();
+        if($cat->depth > 1) {
+            $path = explode('/', $cat->path);
+            $superid = $path[count($path)-2];
+            $categories[$superid]->subs[$cat->id] = $cat;
         }
     }
 
-    saas_get_courses_from_categories($categories, $repeat_allowed);
+    if(isset($SESSION->last_categoryid)) {
+        if(isset($categories[$SESSION->last_categoryid])) {
+            $category_path = explode('/', $categories[$SESSION->last_categoryid]->path);
+            unset($category_path[0]);
+        } else {
+            if($path = $DB->get_field('course_categories', 'path', array('id'=>$SESSION->last_categoryid))) {
+                $category_path = explode('/', $path);
+                unset($category_path[0]);
+            } else {
+                $category_path = array();
+            }
+        }
+    } else {
+        $category_path = array();
+    }
+
+    // Cursos ainda não selecionados
+    $sql = "SELECT c.id, c.category, c.fullname
+              FROM {course} c
+         LEFT JOIN saas_map_course mc ON (mc.courseid = c.id)
+             WHERE c.id > 1
+               AND ISNULL(mc.id)
+          ORDER BY c.fullname";
+    foreach($DB->get_records_sql($sql) AS $course) {
+        $categories[$course->category]->courses[$course->id] = $course;
+    }
+
+    foreach(array_keys($categories) AS $catid) {
+        if($categories[$catid]->depth > 1) {
+            unset($categories[$catid]);
+        }
+    }
 
     echo html_writer::start_tag('div', array('class'=>'tree well'));
     echo html_writer::start_tag('ul');
-    saas_show_categories($topo, $categories, true);
+    saas_show_categories($categories, $category_path);
     echo html_writer::end_tag('ul');
     echo html_writer::end_tag('div');
 }
@@ -89,40 +128,29 @@ function saas_get_courses_from_categories(&$categories, $repeat_allowed = true) 
 
 }
 
-function saas_show_categories($catids, $categories, $first_category = false){
+function saas_show_categories(&$categories, $open_catids = array()){
     global $OUTPUT;
 
-    foreach ($catids as $catid){
-        $has_courses = empty($categories[$catid]->courses);
-        $has_sub_categories = empty($categories[$catid]->sub_ids);
+    foreach ($categories as $cat){
+        $cat_class = $cat->depth == 1 ? 'category-root' : '';
 
-        $class = "";
-        $cat_class = "";
-        $style = "";
-
-        if($has_courses && $has_sub_categories){
-            $style = "background: #ccc;";
-        } elseif ($first_category) {
-            $class = "icon-folder-open";
-            $cat_class = 'category-root';
-        } else {
-            $class = "icon-folder-close";
-        }
+        $open = in_array($cat->id, $open_catids);
+        $cat_class .= $open ? " folder-open" : " folder-close";
+        $icon_class = $open ? "icon-folder-open" : "icon-folder-close";
 
         echo html_writer::start_tag('li', array('class'=>$cat_class));
-        echo html_writer::start_tag('span', array('style'=>$style));
-        echo html_writer::tag('i', '', array('class'=>$class));
-        echo $categories[$catid]->name;
+        echo html_writer::start_tag('span');
+        echo html_writer::tag('i', '', array('class'=>$icon_class));
+        echo $cat->name;
         echo html_writer::end_tag('span');
 
         echo html_writer::start_tag('ul');
 
-        foreach ($categories[$catid]->courses as $c){
+        foreach ($cat->courses as $c){
             echo html_writer::start_tag('li');
 
-            echo html_writer::start_tag('span', array('id'=>$c->id, 'class'=>'select_moodle_course',
-                        'rel'=>'tooltip', 'data-placement'=>'right',
-                        'data-original-title'=>'Selecionar'));
+            echo html_writer::start_tag('span', array('id'=>$c->id, 'class'=>'select_moodle_course', 'rel'=>'tooltip',
+                                    'data-placement'=>'right', 'data-original-title'=>'Selecionar'));
             echo $OUTPUT->pix_icon("i/course", '', 'moodle', array('class' => 'icon smallicon'));
             echo html_writer::tag('html', $c->fullname);
             echo html_writer::end_tag('span');
@@ -130,32 +158,13 @@ function saas_show_categories($catids, $categories, $first_category = false){
             echo html_writer::end_tag('li');
         }
 
-
-        if(!empty($categories[$catid]->sub_ids)){
-            saas_show_categories($categories[$catid]->sub_ids, $categories);
+        if(!empty($cat->subs)){
+            saas_show_categories($cat->subs, $open_catids);
         }
 
         echo html_writer::end_tag('ul');
         echo html_writer::end_tag('li');
     }
-}
-
-function saas_show_offers($oferta_de_curso_uid, $repeat_allowed = true) {
-    global $DB, $saas;
-
-    $modal = "";
-
-    $ofertas_de_disciplinas = $saas->get_ofertas_disciplinas($oferta_de_curso_uid);
-
-    $modal .= html_writer::start_tag('div', array('style'=>'display:block;', 'id'=>$oferta_de_curso_uid, 'class'=>'lista_de_ofertas'));
-    foreach($ofertas_de_disciplinas as $od) {
-        $modal .= html_writer::tag('input', '', array('type'=>'checkbox', 'class'=>'od_checkbox',
-                                                      'chk_id'=>$od->uid, 'style'=>'margin-right:5px;'));
-        $modal .= html_writer::tag('div', $od->nome, array('style'=>'display:inline;'));
-    }
-    $modal .= html_writer::end_tag('div');
-
-    return $modal;
 }
 
 // ----------------------------------------------------------------------------------------------
@@ -354,7 +363,7 @@ function saas_show_overview_courses_polos($ocid, $poloid) {
     $sql = "SELECT DISTINCT oc.id AS oc_id, sp.*
               FROM {saas_ofertas_cursos} oc
               JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1)
-              JOIN {saas_map_course} cm ON (cm.oferta_disciplina_id = od.id)
+              JOIN {saas_map_course} cm ON (cm.group_map_id = od.group_map_id)
               JOIN {course} c ON (c.id = cm.courseid)
               JOIN {saas_map_catcourses_polos} smcp ON (smcp.type = 'course' AND smcp.instanceid = c.id)
               JOIN {saas_polos} sp ON (sp.id = smcp.polo_id AND sp.enable = 1)
@@ -374,7 +383,7 @@ function saas_show_overview_categories_polos($ocid, $poloid) {
     $sql = "SELECT DISTINCT oc.id AS oc_id, sp.*
               FROM {saas_ofertas_cursos} oc
               JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1)
-              JOIN {saas_map_course} cm ON (cm.oferta_disciplina_id = od.id)
+              JOIN {saas_map_course} cm ON (cm.group_map_id = od.group_map_id)
               JOIN {course} c ON (c.id = cm.courseid)
               JOIN {course_categories} cc ON (cc.id = c.category)
               JOIN {course_categories} ccp ON (ccp.id = cc.id OR cc.path LIKE CONCAT('%/',ccp.id,'/%'))
@@ -396,7 +405,7 @@ function saas_show_overview_groups_polos($ocid, $poloid) {
     $sql = "SELECT DISTINCT oc.id AS oc_id, sp.*
               FROM {saas_ofertas_cursos} oc
               JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1)
-              JOIN {saas_map_course} cm ON (cm.oferta_disciplina_id = od.id)
+              JOIN {saas_map_course} cm ON (cm.group_map_id = od.group_map_id)
               JOIN {course} c ON (c.id = cm.courseid)
               JOIN {groups} g ON (g.courseid = c.id)
               JOIN {saas_map_groups_polos} spm ON (spm.groupname = g.name)
@@ -525,7 +534,7 @@ function saas_show_users_oferta_curso_polo($ocid, $poloid, $sql, $params) {
     $rs = $DB->get_recordset_sql($sql, $params);
     foreach($rs AS $rec) {
         $user = $saas->get_user($rec->role, $rec->userid, $rec->uid);
-        $data[$rec->role][] = array((count($data[$rec->role])+1) . '.', $user->uid, $user->nome, $user->email, $user->cpf);
+        $data[$rec->role][] = array((count($data[$rec->role])+1) . '.', $user->nome, $user->uid, $user->email, $user->cpf);
     }
 
     foreach($role_types AS $role) {
@@ -534,7 +543,7 @@ function saas_show_users_oferta_curso_polo($ocid, $poloid, $sql, $params) {
             print $OUTPUT->heading(get_string($role . 's', 'report_saas_export') . ' => ' . $title, '4');
 
             $table = new html_table();
-            $table->head = array('', get_string('username', 'report_saas_export'), get_string('name'), get_string('email'), get_string('cpf', 'report_saas_export'));
+            $table->head = array('', get_string('name'), get_string('username', 'report_saas_export'), get_string('email'), get_string('cpf', 'report_saas_export'));
             $table->attributes = array('class'=>'saas_table');
             $table->data = $data[$role];
             print html_writer::table($table);
@@ -567,7 +576,7 @@ function saas_show_users_oferta_disciplina($ofer_disciplina_id) {
     foreach($rs AS $rec) {
         if(empty($rec->suspended)) {
             $user = $saas->get_user($rec->role, $rec->userid, $rec->uid);
-            $row = array((count($data[$rec->role])+1) . '.', $user->uid, $user->nome, $user->email, $user->cpf);
+            $row = array((count($data[$rec->role])+1) . '.', $user->nome, $user->uid, $user->email, $user->cpf);
             if($rec->role == 'student') {
                 $row[] = get_string('no');
                 $row[] = empty($rec->currentlogin) ? '-' : date('d-m-Y H:i', $rec->currentlogin);
@@ -587,8 +596,8 @@ function saas_show_users_oferta_disciplina($ofer_disciplina_id) {
 
         $row->style = "background-color: {$color};";
         $row->cells[] = (count($data[$rec->role])+1) . '.';
-        $row->cells[] = $user->uid;
         $row->cells[] = $user->nome;
+        $row->cells[] = $user->uid;
         $row->cells[] = $user->email;
         $row->cells[] = $user->cpf;
         $row->cells[] = html_writer::tag('span', get_string('yes'), array('class'=>'saas_export_warning'));
@@ -605,7 +614,7 @@ function saas_show_users_oferta_disciplina($ofer_disciplina_id) {
             print $OUTPUT->heading(get_string($r . 's', 'report_saas_export') . ' => ' . $title, '4');
 
             $table = new html_table();
-            $table->head = array('', get_string('username', 'report_saas_export'), get_string('name'), get_string('email'), get_string('cpf', 'report_saas_export'));
+            $table->head = array('', get_string('name'), get_string('username', 'report_saas_export'), get_string('email'), get_string('cpf', 'report_saas_export'));
             $table->colclasses = array('rightalign', 'leftalign', 'leftalign', 'leftalign', 'leftalign');
             if($r == 'student') {
                 $table->head[] = get_string('suspended', 'report_saas_export');

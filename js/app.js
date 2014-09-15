@@ -21,23 +21,11 @@ jQuery( document ).ready(function( $ ) {
     $('.delete_bt').click(function(element) {
         $.post("delete_mapping.php",
         {
-            uid:element.target.getAttribute('uid'),
-            id:element.target.getAttribute('id'),
+            group_map_id:element.target.getAttribute('group_map_id'),
+            courseid:element.target.getAttribute('courseid'),
             action:'delete_one'
         })
         .done(function() {
-            window.location.reload();
-        });
-    });
-
-    //Desfaz mais de uma mapeamento.
-    $('.delete_many_offers_bt').click(function(element) {
-        $.post("delete_mapping.php",
-        {
-            id:element.target.getAttribute('id'),
-            uid:-1,
-            action:'delete_many_offers'
-        }).done(function() {
             window.location.reload();
         });
     });
@@ -51,15 +39,13 @@ jQuery( document ).ready(function( $ ) {
         $('#cursos_moodle_modal').modal('show');
 
         //Adiciona o nome da oferta de disciplina que está sendo mapeada na modal.
-        $('<h4> Oferta de Disciplina: ' +saas.target.getAttribute('od_nome')+ '</h4>').insertAfter('.modal_cursos_moodle_title');
-        $('<h4> Oferta de Curso: ' +saas.target.getAttribute('oc_nome')+ '</h4>').insertAfter('.modal_cursos_moodle_title');
+        $('<h5 style="margin-left: 2em;"> Oferta de disciplina: <font color="darkblue">' +saas.target.getAttribute('od_nome')+ '</font></h5>').insertAfter('.modal_cursos_moodle_title');
+        $('<h5 style="margin-left: 2em;"> Oferta de curso:  <font color="darkblue">' +saas.target.getAttribute('oc_nome')+ '</font></h5>').insertAfter('.modal_cursos_moodle_title');
 
         //Define inicialmente as categorias que estão abertas
         $('.tree li:has(ul)').addClass('parent_li');
-        $('.parent_li').css('display', 'none');
         $('.category-root').css('display', 'list-item');
-        var primeiro_nivel = $('.category-root').children('ul');
-        primeiro_nivel.children('li').show();
+        $('.folder-close').children('ul').children('li').hide();
 
         //Expande e contrai as categorias.
         $('.tree li.parent_li > span').on('click', function (e) {
@@ -74,43 +60,16 @@ jQuery( document ).ready(function( $ ) {
         });
 
         $('.select_moodle_course').click(function(moodle) {
-            var uid_saas = saas.target.getAttribute('id');
-            var id_moodle = moodle.target.getAttribute('id');
-
-            if (uid_saas && id_moodle) {
-                $.post("save_mapping.php",
-                    {
-                      uid:uid_saas,
-                      id:id_moodle
-                    },
+            var group_map_id = saas.target.getAttribute('id');
+            var courseid= moodle.target.getAttribute('id');
+            if (group_map_id && courseid) {
+                $.post("save_mapping.php", { group_map_id:group_map_id, courseid:courseid },
                     function(data,status){
                         window.location.reload();
                     }
                 );
             }
         });
-        return false;
-    });
-
-    $('.saas_map_bt').click(function(saas) {
-
-        saas.preventDefault();
-
-        var oc_uid = saas.target.getAttribute('id_da_modal');
-        $('#' + oc_uid).modal('show');
-        
-        $('.saas-bt-save').click(function(moodle) {
-            var lista_de_ofertas = $('#'+oc_uid + ' .lista_de_ofertas');
-            var checkbox = lista_de_ofertas.children('.od_checkbox');
-            
-            $.each(checkbox, function(key, chk) {
-                if(chk.checked) {
-                    //Finish this, create a <tr>.
-                    //$('<h4> Oferta de Curso </h4>').insertAfter('.tr' + oc_uid);
-                }
-            });
-        });
-
         return false;
     });
 

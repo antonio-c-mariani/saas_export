@@ -145,6 +145,7 @@ class saas {
         global $DB;
 
         $local = $DB->get_records('saas_ofertas_disciplinas', null, null ,'uid, id, enable');
+
         foreach ($this->get_ws('ofertas/disciplinas') as $oferta_disciplina){
             $record = new stdClass();
             $record->uid = $oferta_disciplina->uid;
@@ -159,6 +160,8 @@ class saas {
                 $DB->update_record('saas_ofertas_disciplinas', $record);
                 unset($local[$oferta_disciplina->uid]);
             } else {
+                $max = $DB->get_field_sql("SELECT MAX(group_map_id) FROM {saas_ofertas_disciplinas}");
+                $record->group_map_id = empty($max) ? 1 : $max+1;
                 $DB->insert_record('saas_ofertas_disciplinas', $record);
             }
         }
@@ -293,7 +296,7 @@ class saas {
                   FROM {saas_ofertas_cursos} oc
              LEFT JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1)
              LEFT JOIN {saas_disciplinas} d ON (d.uid = od.disciplina_uid AND d.enable = 1)
-             LEFT JOIN {saas_map_course} cm ON (cm.oferta_disciplina_id = od.id)
+             LEFT JOIN {saas_map_course} cm ON (cm.group_map_id = od.group_map_id)
                  WHERE oc.enable = 1
               ORDER BY d.nome";
         $recs = $DB->get_recordset_sql($sql);
@@ -348,7 +351,7 @@ class saas {
         $sql = "SELECT {$distinct} oc.id AS oc_id, sp.id AS p_id, scr.role, $field
                   FROM {saas_ofertas_cursos} oc
                   JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1)
-                  JOIN {saas_map_course} cm ON (cm.oferta_disciplina_id = od.id)
+                  JOIN {saas_map_course} cm ON (cm.group_map_id = od.group_map_id)
                   JOIN {course} c ON (c.id = cm.courseid)
                   JOIN {enrol} e ON (e.courseid = c.id AND e.status = :enable)
                   JOIN {user_enrolments} ue ON (ue.enrolid = e.id AND ue.status = :active)
@@ -412,7 +415,7 @@ class saas {
         $sql = "SELECT {$distinct} oc.id AS oc_id, sp.id AS p_id, scr.role, $field
                   FROM {saas_ofertas_cursos} oc
                   JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1)
-                  JOIN {saas_map_course} cm ON (cm.oferta_disciplina_id = od.id)
+                  JOIN {saas_map_course} cm ON (cm.group_map_id = od.group_map_id)
                   JOIN {course} c ON (c.id = cm.courseid)
                   JOIN {enrol} e ON (e.courseid = c.id AND e.status = :enable)
                   JOIN {user_enrolments} ue ON (ue.enrolid = e.id AND ue.status = :active)
@@ -474,7 +477,7 @@ class saas {
         $sql = "SELECT {$distinct} oc.id AS oc_id, sp.id AS p_id, scr.role, $field
                   FROM {saas_ofertas_cursos} oc
                   JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1)
-                  JOIN {saas_map_course} cm ON (cm.oferta_disciplina_id = od.id)
+                  JOIN {saas_map_course} cm ON (cm.group_map_id = od.group_map_id)
                   JOIN {course} c ON (c.id = cm.courseid)
                   JOIN {enrol} e ON (e.courseid = c.id AND e.status = :enable)
                   JOIN {user_enrolments} ue ON (ue.enrolid = e.id AND ue.status = :active)
@@ -575,7 +578,7 @@ class saas {
         $sql = "SELECT od.id AS od_id, scr.role, {$fields}
                   FROM {saas_ofertas_cursos} oc
                   JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1)
-                  JOIN {saas_map_course} cm ON (cm.oferta_disciplina_id = od.id)
+                  JOIN {saas_map_course} cm ON (cm.group_map_id = od.group_map_id)
                   JOIN {course} c ON (c.id = cm.courseid)
                   JOIN {enrol} e ON (e.courseid = c.id AND e.status = :enable)
                   JOIN {user_enrolments} ue ON (ue.enrolid = e.id)
@@ -638,11 +641,11 @@ class saas {
         return $user;
     }
 
-    function get_grades($ofer_disciplina_id) {
+    function get_grades($group_map_id) {
         global $DB;
 
         $grades = array();
-        foreach($DB->get_records('saas_map_course', array('oferta_disciplina_id' => $ofer_disciplina_id)) AS $rec) {
+        foreach($DB->get_records('saas_map_course', array('group_map_id' => $group_map_id)) AS $rec) {
             $grade_item = grade_item::fetch_course_item($rec->courseid);
             $sql = "SELECT DISTINCT ra.userid
                       FROM {context} ctx
