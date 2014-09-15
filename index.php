@@ -165,7 +165,7 @@ switch ($action) {
 
         switch($saas_data_action) {
             case 'ofertas':
-                saas_show_table_ofertas_curso_disciplinas(false);
+                saas_show_table_ofertas_curso_disciplinas(0, false);
                 break;
             case 'add_oferta':
                 if(has_capability('report/saas_export:export', $syscontext)) {
@@ -271,7 +271,8 @@ switch ($action) {
         print_tabs(array($saas_data_tabs), $saas_data_action);
 
         if($saas_data_action == 'ofertas') {
-            saas_show_table_ofertas_curso_disciplinas(true);
+            $oc_id = optional_param('oc_id', 0 , PARAM_INT);
+            saas_show_table_ofertas_curso_disciplinas($oc_id, true, true);
             if($odid = optional_param('odid', 0 , PARAM_INT)) {
                 saas_show_users_oferta_disciplina($odid);
             }

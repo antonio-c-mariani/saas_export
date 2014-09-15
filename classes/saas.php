@@ -287,19 +287,27 @@ class saas {
     }
 
 
-    function get_ofertas() {
+    function get_ofertas($oferta_curso_id=0) {
         global $DB;
 
-        $ofertas = $DB->get_records('saas_ofertas_cursos', array('enable'=>1), 'nome, ano, periodo');
+        $cond = '';
+        $params = array('enable'=>1);
+        if(!empty($oferta_curso_id)) {
+            $cond = 'AND oc.id = :id';
+            $params['id'] = $oferta_curso_id;
+        }
+
+        $ofertas = $DB->get_records('saas_ofertas_cursos', $params, 'nome, ano, periodo');
 
         $sql = "SELECT DISTINCT od.*, d.nome, oc.id as oc_id, cm.id IS NOT NULL AS mapped
                   FROM {saas_ofertas_cursos} oc
              LEFT JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1)
              LEFT JOIN {saas_disciplinas} d ON (d.uid = od.disciplina_uid AND d.enable = 1)
              LEFT JOIN {saas_map_course} cm ON (cm.group_map_id = od.group_map_id)
-                 WHERE oc.enable = 1
+                 WHERE oc.enable = :enable
+                   {$cond}
               ORDER BY d.nome";
-        $recs = $DB->get_recordset_sql($sql);
+        $recs = $DB->get_recordset_sql($sql, $params);
         foreach($recs as $rec) {
             if(empty($rec->id)) {
                 $ofertas[$rec->oc_id]->ofertas_disciplinas = array();

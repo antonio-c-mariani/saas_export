@@ -59,7 +59,7 @@ print html_writer::start_tag('div', array('class'=>'saas_table'));
 
 print html_writer::start_tag('div', array('align'=>'right'));
 print get_string('oferta_curso', 'report_saas_export') . ':';
-print html_writer::select($ofertas_menu, '', $pocid, false, array('class'=>'select_oferta_curso'));
+print html_writer::select($ofertas_menu, '', $pocid, false, array('class'=>'select_oc_course_mapping'));
 print html_writer::end_tag('div');
 
 foreach($ofertas AS $oc_id=>$maps) {

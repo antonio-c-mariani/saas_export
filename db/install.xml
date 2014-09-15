@@ -17,12 +17,12 @@
     <TABLE NAME="saas_map_course" COMMENT="" PREVIOUS="saas_config_roles" NEXT="saas_map_groups_polos">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" NEXT="courseid"/>
-        <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" PREVIOUS="id" NEXT="oferta_disciplina_id"/>
-        <FIELD NAME="oferta_disciplina_id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" PREVIOUS="courseid"/>
+        <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" PREVIOUS="id" NEXT="group_map_id"/>
+        <FIELD NAME="group_map_id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" PREVIOUS="courseid"/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id" NEXT="saas_map_course_unique"/>
-        <KEY NAME="saas_map_course_unique" TYPE="unique" FIELDS="courseid, oferta_disciplina_id" COMMENT="saas_id must be unique" PREVIOUS="primary"/>
+        <KEY NAME="saas_map_course_unique" TYPE="unique" FIELDS="courseid, group_map_id" COMMENT="saas_id must be unique" PREVIOUS="primary"/>
       </KEYS>
     </TABLE>
     <TABLE NAME="saas_map_groups_polos" COMMENT="" PREVIOUS="saas_map_course" NEXT="saas_ofertas_cursos">

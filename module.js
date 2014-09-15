@@ -41,6 +41,10 @@ M.report_saas_export.init = function(Y) {
     Y.on('change', function(e) {
         value = this.get('value');
         window.location="index.php?action=course_mapping&oc_id="+value;
-    }, '.select_oferta_curso');
+    }, '.select_oc_course_mapping');
 
+    Y.on('change', function(e) {
+        value = this.get('value');
+        window.location="index.php?action=overview&data=ofertas&oc_id="+value;
+    }, '.select_oc_overview');
 }
