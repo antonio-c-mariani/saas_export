@@ -408,7 +408,7 @@ function saas_show_overview_groups_polos($ocid, $poloid) {
               JOIN {saas_map_course} cm ON (cm.group_map_id = od.group_map_id)
               JOIN {course} c ON (c.id = cm.courseid)
               JOIN {groups} g ON (g.courseid = c.id)
-              JOIN {saas_map_groups_polos} spm ON (spm.groupname = g.name)
+              JOIN {saas_map_groups_polos} spm ON (spm.groupname = g.name AND spm.polo_id > 0)
               JOIN {saas_polos} sp ON (sp.id = spm.polo_id AND sp.enable = 1)
              WHERE oc.enable = 1
           ORDER BY oc.id, sp.nome";

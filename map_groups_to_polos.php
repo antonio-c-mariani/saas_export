@@ -48,6 +48,7 @@ if(isset($_POST['map_polos']) && isset($_POST['save']) && $may_export) {
 }
 
 $polos = $DB->get_records_menu('saas_polos', null, 'nome', 'id, nome');
+$polos = array(-1=>'-- este grupo não corresponde a um polo --') + $polos;
 
 $sql = "SELECT DISTINCT g.name as groupname, polo.polo_id, polo.nome as saas_polo_nome, spn.id AS polo_id_same_name
           FROM {saas_map_course} scm
@@ -56,43 +57,53 @@ $sql = "SELECT DISTINCT g.name as groupname, polo.polo_id, polo.nome as saas_pol
           JOIN {groups} g ON (g.courseid = c.id)
      LEFT JOIN (SELECT spm.groupname, spm.polo_id, sp.nome
                   FROM {saas_map_groups_polos} spm
-                  JOIN {saas_polos} sp ON (sp.id = spm.polo_id)) polo
+             LEFT JOIN {saas_polos} sp ON (sp.id = spm.polo_id)) polo
             ON (polo.groupname = g.name)
      LEFT JOIN {saas_polos} spn ON (spn.nome = g.name)
       ORDER BY g.name";
 $map = $DB->get_records_sql($sql);
-$data = array();
-$color_class = '';
-foreach($map AS $groupname=>$m) {
-    $color_class = $color_class == 'saas_normalcolor' ? 'saas_alternatecolor' : 'saas_normalcolor';
-    $poloid = empty($m->polo_id) ? 0 : $m->polo_id;
-    $encoded_groupname = urlencode($groupname);
-    $polo_name = empty($m->saas_polo_nome) ? '' : $m->saas_polo_nome;
-
-    $row = new html_table_row();
-
-    $cell = new html_table_cell();
-    $cell->text = $m->groupname;
-    $cell->attributes['class'] = $color_class;
-    $row->cells[] = $cell;
-
-    $cell = new html_table_cell();
-    $cell->text = $may_export ? html_writer::select($polos, "map_polos[{$encoded_groupname}]", $poloid) : $polo_name;
-    $cell->attributes['class'] = $color_class;
-    $row->cells[] = $cell;
-
-    $data[] = $row;
-}
 
 print html_writer::start_tag('form', array('method'=>'post', 'action'=>'index.php'));
 print html_writer::empty_tag('input', array('type'=>'hidden', 'name'=>'action', 'value'=>'polo_mapping'));
 
-$table = new html_table();
-$table->head  = array(get_string('moodle_group', 'report_saas_export'), get_string('polo_saas', 'report_saas_export'));
-$table->colclasses = array('leftalign', 'leftalign');
-$table->size = array('60%', '40%');
-$table->data = $data;
-print html_writer::table($table);
+foreach(array(1,-1) AS $tipo) {
+    $data = array();
+    $color_class = '';
+    foreach($map AS $groupname=>$m) {
+        $poloid = empty($m->polo_id) ? 0 : $m->polo_id;
+        if($tipo == 1 && $poloid >= 0 || $tipo == -1 && $poloid == -1) {
+            $color_class = $color_class == 'saas_normalcolor' ? 'saas_alternatecolor' : 'saas_normalcolor';
+            $encoded_groupname = urlencode($groupname);
+            $polo_name = empty($m->saas_polo_nome) ? '' : $m->saas_polo_nome;
+
+            $row = new html_table_row();
+
+            $cell = new html_table_cell();
+
+            if(empty($m->polo_id)) {
+                $cell->text = html_writer::tag('span', $m->groupname, array('style'=>'color:red'));
+            } else {
+                $cell->text = $m->groupname;
+            }
+            $cell->attributes['class'] = $color_class;
+            $row->cells[] = $cell;
+
+            $cell = new html_table_cell();
+            $cell->text = $may_export ? html_writer::select($polos, "map_polos[{$encoded_groupname}]", $poloid) : $polo_name;
+            $cell->attributes['class'] = $color_class;
+            $row->cells[] = $cell;
+
+            $data[] = $row;
+        }
+    }
+
+    $table = new html_table();
+    $table->head  = array(get_string('moodle_group', 'report_saas_export'), get_string('polo_saas', 'report_saas_export'));
+    $table->colclasses = array('leftalign', 'leftalign');
+    $table->size = array('60%', '40%');
+    $table->data = $data;
+    print html_writer::table($table);
+}
 
 if($may_export) {
     print html_writer::empty_tag('input', array('type'=>'submit', 'name'=>'save', 'value'=>s(get_string('save', 'admin'))));
