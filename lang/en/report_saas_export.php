@@ -40,7 +40,7 @@ $string['saas_settings'] = 'Configurações do SAAS';
 $string['course_settings'] = 'Configurações de cursos Moodle';
 $string['user_settings'] = 'Configurações de usuários';
 $string['cpf_settings'] = 'Configurações de CPF (opcional)';
-$string['role_settings'] = 'Configurações de papeis/funções';
+$string['role_settings'] = 'Configurações de papéis/funções';
 
 $string['duplicated_role'] = 'Há papel já selecionado em outro perfil de usuário';
 $string['duplicated_disciplina'] = 'Disciplina já disponível na oferta de curso selecionada';
@@ -123,18 +123,18 @@ $string['cpf_field_tutor_inst_help'] = 'Campo do perfil de tutores a distância 
 $string['cpf_regexp'] = 'Filtro para CPF';
 $string['cpf_regexp_help'] = 'Expressão regular aplicada sobre o valor de CPF que possibilita filtrar o valor';
 
-$string['roles_teacher'] = 'Papeis de professores';
-$string['roles_teacher_help'] = 'Papeis com os quais professores são inscritos nos cursos Moodle correspondentes às ofertas de disciplinas. <BR>
-                            Utilize <ctrl\> + click para selecionar múltiplos papeis ou para desmarcar uma opção.';
-$string['roles_student'] = 'Papeis de estudantes';
-$string['roles_student_help'] = 'Papeis com os quais estudantes são inscritos nos cursos Moodle correspondentes às ofertas de disciplinas. <BR>
-                            Utilize <ctrl\> + click para selecionar múltiplos papeis ou para desmarcar uma opção.';
-$string['roles_tutor_polo'] = 'Papeis de tutores polo';
-$string['roles_tutor_polo_help'] = 'Papeis com os quais tutores de polo (presenciais) são inscritos nos cursos Moodle correspondentes às ofertas de disciplinas. <BR>
-                            Utilize <ctrl\> + click para selecionar múltiplos papeis ou para desmarcar uma opção.';
-$string['roles_tutor_inst'] = 'Papeis de tutores a distância';
-$string['roles_tutor_inst_help'] = 'Papeis com os quais tutores a distância (da instituição) são inscritos nos cursos Moodle correspondentes às ofertas de disciplinas. <BR>
-                            Utilize <ctrl\> + click para selecionar múltiplos papeis ou para desmarcar uma opção.';
+$string['roles_teacher'] = 'Papéis de professores';
+$string['roles_teacher_help'] = 'Papéis com os quais professores são inscritos nos cursos Moodle correspondentes às ofertas de disciplinas. <BR>
+                            Utilize <ctrl\> + click para selecionar múltiplos papéis ou para desmarcar uma opção.';
+$string['roles_student'] = 'Papéis de estudantes';
+$string['roles_student_help'] = 'Papéis com os quais estudantes são inscritos nos cursos Moodle correspondentes às ofertas de disciplinas. <BR>
+                            Utilize <ctrl\> + click para selecionar múltiplos papéis ou para desmarcar uma opção.';
+$string['roles_tutor_polo'] = 'Papéis de tutores polo';
+$string['roles_tutor_polo_help'] = 'Papéis com os quais tutores de polo (presenciais) são inscritos nos cursos Moodle correspondentes às ofertas de disciplinas. <BR>
+                            Utilize <ctrl\> + click para selecionar múltiplos papéis ou para desmarcar uma opção.';
+$string['roles_tutor_inst'] = 'Papéis de tutores a distância';
+$string['roles_tutor_inst_help'] = 'Papéis com os quais tutores a distância (da instituição) são inscritos nos cursos Moodle correspondentes às ofertas de disciplinas. <BR>
+                            Utilize <ctrl\> + click para selecionar múltiplos papéis ou para desmarcar uma opção.';
 
 
 $string['profile_field_name'] = 'Nome:';
@@ -168,7 +168,7 @@ $string['cpf'] = 'CPF';
 $string['cpf_help'] = 'Campo do perfil do usuário que contém o CPF.';
 
 $string['desc_user_role'] = 'Papéis com os quais {$a} são inscritos nos cursos Moodle correspondentes às ofertas de disciplinas. <BR>
-                            Utilize <ctrl\> + click para selecionar múltiplos papeis ou para desmarcar uma opção.';
+                            Utilize <ctrl\> + click para selecionar múltiplos papéis ou para desmarcar uma opção.';
 $string['roles'] = 'Papéis';
 $string['roles_help'] = 'Papéis com os quais estes usuários são inscritos nos cursos Moodle correspondentes às ofertas de disciplinas.';
 
