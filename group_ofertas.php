@@ -55,7 +55,7 @@ foreach($DB->get_recordset_sql($sql) AS $rec) {
     $mapping[$rec->group_map_id][] = $rec;
 }
 
-print html_writer::start_tag('div', array('class'=>'saas_table'));
+print html_writer::start_tag('div', array('class'=>'saas_table_map'));
 
 print html_writer::start_tag('div', array('align'=>'right'));
 print get_string('oferta_curso', 'report_saas_export') . ':';
@@ -69,9 +69,9 @@ foreach($ofertas AS $oc_id=>$maps) {
 
     $group_options = array(0=>'');
     foreach(array_keys($maps) AS $ind=>$group_map_id) {
-        $group_options[$group_map_id] = $ind+1;
+        $group_options[$group_map_id] = 'Grupo ' . ($ind+1);
     }
-    $group_options[-1] = 'novo';
+    $group_options[-1] = 'Novo grupo';
 
     $rows = array();
     $index = 0;
@@ -119,6 +119,7 @@ foreach($ofertas AS $oc_id=>$maps) {
 
             $cell = new html_table_cell();
             $cell->text = $rec->nome . ' (' . $saas->format_date($rec->inicio, $rec->fim) . ')';
+            $cell->style = "vertical-align: middle;";
             $cell->attributes['class'] = $color_class;
             $row->cells[] = $cell;
 
@@ -159,9 +160,12 @@ foreach($ofertas AS $oc_id=>$maps) {
 
     $table = new html_table();
 
-    $table->head = array('Grupo');
+     $table->head = array();
     if($one_to_many) {
-        $table->head[] = 'Mover p/';
+        $table->head = array('Grupo');
+        $table->head[] = 'Mover para';
+    } else {
+        $table->head = array('');
     }
     $table->head[] = 'Oferta de disciplina';
     $table->head[] = 'Curso Moodle';
@@ -184,7 +188,7 @@ print html_writer::end_tag('div');
 
 
   <!-- Modal para Cursos Moodle-->
-  <div class="modal fade bs-example-modal-lg" id="cursos_moodle_modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal bs-example-modal-lg" id="cursos_moodle_modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
 

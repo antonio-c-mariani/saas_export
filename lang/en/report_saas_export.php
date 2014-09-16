@@ -97,7 +97,10 @@ $string['success'] = 'Todos os dados foram enviados com sucesso.';
 $string['config'] = 'Configurações';
 $string['no_groups_found'] = 'Não foram encontrados grupos no Moodle para relacionar como polos.';
 $string['no_data_to_export'] = 'Não há dados a serem exportados.';
-$string['export_ok'] = 'Os dados foram exportados para o SAAS.';
+$string['export_ok'] = 'Os dados foram exportados para o SAAS. <BR>
+    Visite o <A HREF="{$a->report_url}" TARGET="_new">relatório de exportação do SAAS</A> para ver detalhes.';
+$string['export_errors'] = 'Houve {$a->errors} falha(s) ao exportar os dados para o SAAS.<BR>
+    Visite o <A HREF="{$a->report_url}" TARGET="_new">relatório de exportação do SAAS</A> para ver detalhes.';
 
 $string['name_field_teacher'] = 'Nome de professores';
 $string['name_field_teacher_help'] = 'Campo(s) do perfil de professores que define(m) seu nome completo.';
@@ -148,6 +151,7 @@ $string['ws_url_help'] = 'URL do servidor do SAAS para onde os dados serão tran
 
 $string['api_key'] = 'Chave da Instituição';
 $string['api_key_help'] = 'Chave de identificação da instituição definida no SAAS. Entre em contato com a administração do SAAS para solicitar a chave.';
+$string['api_key_unknown'] = 'URL SAAS ou Chave da Instituição não são válidos. Entre em contato com a administração do SAAS para confirmar estes dados.';
 
 $string['course_name_default'] = 'Nome de cursos';
 $string['course_name_default_help'] = 'Campo do curso Moodle correspondente ao nome da oferta de disciplina.';

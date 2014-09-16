@@ -750,7 +750,7 @@ function saas_show_table_ofertas_curso_disciplinas($oferta_curso_id=0, $show_cou
 }
 
 function saas_show_export_options($url, $selected_ocs=true, $selected_ods=true, $selected_polos=true) {
-    global $DB, $saas, $PAGE;
+    global $DB, $saas, $PAGE, $OUTPUT;
 
     $PAGE->requires->js_init_call('M.report_saas_export.init');
 
@@ -795,12 +795,8 @@ function saas_show_export_options($url, $selected_ocs=true, $selected_ods=true, 
             $cell = new html_table_cell();
             $checked = $selected_ocs===true || isset($selected_ocs[$oc_id]);
             $disabled = $checked ? array('disabled'=>true) : array();
-            $cell->text = html_writer::checkbox("oc[{$oc_id}]", $oc_id, $checked, $oc->nome, array('id'=>$tag_checkbox, 'class'=>'oc_checkbox'));
-            $cell->style = "vertical-align: middle; background-color: {$color};";
-            $row->cells[] = $cell;
-
-            $cell = new html_table_cell();
-            $cell->text = $oc->ano. '/'.$oc->periodo;
+            $lable = "{$oc->nome} ({$oc->ano}/{$oc->periodo})";
+            $cell->text = html_writer::checkbox("oc[{$oc_id}]", $oc_id, $checked, $lable, array('id'=>$tag_checkbox, 'class'=>'oc_checkbox'));
             $cell->style = "vertical-align: middle; background-color: {$color};";
             $row->cells[] = $cell;
 
@@ -847,15 +843,22 @@ function saas_show_export_options($url, $selected_ocs=true, $selected_ods=true, 
     }
 
     print html_writer::start_tag('DIV', array('align'=>'center'));
+
+    print $OUTPUT->box_start('generalbox boxwidthwide');
+    print html_writer::tag('p', 'Selecione abaixo as ofertas de curso, de disciplinas e polos cujos dados devam ser exportados para o SAAS');
+    print $OUTPUT->box_end();
+
     print html_writer::start_tag('form', array('method'=>'post', 'action'=>$url));
 
     $table = new html_table();
-    $table->head = array('Oferta de Curso', 'Período', 'Ofertas de disciplina', 'Polos');
-    $table->attributes = array('class'=>'saas_table');
+    $table->head = array('Oferta de Curso', 'Ofertas de disciplina', 'Polos');
+    $table->attributes = array('class'=>'saas_table_map');
     $table->colclasses = array('leftalign', 'leftalign', 'leftalign', 'leftalign');
     $table->data = $rows;
     print html_writer::table($table);
 
+    print html_writer::checkbox('send_user_details', 'ok', true, 'Enviar detalhes de estudantes (último acesso e notas)');
+    print html_writer::empty_tag('br');
     print html_writer::empty_tag('input', array('type'=>'submit', 'name'=>'export', 'value'=>s(get_string('saas_export:export', 'report_saas_export'))));
     print html_writer::end_tag('form');
     print html_writer::end_tag('DIV');

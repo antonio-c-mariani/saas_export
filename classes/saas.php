@@ -11,6 +11,9 @@ class saas {
 
     public $config;
 
+    private $count_errors = 0;
+    private $errors = array();
+
     public $curl = null;
 
     function __construct() {
@@ -36,6 +39,21 @@ class saas {
         if(isset($this->config->{$name})) {
             return $this->config->{$name};
         } else {
+            return false;
+        }
+    }
+
+    function is_configured() {
+        $api_key = $this->get_config('api_key');
+        $url = $this->get_config('ws_url');
+        return !empty($api_key) && !empty($url);
+    }
+
+    function verify_api_key() {
+        try {
+            $this->get_ws('', true);
+            return true;
+        } catch(Exception $e) {
             return false;
         }
     }
@@ -717,7 +735,7 @@ class saas {
     //----------------------------------------------------------------------------------------------------------
 
     //envia os usuários com seus devidos papéis nos pólos.
-    function send_users_by_polo($id_oferta_curso=0, $id_polo=0) {
+    function send_users_by_polo($id_oferta_curso=0, $id_polo=0, $send_user_details=true) {
         global $DB;
 
         $role_types = $this->get_role_types('polos');
@@ -747,7 +765,7 @@ class saas {
         $poloid = 0;
         $users_by_roles = array();
         foreach($rs AS $rec) {
-            $this->send_user($rec);
+            $this->send_user($rec, $send_user_details);
 
             if($rec->oc_id != $ocid || $rec->p_id != $poloid) {
                 if($ocid !== 0) {
@@ -779,7 +797,7 @@ class saas {
     }
 
     //envia os usuários com os seus devidos papéis em cada oferta de disciplina.
-    function send_users_by_ofertas_disciplinas($id_oferta_curso=0, $id_oferta_disciplina=0) {
+    function send_users_by_ofertas_disciplinas($id_oferta_curso=0, $id_oferta_disciplina=0, $send_user_details=true) {
         global $DB;
 
         $ofertas = $this->get_ofertas_disciplinas();
@@ -800,11 +818,11 @@ class saas {
                public 'lastaccess' => string '1397606103' (length=10)
             */
 
-            $this->send_user($rec);
+            $this->send_user($rec, $send_user_details);
 
             if($rec->od_id != $odid) {
                 if($odid !== 0) {
-                    $this->send_users_by_oferta_disciplina($ofertas[$odid], $users_by_roles, $users_lastaccess, $users_suspended);
+                    $this->send_users_by_oferta_disciplina($ofertas[$odid], $users_by_roles, $users_lastaccess, $users_suspended, $send_user_details);
                 }
                 foreach($role_types AS $r) {
                     $users_by_roles[$r] = array();
@@ -826,15 +844,15 @@ class saas {
 
         //send the last one
         if($odid !== 0) {
-            $this->send_users_by_oferta_disciplina($ofertas[$odid], $users_by_roles, $users_lastaccess, $users_suspended);
+            $this->send_users_by_oferta_disciplina($ofertas[$odid], $users_by_roles, $users_lastaccess, $users_suspended, $send_user_details);
         }
     }
 
-    function send_users_by_oferta_disciplina($oferta_disciplina, $users_by_roles, $users_lastaccess, $users_suspended) {
+    function send_users_by_oferta_disciplina($oferta_disciplina, $users_by_roles, $users_lastaccess, $users_suspended, $send_user_details=true) {
         $oferta_uid_encoded = urlencode($oferta_disciplina->uid);
         foreach($users_by_roles AS $r=>$users) {
             $this->put_ws("ofertas/disciplinas/{$oferta_uid_encoded}/". self::$role_types[$r], array_values($users));
-            if($r == 'student') {
+            if($r == 'student' && $send_user_details) {
                 $grades = $this->get_grades($oferta_disciplina->id);
                 $obj_nota = new stdClass();
                 $obj_lastaccess = new stdClass();
@@ -866,11 +884,11 @@ class saas {
         }
     }
 
-    function send_user($rec) {
+    function send_user($rec, $send_user_details=true) {
         if(!isset($this->sent_users[$rec->userid])) {
             $user_uid_encoded = urlencode($rec->uid);
             $this->put_ws("pessoas/{$user_uid_encoded}",  $this->get_user($rec->role, $rec->userid, $rec->uid));
-            if($rec->role == 'student' && !empty($rec->uid) && !empty($rec->currentlogin)) {
+            if($send_user_details && $rec->role == 'student' && !empty($rec->uid) && !empty($rec->currentlogin)) {
 //todo                $this->put_ws("pessoas/{$user_uid_encoded}/ultimoLogin", array('ultimoLogin'=>$rec->currentlogin));
             }
             $this->sent_users[$rec->userid] = true;
@@ -878,87 +896,97 @@ class saas {
         }
     }
 
-    function send_data($selected_ocs=array(), $selected_ods=array(), $selected_polos=array()) {
-        try {
-            $this->sent_users = array();
-            $this->count_sent_users = array();
-            foreach(self::$role_types AS $r=>$rname) {
-                $this->count_sent_users[$r] = 0;
+    function send_data($selected_ocs=array(), $selected_ods=array(), $selected_polos=array(), $send_user_details=true) {
+        $this->count_errors = 0;
+        $this->errors = array();
+
+        $this->sent_users = array();
+        $this->count_sent_users = array();
+        foreach(self::$role_types AS $r=>$rname) {
+            $this->count_sent_users[$r] = 0;
+        }
+
+        $ofertas_cursos = $this->get_ofertas_curso();
+
+        foreach($ofertas_cursos AS $oc_id=>$oc) {
+            if(isset($selected_ocs[$oc_id])) {
+                $this->send_users_by_ofertas_disciplinas($oc_id, 0, $send_user_details);
+            } else if(isset($selected_ods[$oc_id])) {
+                foreach($selected_ods[$oc_id] AS $od_id=>$i) {
+                    $this->send_users_by_ofertas_disciplinas(0, $od_id, $send_user_details);
+                }
             }
+        }
 
-            $ofertas_cursos = $this->get_ofertas_curso();
-
+        $polo_mapping_type = $this->get_config('polo_mapping');
+        if($polo_mapping_type != 'no_polo') {
             foreach($ofertas_cursos AS $oc_id=>$oc) {
                 if(isset($selected_ocs[$oc_id])) {
-                    $this->send_users_by_ofertas_disciplinas($oc_id);
-                } else if(isset($selected_ods[$oc_id])) {
-                    foreach($selected_ods[$oc_id] AS $od_id=>$i) {
-                        $this->send_users_by_ofertas_disciplinas(0, $od_id);
+                    $this->send_users_by_polo($oc_id, 0, $send_user_details);
+                } else if(isset($selected_polos[$oc_id])) {
+                    foreach($selected_polos[$oc_id] AS $polo_id=>$i) {
+                        $this->send_users_by_polo($oc_id, $polo_id, $send_user_details);
                     }
                 }
             }
-
-            $polo_mapping_type = $this->get_config('polo_mapping');
-            if($polo_mapping_type != 'no_polo') {
-                foreach($ofertas_cursos AS $oc_id=>$oc) {
-                    if(isset($selected_ocs[$oc_id])) {
-                        $this->send_users_by_polo($oc_id);
-                    } else if(isset($selected_polos[$oc_id])) {
-                        foreach($selected_polos[$oc_id] AS $polo_id=>$i) {
-                            $this->send_users_by_polo($oc_id, $polo_id);
-                        }
-                    }
-                }
-            }
-        } catch (dml_exception $e){
-            $debuginfo = empty($e->debuginfo) ? '' : '<BR>'.$e->debuginfo;
-            return get_string('bd_error', 'report_saas_export', $e->getMessage() . $debuginfo);
-        } catch (Exception $e){
-            return get_string('ws_error', 'report_saas_export', $e->getMessage());
         }
-        return true;
+
+        return array($this->count_errors, $this->errors);
     }
 
 
     //Métodos para acesso ao webservice.
-    function make_ws_url($functionname) {
-        return $this->config->ws_url . '/instituicoes/' . $this->config->api_key  . '/' . $functionname;
+    function make_ws_url($functionname='') {
+        if(empty($functionname)) {
+            return $this->config->ws_url . '/instituicoes/' . $this->config->api_key;
+        } else {
+            return $this->config->ws_url . '/instituicoes/' . $this->config->api_key  . '/' . $functionname;
+        }
     }
 
     function init_curl() {
         $this->curl = new \report_saas_export\curl();
     }
 
-    function head_ws($functionname) {
+    function head_ws($functionname, $throw_exception=false) {
         $this->init_curl();
         $this->curl->head($this->make_ws_url($functionname));
-        return $this->handle_ws_errors();
+        return $this->handle_ws_errors($throw_exception);
     }
 
-    function get_ws($functionname) {
+    function get_ws($functionname='', $throw_exception=false) {
         $this->init_curl();
         $response = $this->curl->get($this->make_ws_url($functionname));
-        $this->handle_ws_errors();
+        $this->handle_ws_errors($throw_exception);
         return json_decode($response);
     }
 
-    function post_ws($functionname, $data = array()) {
+    function post_ws($functionname, $data = array(), $throw_exception=false) {
         $this->init_curl();
         $options = array('CURLOPT_HTTPHEADER'=>array('Content-Type: application/json'));
         $response = $this->curl->post($this->make_ws_url($functionname), json_encode($data), $options);
-        $this->handle_ws_errors();
+        $this->handle_ws_errors($throw_exception);
         return json_decode($response);
     }
 
-    function put_ws($functionname, $data = array()) {
+    function put_ws($functionname, $data = array(), $throw_exception=false) {
         $this->init_curl();
         $this->curl->put_json($this->make_ws_url($functionname), json_encode($data));
-        return $this->handle_ws_errors();
+        return $this->handle_ws_errors($throw_exception);
     }
 
-    function handle_ws_errors() {
+    function handle_ws_errors($throw_exception=false) {
         $info = $this->curl->get_info();
         if($info['http_code'] <= 299) {
+            return true;
+        } else if($info['http_code'] <= 499) {
+            $this->count_errors++;
+            if(count($this->errors) < 5) {
+                $this->errors[] = "Falha {$info['http_code']} no acesso ao SAAS para: ". $info['url'];
+            }
+            if($throw_exception) {
+                throw new Exception("Falha {$info['http_code']} no acesso ao SAAS para: ". $info['url']);
+            }
             return true;
         } else {
             throw new Exception("Falha {$info['http_code']} no acesso ao SAAS para: ". $info['url']);
@@ -1080,8 +1108,8 @@ class saas {
         return $cpf;
     }
 
-    static function get_estados() {
-        return array(
+    static function get_estados($mostrar_sigla=true) {
+        $ufs = array(
                     'AC'=>'Acre',
                     'AL'=>'Alagoas',
                     'AM'=>'Amazonas',
@@ -1109,5 +1137,16 @@ class saas {
                     'SE'=>'Sergipe',
                     'SP'=>'São Paulo',
                     'TO'=>'Tocantins');
+        if($mostrar_sigla) {
+            $siglas = array();
+            $keys = array_keys($ufs);
+            sort($keys);
+            foreach($keys AS $sigla) {
+                $siglas[$sigla] = $sigla;
+            }
+            return $siglas;
+        } else {
+            return $ufs;
+        }
     }
 }

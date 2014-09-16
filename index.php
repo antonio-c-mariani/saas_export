@@ -34,12 +34,13 @@ admin_externalpage_setup('report_saas_export', '', null, '', array('pagelayout'=
 
 $baseurl = new moodle_url('/report/saas_export/index.php');
 
-$api_key = get_config('report_saas_export', 'api_key');
+$saas = new saas();
+
 $polo_mapping = get_config('report_saas_export', 'polo_mapping');
 $may_export = has_capability('report/saas_export:export', $syscontext);
 
 $tab_items = array('guidelines', 'settings');
-if($api_key) {
+if($saas->is_configured()) {
     $tab_items[] = 'saas_data';
     $tab_items[] = 'course_mapping';
     if($polo_mapping != 'no_polo') {
@@ -59,8 +60,6 @@ foreach($tab_items AS $act) {
 $action = optional_param('action', 'guidelines' , PARAM_TEXT);
 $action = isset($tabs[$action]) ? $action : 'guidelines';
 
-$saas = new saas();
-
 switch ($action) {
     case 'guidelines':
         echo $OUTPUT->header();
@@ -79,7 +78,11 @@ switch ($action) {
                 redirect($baseurl);
             } else if ($data = $mform->get_data()) {
                 $saas->save_settings($data);
-                redirect($baseurl);
+                if($saas->verify_api_key()) {
+                    redirect($baseurl);
+                } else {
+                    print_error('api_key_unknown', 'report_saas_export', $baseurl);
+                }
             }
         }
 
@@ -102,7 +105,6 @@ switch ($action) {
             $saas_data_tab_items['polos'] = false;
             $saas_data_tab_items['add_polo'] = 'report/saas_export:export';
         }
-        $saas_data_tab_items['reload'] = false;
 
         $saas_data_tabs = array();
         foreach($saas_data_tab_items AS $act=>$capability) {
@@ -137,6 +139,7 @@ switch ($action) {
                         $saas->post_ws('ofertas/disciplinas', $new_oferta);
                         $saas->load_ofertas_disciplinas_saas();
                         $url->param('data', 'ofertas');
+                        $url->param('reload', 0);
                         redirect($url);
                     }
                     break;
@@ -165,6 +168,9 @@ switch ($action) {
 
         switch($saas_data_action) {
             case 'ofertas':
+                if(optional_param('reload', true, PARAM_INT)) {
+                    $saas->load_saas_data(true);
+                }
                 saas_show_table_ofertas_curso_disciplinas(0, false);
                 break;
             case 'add_oferta':
@@ -178,6 +184,7 @@ switch ($action) {
                 }
                 break;
             case 'polos':
+                $saas->load_polos_saas();
                 saas_show_table_polos();
                 break;
             case 'add_polo':
@@ -189,12 +196,6 @@ switch ($action) {
                     print $OUTPUT->box_end();
                     print html_writer::end_tag('DIV');
                 }
-                break;
-            default:
-                $saas->load_saas_data(true);
-                print html_writer::start_tag('DIV', array('align'=>'center'));
-                print $OUTPUT->heading(get_string('reloaded', 'report_saas_export'));
-                print html_writer::end_tag('DIV');
                 break;
         }
 
@@ -310,13 +311,32 @@ switch ($action) {
             $polos = isset($_POST['polo']) ? $_POST['polo'] : array();
             $baseurl->param('action', $action);
             if(optional_param('export', false, PARAM_TEXT)) {
-                $result = $saas->send_data($ocs, $ods, $polos);
+                $send_user_details = optional_param('send_user_details', false, PARAM_BOOL);
+
+                $exception_msg = false;
+                try {
+                    list($count_errors, $errors) = $saas->send_data($ocs, $ods, $polos, $send_user_details);
+                } catch (dml_exception $e){
+                    $debuginfo = empty($e->debuginfo) ? '' : '<BR>'.$e->debuginfo;
+                    $exception_msg = get_string('bd_error', 'report_saas_export', $e->getMessage() . $debuginfo);
+                } catch (Exception $e){
+                    $exception_msg = get_string('ws_error', 'report_saas_export', $e->getMessage());
+                }
+
                 print html_writer::start_tag('DIV', array('align'=>'center'));
                 print $OUTPUT->box_start('generalbox boxwidthormal');
-                if($result === true) {
-                    print html_writer::tag('SPAN', get_string('export_ok', 'report_saas_export'), array('class'=>'saas_export_message'));
+
+                $report_url = $saas->make_ws_url('moodle/relatorioDeExportacao');
+                if($exception_msg) {
+                    print html_writer::tag('SPAN', $exception_msg, array('class'=>'saas_export_error'));
+                } else if($count_errors == 0) {
+                    print html_writer::tag('SPAN', get_string('export_ok', 'report_saas_export', $report_url), array('class'=>'saas_export_message'));
                 } else {
-                    print html_writer::tag('SPAN', $result, array('class'=>'saas_export_error'));
+                    $a = new stdClass();
+                    $a->report_url = $report_url;
+                    $a->errors = $count_errors;
+                    print html_writer::tag('SPAN', get_string('export_errors', 'report_saas_export', $a), array('class'=>'saas_export_error'));
+ var_dump($errors);
                 }
                 print $OUTPUT->box_end();
                 print html_writer::end_tag('DIV');

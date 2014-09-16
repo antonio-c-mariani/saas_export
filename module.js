@@ -13,22 +13,26 @@ M.report_saas_export.init = function(Y) {
 
     Y.on('click', function(e) {
         id = this.get('id');
-        disabled = this.get('checked');
+        checked = this.get('checked');
 
         Y.all('.od_'+id).each(function() {
-            this.set('disabled', disabled);
+            this.set('disabled', checked);
+            this.set('checked', checked);
         });
 
         Y.all('.polo_'+id).each(function() {
-            this.set('disabled', disabled);
+            this.set('disabled', checked);
+            this.set('checked', checked);
         });
 
         Y.all('#od_'+id).each(function() {
-            this.set('disabled', disabled);
+            this.set('disabled', checked);
+            this.set('checked', checked);
         });
 
         Y.all('#polo_'+id).each(function() {
-            this.set('disabled', disabled);
+            this.set('disabled', checked);
+            this.set('checked', checked);
         });
     }, '.oc_checkbox');
 
