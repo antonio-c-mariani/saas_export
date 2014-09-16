@@ -105,7 +105,10 @@ class saas {
 
         $local = $DB->get_records('saas_disciplinas', null, null ,'uid, id, enable');
 
-        foreach ($this->get_ws('disciplinas') as $dis) {
+        $disciplinas = $this->get_ws('disciplinas');
+        $disciplinas = empty($disciplinas) ? array() : $disciplinas;
+
+        foreach($disciplinas as $dis) {
             $dis->enable = 1;
             if (isset($local[$dis->uid])){
                 $dis->id = $local[$dis->uid]->id;
@@ -129,7 +132,10 @@ class saas {
         $local = $DB->get_records('saas_ofertas_cursos', null, null ,'uid, id, enable');
 
         $cursos_saas = $this->get_ws('cursos');
+        $cursos_saas = empty($cursos_saas) ? array() : $cursos_saas;
+
         $ofertas_cursos_saas = $this->get_ws('ofertas/cursos');
+        $ofertas_cursos_saas = empty($ofertas_cursos_saas) ? array() : $ofertas_cursos_saas;
 
         foreach ($cursos_saas as $curso) {
             foreach ($ofertas_cursos_saas as $oferta_curso) {
@@ -164,7 +170,10 @@ class saas {
 
         $local = $DB->get_records('saas_ofertas_disciplinas', null, null ,'uid, id, enable');
 
-        foreach ($this->get_ws('ofertas/disciplinas') as $oferta_disciplina){
+        $ofertas_disciplinas = $this->get_ws('ofertas/disciplinas');
+        $ofertas_disciplinas = empty($ofertas_disciplinas) ? array() : $ofertas_disciplinas;
+
+        foreach ($ofertas_disciplinas as $oferta_disciplina){
             $record = new stdClass();
             $record->uid = $oferta_disciplina->uid;
             $record->disciplina_uid = $oferta_disciplina->disciplina->uid;
@@ -197,22 +206,21 @@ class saas {
         $local = $DB->get_records('saas_polos', null, '' ,'uid, id, enable');
 
         $polos_saas = $this->get_ws('polos');
+        $polos_saas = empty($polos_saas) ? array() : $polos_saas;
 
-        if (!empty($polos_saas)) {
-            foreach ($polos_saas as $pl){
-                $record = new stdClass();
-                $record->nome = $pl->nome;
-                $record->cidade = $pl->cidade;
-                $record->estado = $pl->estado;
-                $record->enable = 1;
-                if (isset($local[$pl->uid])){
-                    $record->id = $local[$pl->uid]->id;
-                    $DB->update_record('saas_polos', $record);
-                    unset($local[$pl->uid]);
-                } else {
-                    $record->uid = $pl->uid;
-                    $DB->insert_record('saas_polos', $record);
-                }
+        foreach ($polos_saas as $pl){
+            $record = new stdClass();
+            $record->nome = $pl->nome;
+            $record->cidade = $pl->cidade;
+            $record->estado = $pl->estado;
+            $record->enable = 1;
+            if (isset($local[$pl->uid])){
+                $record->id = $local[$pl->uid]->id;
+                $DB->update_record('saas_polos', $record);
+                unset($local[$pl->uid]);
+            } else {
+                $record->uid = $pl->uid;
+                $DB->insert_record('saas_polos', $record);
             }
         }
 
