@@ -17,6 +17,10 @@ class saas {
     public $curl = null;
 
     function __construct() {
+        $this->load_settings();
+    }
+
+    function load_settings() {
         global $DB;
 
         $this->config = get_config('report_saas_export');
@@ -1034,6 +1038,8 @@ class saas {
                 set_config($key, $val, 'report_saas_export');
             }
         }
+
+        $this->load_settings();
     }
 
     function get_student_roles_menu() {

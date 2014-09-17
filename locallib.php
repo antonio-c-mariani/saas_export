@@ -9,11 +9,11 @@ function saas_build_tree_categories() {
 
     // Hierarquia de categorias com cursos a selecionar (não vazias)
     $sql = "SELECT DISTINCT ccp.id, ccp.depth, ccp.path, ccp.name
-              FROM course_categories ccp
+              FROM {course_categories} ccp
               JOIN (SELECT DISTINCT cc.id, cc.path
-                      FROM course_categories cc
-                      JOIN course c ON (c.category = cc.id)
-                 LEFT JOIN saas_map_course mc ON (mc.courseid = c.id)
+                      FROM {course_categories} cc
+                      JOIN {course} c ON (c.category = cc.id)
+                 LEFT JOIN {saas_map_course} mc ON (mc.courseid = c.id)
                      WHERE c.id > 1
                        AND ISNULL(mc.id)) cat
                 ON (ccp.id = cat.id OR cat.path LIKE CONCAT('%/',ccp.id,'/%'))
@@ -48,7 +48,7 @@ function saas_build_tree_categories() {
     // Cursos ainda não selecionados
     $sql = "SELECT c.id, c.category, c.fullname
               FROM {course} c
-         LEFT JOIN saas_map_course mc ON (mc.courseid = c.id)
+         LEFT JOIN {saas_map_course} mc ON (mc.courseid = c.id)
              WHERE c.id > 1
                AND ISNULL(mc.id)
           ORDER BY c.fullname";
