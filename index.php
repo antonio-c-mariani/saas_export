@@ -174,14 +174,16 @@ switch ($action) {
                 saas_show_table_ofertas_curso_disciplinas(0, false);
                 break;
             case 'add_oferta':
-                if(has_capability('report/saas_export:export', $syscontext)) {
-                    print html_writer::start_tag('DIV', array('align'=>'center'));
-                    print $OUTPUT->box_start('generalbox boxwidthnormal');
+                print html_writer::start_tag('DIV', array('align'=>'center'));
+                print $OUTPUT->box_start('generalbox boxwidthnormal');
+                if($DB->record_exists('saas_ofertas_cursos', array('enable'=>1))) {
                     print $OUTPUT->heading(get_string('add_oferta', 'report_saas_export'));
                     $oferta_form->display();
-                    print $OUTPUT->box_end();
-                    print html_writer::end_tag('DIV');
+                } else {
+                    print html_writer::tag('h3', get_string('no_ofertas_cursos', 'report_saas_export'));
                 }
+                print $OUTPUT->box_end();
+                print html_writer::end_tag('DIV');
                 break;
             case 'polos':
                 $saas->load_polos_saas();
@@ -223,7 +225,6 @@ switch ($action) {
         echo $OUTPUT->header();
         print_tabs(array($tabs), $action);
 
-        // include('ofertas_mapping.php');
         include('group_ofertas.php');
 
         echo $OUTPUT->footer();
@@ -232,22 +233,26 @@ switch ($action) {
         echo $OUTPUT->header();
         print_tabs(array($tabs), $action);
 
-        $polo_mapping_type = $saas->get_config('polo_mapping');
-        switch ($polo_mapping_type) {
-            case 'no_polo':
-                print $OUTPUT->heading(get_string('title_no_polo', 'report_saas_export'));
-                break;
-            case 'group_to_polo':
-                include('map_groups_to_polos.php');
-                break;
-            case 'category_to_polo':
-                include('map_categories_to_polos.php');
-                break;
-            case 'course_to_polo':
-                include('map_courses_to_polos.php');
-                break;
-            default:
-                print $OUTPUT->heading('Mapeamento ainda não implementado: ' . $polo_mapping_type);
+        if($DB->record_exists('saas_polos', array('enable'=>1))) {
+            $polo_mapping_type = $saas->get_config('polo_mapping');
+            switch ($polo_mapping_type) {
+                case 'no_polo':
+                    print $OUTPUT->heading(get_string('title_no_polo', 'report_saas_export'));
+                    break;
+                case 'group_to_polo':
+                    include('map_groups_to_polos.php');
+                    break;
+                case 'category_to_polo':
+                    include('map_categories_to_polos.php');
+                    break;
+                case 'course_to_polo':
+                    include('map_courses_to_polos.php');
+                    break;
+                default:
+                    print $OUTPUT->heading('Mapeamento ainda não implementado: ' . $polo_mapping_type);
+            }
+        } else {
+            print html_writer::tag('h3', get_string('no_polos', 'report_saas_export'));
         }
 
         echo $OUTPUT->footer();
@@ -278,24 +283,28 @@ switch ($action) {
                 saas_show_users_oferta_disciplina($odid);
             }
         } else {
-            $polo_mapping_type = $saas->get_config('polo_mapping');
-            $ocid = optional_param('ocid', 0 , PARAM_INT);
-            $poloid = optional_param('poloid', 0 , PARAM_INT);
-            switch ($polo_mapping_type) {
-                case 'no_polo':
-                    print $OUTPUT->heading(get_string('title_no_polo', 'report_saas_export'));
-                    break;
-                case 'group_to_polo':
-                    saas_show_overview_groups_polos($ocid, $poloid);
-                    break;
-                case 'category_to_polo':
-                    saas_show_overview_categories_polos($ocid, $poloid);
-                    break;
-                case 'course_to_polo':
-                    saas_show_overview_courses_polos($ocid, $poloid);
-                    break;
-                default:
-                    print $OUTPUT->heading('Mapeamento ainda não implementado: ' . $polo_mapping_type);
+            if($DB->record_exists('saas_polos', array('enable'=>1))) {
+                $polo_mapping_type = $saas->get_config('polo_mapping');
+                $ocid = optional_param('ocid', 0 , PARAM_INT);
+                $poloid = optional_param('poloid', 0 , PARAM_INT);
+                switch ($polo_mapping_type) {
+                    case 'no_polo':
+                        print $OUTPUT->heading(get_string('title_no_polo', 'report_saas_export'));
+                        break;
+                    case 'group_to_polo':
+                        saas_show_overview_groups_polos($ocid, $poloid);
+                        break;
+                    case 'category_to_polo':
+                        saas_show_overview_categories_polos($ocid, $poloid);
+                        break;
+                    case 'course_to_polo':
+                        saas_show_overview_courses_polos($ocid, $poloid);
+                        break;
+                    default:
+                        print $OUTPUT->heading('Mapeamento ainda não implementado: ' . $polo_mapping_type);
+                }
+            } else {
+                print html_writer::tag('h3', get_string('no_polos', 'report_saas_export'));
             }
         }
 
@@ -336,7 +345,6 @@ switch ($action) {
                     $a->report_url = $report_url;
                     $a->errors = $count_errors;
                     print html_writer::tag('SPAN', get_string('export_errors', 'report_saas_export', $a), array('class'=>'saas_export_error'));
- var_dump($errors);
                 }
                 print $OUTPUT->box_end();
                 print html_writer::end_tag('DIV');

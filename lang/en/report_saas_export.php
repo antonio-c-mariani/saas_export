@@ -45,7 +45,9 @@ $string['role_settings'] = 'Configurações de papéis/funções';
 $string['duplicated_role'] = 'Há papel já selecionado em outro perfil de usuário';
 $string['duplicated_disciplina'] = 'Disciplina já disponível na oferta de curso selecionada';
 $string['no_course_mapping'] = 'Não há cursos Moodle mapeados para ofertas de disciplinas do SAAS';
-$string['no_no_ofertas_disciplinas'] = 'Não há ofertas de disciplinas ativas registradas no SAAS';
+$string['no_ofertas_disciplinas'] = 'Não há ofertas de disciplinas ativas registradas no SAAS';
+$string['no_ofertas_cursos'] = 'Não há ofertas de cursos ativas registradas no SAAS';
+$string['no_polos'] = 'Não há polo ativo registrado no SAAS';
 
 $string['course_mapping'] = 'Mapeamento de disciplinas';
 $string['course_mapping_help'] = 'Indica a forma como os cursos do Moodle são mapeados para disciplinas do SAAS';

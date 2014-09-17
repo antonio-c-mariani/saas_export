@@ -333,7 +333,7 @@ function saas_show_table_polos() {
     print html_writer::start_tag('DIV', array('align'=>'center'));
 
     if(empty($polos)) {
-        print html_writer::tag('h3', 'Não foram localizadas polos cadastrados no SAAS');
+        print html_writer::tag('h3', get_string('no_polos', 'report_saas_export'));
     } else {
         $table = new html_table();
         $table->head = array(get_string('nome_polo', 'report_saas_export'),
@@ -678,7 +678,7 @@ function saas_show_table_ofertas_curso_disciplinas($oferta_curso_id=0, $show_cou
     $role_types = $saas->get_role_types('disciplinas');
     $ofertas = $saas->get_ofertas($oferta_curso_id);
     if(empty($ofertas)) {
-        print html_writer::tag('h3', 'Não foram localizadas ofertas de curso ou disciplinas cadastradas no SAAS');
+        print html_writer::tag('h3', get_string('no_ofertas_cursos', 'report_saas_export'));
     } else {
         foreach($ofertas AS $oc_id=>$oc) {
             $oc_nome_formatado = "{$oc->nome} ({$oc->ano}/{$oc->periodo})";
@@ -776,6 +776,12 @@ function saas_show_export_options($url, $selected_ocs=true, $selected_ods=true, 
     $polos_count = $saas->get_polos_count();
 
     $ofertas = $saas->get_ofertas();
+
+    if(empty($ofertas)) {
+        print html_writer::tag('h3', get_string('no_ofertas_cursos', 'report_saas_export'));
+        return;
+    }
+
     foreach($ofertas AS $oc_id=>$oc) {
         foreach(array_keys($oc->ofertas_disciplinas) AS $od_id) {
             if(!isset($od_counts[$od_id])) {

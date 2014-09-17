@@ -47,19 +47,25 @@ if(isset($_POST['map_polos']) && isset($_POST['save']) && $may_export) {
     print $OUTPUT->heading($msg, 4, 'saas_export_message');
 }
 
-$polos = $DB->get_records_menu('saas_polos', null, 'nome', 'id, nome');
+
+$sql = "SELECT DISTINCT g.name, pl.id
+          FROM {saas_map_course} scm
+          JOIN {course} c ON (c.id = scm.courseid)
+          JOIN {groups} g ON (g.courseid = c.id)
+          JOIN {saas_polos} pl ON (pl.nome = g.name AND pl.enable = 1)
+     LEFT JOIN {saas_polos} pl2 ON (pl2.enable = 1 AND pl2.nome = pl.nome AND pl2.id != pl.id)
+         WHERE ISNULL(pl2.id)";
+$group_names = $DB->get_records_sql_menu($sql);
+
+$polos = $DB->get_records_menu('saas_polos', array('enable'=>1), 'nome', 'id, nome');
 $polos = array(-1=>'-- este grupo não corresponde a um polo --') + $polos;
 
-$sql = "SELECT DISTINCT g.name as groupname, polo.polo_id, polo.nome as saas_polo_nome, spn.id AS polo_id_same_name
+$sql = "SELECT DISTINCT g.name as groupname, spm.polo_id
           FROM {saas_map_course} scm
           JOIN {course} c ON (c.id = scm.courseid)
           JOIN {saas_ofertas_disciplinas} sod ON (sod.group_map_id = scm.group_map_id AND sod.enable = 1)
           JOIN {groups} g ON (g.courseid = c.id)
-     LEFT JOIN (SELECT spm.groupname, spm.polo_id, sp.nome
-                  FROM {saas_map_groups_polos} spm
-             LEFT JOIN {saas_polos} sp ON (sp.id = spm.polo_id)) polo
-            ON (polo.groupname = g.name)
-     LEFT JOIN {saas_polos} spn ON (spn.nome = g.name)
+     LEFT JOIN {saas_map_groups_polos} spm ON (spm.groupname = g.name)
       ORDER BY g.name";
 $map = $DB->get_records_sql($sql);
 
@@ -87,6 +93,10 @@ foreach(array(1,-1) AS $tipo) {
             }
             $cell->attributes['class'] = $color_class;
             $row->cells[] = $cell;
+
+            if($poloid == 0) {
+               $poloid = isset($group_names[$m->groupname]) ? $group_names[$m->groupname] : -1;
+            }
 
             $cell = new html_table_cell();
             $cell->text = $may_export ? html_writer::select($polos, "map_polos[{$encoded_groupname}]", $poloid) : $polo_name;
