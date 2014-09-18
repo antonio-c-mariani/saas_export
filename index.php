@@ -100,7 +100,8 @@ switch ($action) {
         $saas->load_saas_data();
 
         $saas_data_tab_items = array('ofertas'    => false,
-                                     'add_oferta' => 'report/saas_export:export');
+                                     // 'add_oferta' => 'report/saas_export:export'
+                                     );
         if($polo_mapping != 'no_polo') {
             $saas_data_tab_items['polos'] = false;
             $saas_data_tab_items['add_polo'] = 'report/saas_export:export';
@@ -171,7 +172,7 @@ switch ($action) {
                 if(optional_param('reload', true, PARAM_INT)) {
                     $saas->load_saas_data(true);
                 }
-                saas_show_table_ofertas_curso_disciplinas(0, false);
+                saas_show_table_ofertas_curso_disciplinas(0, false, false);
                 break;
             case 'add_oferta':
                 print html_writer::start_tag('DIV', array('align'=>'center'));

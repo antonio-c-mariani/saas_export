@@ -68,7 +68,10 @@ $string['group_to_polo_msg1'] = 'Estão listados abaixo (à esquerda) os grupos 
     A cada grupo pode ser associado um polo do SAAS, fato que indica que neste grupo estão inscritos apenas
     estudantes e tutores deste polo.';
 $string['group_to_polo_msg2'] = 'Este mapeamento define a relação de estudantes e tutores com seus respectivos polos a serem
-    exportados para o SAAS, conforme descrito no \'Cenário A\' da aba de orientações.';
+    exportados para o SAAS, conforme descrito no \'Cenário A\' da aba de orientações.
+    Há alguns grupos Moodle que podem não ter sido ainda mapeados. Estes grupos aparecem em <span style="color:red">vermelho</span> abaixo, sendo que à direita
+    (Polo SAAS) já aparece uma sugestão de mapeamento em função de haver um nome de polo exatamente com o mesmo nome do grupo.
+    Caso não haja tal polo, é sugerida a opção indicando que este grupo não corresponde a polo do SAAS.';
 
 $string['category_to_polo_msg1'] = 'É apresentada abaixo (à esquerda) a hierarquia de categorias do Moodle para as quais
     há algum curso que tenha sido mapeado na aba \'Mapeamento de disciplinas\'.
@@ -100,7 +103,7 @@ $string['config'] = 'Configurações';
 $string['no_groups_found'] = 'Não foram encontrados grupos no Moodle para relacionar como polos.';
 $string['no_data_to_export'] = 'Não há dados a serem exportados.';
 $string['export_ok'] = 'Os dados foram exportados para o SAAS. <BR>
-    Visite o <A HREF="{$a->report_url}" TARGET="_new">relatório de exportação do SAAS</A> para ver detalhes.';
+    Visite o <A HREF="{$a}" TARGET="_new">relatório de exportação do SAAS</A> para ver detalhes.';
 $string['export_errors'] = 'Houve {$a->errors} falha(s) ao exportar os dados para o SAAS.<BR>
     Visite o <A HREF="{$a->report_url}" TARGET="_new">relatório de exportação do SAAS</A> para ver detalhes.';
 
@@ -129,18 +132,17 @@ $string['cpf_regexp'] = 'Filtro para CPF';
 $string['cpf_regexp_help'] = 'Expressão regular aplicada sobre o valor de CPF que possibilita filtrar o valor';
 
 $string['roles_teacher'] = 'Papéis de professores';
-$string['roles_teacher_help'] = 'Papéis com os quais professores são inscritos nos cursos Moodle correspondentes às ofertas de disciplinas. <BR>
-                            Utilize <ctrl\> + click para selecionar múltiplos papéis ou para desmarcar uma opção.';
+$string['roles_teacher_help'] = 'Selecione os papéis com os quais professores são inscritos nos cursos Moodle correspondentes às ofertas de disciplinas. <BR>
+   Utilize <ctrl\> + clique para selecionar múltiplos papéis. Caso nenhum papel seja selecionado, os dados de professores não serão exportados para o SAAS.';
 $string['roles_student'] = 'Papéis de estudantes';
-$string['roles_student_help'] = 'Papéis com os quais estudantes são inscritos nos cursos Moodle correspondentes às ofertas de disciplinas. <BR>
-                            Utilize <ctrl\> + click para selecionar múltiplos papéis ou para desmarcar uma opção.';
-$string['roles_tutor_polo'] = 'Papéis de tutores polo';
-$string['roles_tutor_polo_help'] = 'Papéis com os quais tutores de polo (presenciais) são inscritos nos cursos Moodle correspondentes às ofertas de disciplinas. <BR>
-                            Utilize <ctrl\> + click para selecionar múltiplos papéis ou para desmarcar uma opção.';
+$string['roles_student_help'] = 'Selecione os papéis com os quais estudantes são inscritos nos cursos Moodle correspondentes às ofertas de disciplinas. <BR>
+   Utilize <ctrl\> + clique para selecionar múltiplos papéis. Caso nenhum papel seja selecionado, os dados de estudantes não serão exportados para o SAAS.';
+$string['roles_tutor_polo'] = 'Papéis de tutores presenciais';
+$string['roles_tutor_polo_help'] = 'Selecione os papéis com os quais tutores presenciais (de polo) são inscritos nos cursos Moodle correspondentes às ofertas de disciplinas. <BR>
+   Utilize <ctrl\> + clique para selecionar múltiplos papéis. Caso nenhum papel seja selecionado, os dados de tutores presenciais não serão exportados para o SAAS.';
 $string['roles_tutor_inst'] = 'Papéis de tutores a distância';
-$string['roles_tutor_inst_help'] = 'Papéis com os quais tutores a distância (da instituição) são inscritos nos cursos Moodle correspondentes às ofertas de disciplinas. <BR>
-                            Utilize <ctrl\> + click para selecionar múltiplos papéis ou para desmarcar uma opção.';
-
+$string['roles_tutor_inst_help'] = 'Selecione papéis com os quais tutores a distância (da instituição) são inscritos nos cursos Moodle correspondentes às ofertas de disciplinas. <BR>
+   Utilize <ctrl\> + clique para selecionar múltiplos papéis. Caso nenhum papel seja selecionado, os dados de tutores a distância não serão exportados para o SAAS.';
 
 $string['profile_field_name'] = 'Nome:';
 $string['profile_field_name_help'] = 'Campo(s) do perfil do usuário que define o nome completo para este papel.';
