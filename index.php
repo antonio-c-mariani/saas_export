@@ -78,11 +78,8 @@ switch ($action) {
                 redirect($baseurl);
             } else if ($data = $mform->get_data()) {
                 $saas->save_settings($data);
-                if($saas->verify_api_key()) {
-                    redirect($baseurl);
-                } else {
-                    print_error('api_key_unknown', 'report_saas_export', $baseurl);
-                }
+                $saas->verify_config($baseurl);
+                redirect($baseurl);
             }
         }
 

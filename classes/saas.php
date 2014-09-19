@@ -53,12 +53,18 @@ class saas {
         return !empty($api_key) && !empty($url);
     }
 
-    function verify_api_key() {
+    function verify_config($url) {
         try {
             $this->get_ws('', true);
-            return true;
         } catch(Exception $e) {
-            return false;
+            print_error('api_key_unknown', 'report_saas_export', $url);
+        }
+
+        if(empty($this->get_config('roles_teacher')) &&
+                empty($this->get_config('roles_student')) &&
+                empty($this->get_config('roles_tutor_polo')) &&
+                empty($this->get_config('roles_tutor_inst')) ) {
+            print_error('no_roles', 'report_saas_export', $url);
         }
     }
 
@@ -820,16 +826,6 @@ class saas {
         $odid = 0;
         $users_by_roles = array();
         foreach($rs AS $rec) {
-            /*
-               public 'od_id' => string '1' (length=1)
-               public 'role' => string 'student' (length=7)
-               public 'userid' => string '335' (length=3)
-               public 'uid' => string '07407053' (length=8)
-               public 'suspended' => string '0' (length=1)
-               public 'currentlogin' => string '1404168189' (length=10)
-               public 'lastaccess' => string '1397606103' (length=10)
-            */
-
             $this->send_user($rec, $send_user_details);
 
             if($rec->od_id != $odid) {
@@ -889,7 +885,7 @@ class saas {
                     if(!empty($uid)) {
                         $user_uid_encoded = urlencode($uid);
                         $obj_suspended->suspenso = true;
-//todo                        $this->put_ws("ofertas/disciplinas/{$oferta_uid_encoded}/estudantes/{$user_uid_encoded}/suspenso", $obj_suspended);
+                        $this->put_ws("ofertas/disciplinas/{$oferta_uid_encoded}/estudantes/{$user_uid_encoded}/suspenso", $obj_suspended);
                     }
                 }
             }
@@ -901,7 +897,7 @@ class saas {
             $user_uid_encoded = urlencode($rec->uid);
             $this->put_ws("pessoas/{$user_uid_encoded}",  $this->get_user($rec->role, $rec->userid, $rec->uid));
             if($send_user_details && $rec->role == 'student' && !empty($rec->uid) && !empty($rec->currentlogin)) {
-//todo                $this->put_ws("pessoas/{$user_uid_encoded}/ultimoLogin", array('ultimoLogin'=>$rec->currentlogin));
+                $this->put_ws("pessoas/{$user_uid_encoded}/ultimoLogin", array('ultimoLogin'=>$rec->currentlogin));
             }
             $this->sent_users[$rec->userid] = true;
             $this->count_sent_users[$rec->role]++;
@@ -943,9 +939,23 @@ class saas {
             }
         }
 
-        return array($this->count_errors, $this->errors);
+        $this->send_resume();
+
+        $result = array($this->count_errors, $this->errors);
+        unset($this->count_errors);
+        unset($this->errors);
+        unset($this->count_sent_users);
+        unset($this->sent_users);
+        return $result;
     }
 
+    function send_resume() {
+        $resume = array();
+        $resume['config'] = $this->config;
+        $resume['count_errors'] = $this->count_errors;
+        $resume['errors'] = $this->errors;
+        $this->post_ws('moodle/configuracoes', $resume);
+    }
 
     //Métodos para acesso ao webservice.
     function make_ws_url($functionname='') {
@@ -991,7 +1001,8 @@ class saas {
         $info = $this->curl->get_info();
         if($info['http_code'] <= 299) {
             return true;
-        } else if($info['http_code'] <= 499) {
+        // } else if($info['http_code'] <= 499) {
+        } else if($info['http_code'] <= 599) {
             $this->count_errors++;
             if(count($this->errors) < 5) {
                 $this->errors[] = "Falha {$info['http_code']} no acesso ao SAAS para: ". $info['url'];

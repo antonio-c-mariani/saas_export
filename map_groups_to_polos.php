@@ -72,7 +72,7 @@ $map = $DB->get_records_sql($sql);
 print html_writer::start_tag('form', array('method'=>'post', 'action'=>'index.php'));
 print html_writer::empty_tag('input', array('type'=>'hidden', 'name'=>'action', 'value'=>'polo_mapping'));
 
-foreach(array(1,-1) AS $tipo) {
+foreach(array(1, -1) AS $tipo) {
     $data = array();
     $color_class = '';
     foreach($map AS $groupname=>$m) {
@@ -106,6 +106,9 @@ foreach(array(1,-1) AS $tipo) {
             $data[] = $row;
         }
     }
+
+    $title = $tipo == 1 ? 'Grupos corresponentes a polos SAAS' : 'Grupos que não correspondem a polos SAAS';
+    print html_writer::tag('h4', $title);
 
     $table = new html_table();
     $table->head  = array(get_string('moodle_group', 'report_saas_export'), get_string('polo_saas', 'report_saas_export'));

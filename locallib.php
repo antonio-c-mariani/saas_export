@@ -871,7 +871,7 @@ function saas_show_export_options($url, $selected_ocs=true, $selected_ods=true, 
     $table->data = $rows;
     print html_writer::table($table);
 
-    print html_writer::checkbox('send_user_details', 'ok', true, 'Enviar detalhes de estudantes (último acesso e notas)');
+    print html_writer::checkbox('send_user_details', 'ok', true, 'Enviar detalhes de estudantes (últimos acessos e notas)');
     print html_writer::empty_tag('br');
     print html_writer::empty_tag('input', array('type'=>'submit', 'name'=>'export', 'value'=>s(get_string('saas_export:export', 'report_saas_export'))));
     print html_writer::end_tag('form');
