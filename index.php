@@ -20,23 +20,28 @@
  * @subpackage saas_export
  */
 
-require('../../config.php');
+if (strpos(__FILE__, '/admin/report/') !== false) {
+    require('../../../config.php');
+} else {
+    require('../../config.php');
+}
+
 require_once($CFG->libdir . '/adminlib.php');
-require_once($CFG->dirroot . '/report/saas_export/classes/saas.php');
-require_once($CFG->dirroot . '/report/saas_export/polo_form.php');
-require_once($CFG->dirroot . '/report/saas_export/oferta_form.php');
-require('./locallib.php');
+require_once('./classes/saas.php');
+require_once('./polo_form.php');
+require_once('./oferta_form.php');
+require_once('./locallib.php');
 
 require_login();
-$syscontext = context_system::instance();
+$syscontext = saas::get_context_system();
 require_capability('report/saas_export:view', $syscontext);
 admin_externalpage_setup('report_saas_export', '', null, '', array('pagelayout'=>'report'));
 
-$baseurl = new moodle_url('/report/saas_export/index.php');
+$baseurl = new moodle_url('index.php');
 
 $saas = new saas();
 
-$polo_mapping = get_config('report_saas_export', 'polo_mapping');
+$polo_mapping = $saas->get_config('polo_mapping');
 $may_export = has_capability('report/saas_export:export', $syscontext);
 
 $tab_items = array('guidelines', 'settings');
@@ -54,7 +59,7 @@ if($saas->is_configured()) {
 
 $tabs = array();
 foreach($tab_items AS $act) {
-    $tabs[$act] = new tabobject($act, new moodle_url('/report/saas_export/index.php', array('action'=>$act)), get_string($act, 'report_saas_export'));
+    $tabs[$act] = new tabobject($act, new moodle_url('index.php', array('action'=>$act)), get_string($act, 'report_saas_export'));
 }
 
 $action = optional_param('action', 'guidelines' , PARAM_TEXT);
@@ -69,7 +74,7 @@ switch ($action) {
         echo $OUTPUT->footer();
         break;
     case 'settings':
-        require_once($CFG->dirroot . '/report/saas_export/settings_form.php');
+        require_once('./settings_form.php');
         $baseurl->param('action', 'settings');
         $mform = new saas_export_settings_form($baseurl);
 
@@ -169,7 +174,7 @@ switch ($action) {
                 if(optional_param('reload', true, PARAM_INT)) {
                     $saas->load_saas_data(true);
                 }
-                saas_show_table_ofertas_curso_disciplinas(0, false, false);
+                saas_show_table_ofertas_curso_disciplinas(0, false);
                 break;
             case 'add_oferta':
                 print html_writer::start_tag('DIV', array('align'=>'center'));
@@ -202,13 +207,12 @@ switch ($action) {
         echo $OUTPUT->footer();
         break;
     case 'course_mapping':
-        $syscontext = context_system::instance();
         $may_export = has_capability('report/saas_export:export', $syscontext);
 
-        $od_id = optional_param('od_id', 0, PARAM_INT);
+        $odid = optional_param('odid', 0, PARAM_INT);
         $group_map_id = optional_param('group_map_id', 0, PARAM_INT);
-        if(!empty($od_id) && !empty($group_map_id) && $may_export) {
-            $od = $DB->get_record('saas_ofertas_disciplinas', array('id'=>$od_id), 'id, group_map_id, oferta_curso_uid', MUST_EXIST);
+        if(!empty($odid) && !empty($group_map_id) && $may_export) {
+            $od = $DB->get_record('saas_ofertas_disciplinas', array('id'=>$odid), 'id, group_map_id, oferta_curso_uid', MUST_EXIST);
             if($group_map_id == -1) {
                 $max = $DB->get_field_sql("SELECT MAX(group_map_id) FROM {saas_ofertas_disciplinas}");
                 $od->group_map_id = empty($max) ? 1 : $max+1;
@@ -217,7 +221,7 @@ switch ($action) {
             }
             $DB->update_record('saas_ofertas_disciplinas', $od);
             $id = $DB->get_field('saas_ofertas_cursos', 'id', array('uid'=>$od->oferta_curso_uid));
-            redirect(new moodle_url('/report/saas_export/index.php', array('action'=>'course_mapping', 'oc_id'=>$id), 'oc'.$id));
+            redirect(new moodle_url('index.php', array('action'=>'course_mapping', 'ocid'=>$id), 'oc'.$id));
         }
 
         echo $OUTPUT->header();
@@ -275,35 +279,18 @@ switch ($action) {
         print_tabs(array($saas_data_tabs), $saas_data_action);
 
         if($saas_data_action == 'ofertas') {
-            $oc_id = optional_param('oc_id', 0 , PARAM_INT);
-            saas_show_table_ofertas_curso_disciplinas($oc_id, true, true);
+            $ocid = optional_param('ocid', 0 , PARAM_INT);
+            $url = new moodle_url('index.php', array('action'=>'overview', 'data'=>'ofertas'));
+            saas_show_menu_ofertas_cursos($ocid, $url);
             if($odid = optional_param('odid', 0 , PARAM_INT)) {
                 saas_show_users_oferta_disciplina($odid);
+            } else {
+                saas_show_table_ofertas_curso_disciplinas($ocid, true);
             }
         } else {
-            if($DB->record_exists('saas_polos', array('enable'=>1))) {
-                $polo_mapping_type = $saas->get_config('polo_mapping');
-                $ocid = optional_param('ocid', 0 , PARAM_INT);
-                $poloid = optional_param('poloid', 0 , PARAM_INT);
-                switch ($polo_mapping_type) {
-                    case 'no_polo':
-                        print $OUTPUT->heading(get_string('title_no_polo', 'report_saas_export'));
-                        break;
-                    case 'group_to_polo':
-                        saas_show_overview_groups_polos($ocid, $poloid);
-                        break;
-                    case 'category_to_polo':
-                        saas_show_overview_categories_polos($ocid, $poloid);
-                        break;
-                    case 'course_to_polo':
-                        saas_show_overview_courses_polos($ocid, $poloid);
-                        break;
-                    default:
-                        print $OUTPUT->heading('Mapeamento ainda não implementado: ' . $polo_mapping_type);
-                }
-            } else {
-                print html_writer::tag('h3', get_string('no_polos', 'report_saas_export'));
-            }
+            $ocid = optional_param('ocid', 0 , PARAM_INT);
+            $poloid = optional_param('poloid', 0 , PARAM_INT);
+            saas_show_overview_polos($ocid, $poloid);
         }
 
         echo $OUTPUT->footer();
@@ -313,7 +300,7 @@ switch ($action) {
         print_tabs(array($tabs), $action);
 
         if(has_capability('report/saas_export:export', $syscontext)) {
-            $ocs = optional_param_array('oc', array(), PARAM_INT);
+            $ocs = isset($_POST['oc']) ? $_POST['oc'] : array();
             $ods = isset($_POST['od']) ? $_POST['od'] : array();
             $polos = isset($_POST['polo']) ? $_POST['polo'] : array();
             $baseurl->param('action', $action);

@@ -1,6 +1,11 @@
 <?php
 define('AJAX_SCRIPT', true);
-require_once '../../config.php';
+
+if (strpos(__FILE__, '/admin/report/') !== false) {
+    require('../../../config.php');
+} else {
+    require('../../config.php');
+}
 
 $group_map_id = required_param('group_map_id', PARAM_INT);
 $ods = $DB->get_records('saas_ofertas_disciplinas', array('group_map_id'=>$group_map_id));

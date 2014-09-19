@@ -2,9 +2,9 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->dirroot . '/report/saas_export/locallib.php');
+require_once('./locallib.php');
 
-$syscontext = context_system::instance();
+$syscontext = saas::get_context_system();
 $may_export = has_capability('report/saas_export:export', $syscontext);
 
 $message = '';

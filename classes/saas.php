@@ -104,7 +104,7 @@ class saas {
            } catch (dml_write_exception $e){
                print_error('bd_error', 'report_saas_export', '', $e->debuginfo);
            } catch (Exception $e){
-               $url = new moodle_url('/report/saas_export/index.php', array('action'=>'settings'));
+               $url = new moodle_url('index.php', array('action'=>'settings'));
                print_error('ws_error', 'report_saas_export', $url, $e->getMessage());
            }
        }
@@ -335,7 +335,7 @@ class saas {
 
         $ofertas = $DB->get_records('saas_ofertas_cursos', $params, 'nome, ano, periodo');
 
-        $sql = "SELECT DISTINCT od.*, d.nome, oc.id as oc_id, cm.id IS NOT NULL AS mapped
+        $sql = "SELECT DISTINCT od.*, d.nome, oc.id as ocid, cm.id IS NOT NULL AS mapped
                   FROM {saas_ofertas_cursos} oc
              LEFT JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1)
              LEFT JOIN {saas_disciplinas} d ON (d.uid = od.disciplina_uid AND d.enable = 1)
@@ -346,9 +346,9 @@ class saas {
         $recs = $DB->get_recordset_sql($sql, $params);
         foreach($recs as $rec) {
             if(empty($rec->id)) {
-                $ofertas[$rec->oc_id]->ofertas_disciplinas = array();
+                $ofertas[$rec->ocid]->ofertas_disciplinas = array();
             } else {
-                $ofertas[$rec->oc_id]->ofertas_disciplinas[$rec->id] = $rec;
+                $ofertas[$rec->ocid]->ofertas_disciplinas[$rec->id] = $rec;
             }
         }
         return $ofertas;
@@ -392,7 +392,7 @@ class saas {
             $orderby = ', CONCAT(u.firstname, u.lastname)';
         }
 
-        $sql = "SELECT {$distinct} oc.id AS oc_id, sp.id AS p_id, scr.role, $field
+        $sql = "SELECT {$distinct} oc.id AS ocid, sp.id AS p_id, scr.role, $field
                   FROM {saas_ofertas_cursos} oc
                   JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1)
                   JOIN {saas_map_course} cm ON (cm.group_map_id = od.group_map_id)
@@ -456,7 +456,7 @@ class saas {
             $orderby = ', CONCAT(u.firstname, u.lastname)';
         }
 
-        $sql = "SELECT {$distinct} oc.id AS oc_id, sp.id AS p_id, scr.role, $field
+        $sql = "SELECT {$distinct} oc.id AS ocid, sp.id AS p_id, scr.role, $field
                   FROM {saas_ofertas_cursos} oc
                   JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1)
                   JOIN {saas_map_course} cm ON (cm.group_map_id = od.group_map_id)
@@ -518,7 +518,7 @@ class saas {
             $orderby = ', CONCAT(u.firstname, u.lastname)';
         }
 
-        $sql = "SELECT {$distinct} oc.id AS oc_id, sp.id AS p_id, scr.role, $field
+        $sql = "SELECT {$distinct} oc.id AS ocid, sp.id AS p_id, scr.role, $field
                   FROM {saas_ofertas_cursos} oc
                   JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1)
                   JOIN {saas_map_course} cm ON (cm.group_map_id = od.group_map_id)
@@ -567,7 +567,7 @@ class saas {
         $rs = $DB->get_recordset_sql($sql, $params);
 
         foreach($rs AS $rec) {
-            $polo_counts[$rec->oc_id][$rec->p_id][$rec->role] = $rec->count;
+            $polo_counts[$rec->ocid][$rec->p_id][$rec->role] = $rec->count;
         }
 
         return $polo_counts;
@@ -577,7 +577,7 @@ class saas {
         global $DB;
 
         $params = array('contextlevel'=>CONTEXT_COURSE, 'enable'=>ENROL_INSTANCE_ENABLED);
-        $group_by = 'GROUP BY od_id, scr.role';
+        $group_by = 'GROUP BY odid, scr.role';
 
         if($this->get_config('suspended_as_evaded') && !$only_count) {
             $user_enrol_condition = "AND (ue.status = :active OR scr.role = 'student')";
@@ -619,7 +619,7 @@ class saas {
             $condition .= " AND oc.id = {$id_oferta_curso}";
         }
 
-        $sql = "SELECT od.id AS od_id, scr.role, {$fields}
+        $sql = "SELECT od.id AS odid, scr.role, {$fields}
                   FROM {saas_ofertas_cursos} oc
                   JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1)
                   JOIN {saas_map_course} cm ON (cm.group_map_id = od.group_map_id)
@@ -639,7 +639,7 @@ class saas {
                    {$condition}
                    {$user_enrol_condition}
               {$group_by}
-              ORDER BY od_id, scr.role {$orderby}";
+              ORDER BY odid, scr.role {$orderby}";
 
         return array($sql, $params);
     }
@@ -785,7 +785,7 @@ class saas {
         foreach($rs AS $rec) {
             $this->send_user($rec, $send_user_details);
 
-            if($rec->oc_id != $ocid || $rec->p_id != $poloid) {
+            if($rec->ocid != $ocid || $rec->p_id != $poloid) {
                 if($ocid !== 0) {
                     $encoded_oferta_uid = urlencode($ofertas[$ocid]->uid);
                     $encoded_polo_uid = urlencode($polos[$poloid]->uid);
@@ -797,7 +797,7 @@ class saas {
                 foreach($role_types AS $r) {
                     $users_by_roles[$r] = array();
                 }
-                $ocid = $rec->oc_id;
+                $ocid = $rec->ocid;
                 $poloid = $rec->p_id;
             }
             $users_by_roles[$rec->role][] = $rec->uid;
@@ -828,7 +828,7 @@ class saas {
         foreach($rs AS $rec) {
             $this->send_user($rec, $send_user_details);
 
-            if($rec->od_id != $odid) {
+            if($rec->odid != $odid) {
                 if($odid !== 0) {
                     $this->send_users_by_oferta_disciplina($ofertas[$odid], $users_by_roles, $users_lastaccess, $users_suspended, $send_user_details);
                 }
@@ -837,7 +837,7 @@ class saas {
                 }
                 $users_lastaccess = array();
                 $users_suspended = array();
-                $odid = $rec->od_id;
+                $odid = $rec->odid;
             }
 
             if(empty($rec->suspended)) {
@@ -916,24 +916,24 @@ class saas {
 
         $ofertas_cursos = $this->get_ofertas_curso();
 
-        foreach($ofertas_cursos AS $oc_id=>$oc) {
-            if(isset($selected_ocs[$oc_id])) {
-                $this->send_users_by_ofertas_disciplinas($oc_id, 0, $send_user_details);
-            } else if(isset($selected_ods[$oc_id])) {
-                foreach($selected_ods[$oc_id] AS $od_id=>$i) {
-                    $this->send_users_by_ofertas_disciplinas(0, $od_id, $send_user_details);
+        foreach($ofertas_cursos AS $ocid=>$oc) {
+            if(isset($selected_ocs[$ocid])) {
+                $this->send_users_by_ofertas_disciplinas($ocid, 0, $send_user_details);
+            } else if(isset($selected_ods[$ocid])) {
+                foreach($selected_ods[$ocid] AS $odid=>$i) {
+                    $this->send_users_by_ofertas_disciplinas(0, $odid, $send_user_details);
                 }
             }
         }
 
         $polo_mapping_type = $this->get_config('polo_mapping');
         if($polo_mapping_type != 'no_polo') {
-            foreach($ofertas_cursos AS $oc_id=>$oc) {
-                if(isset($selected_ocs[$oc_id])) {
-                    $this->send_users_by_polo($oc_id, 0, $send_user_details);
-                } else if(isset($selected_polos[$oc_id])) {
-                    foreach($selected_polos[$oc_id] AS $polo_id=>$i) {
-                        $this->send_users_by_polo($oc_id, $polo_id, $send_user_details);
+            foreach($ofertas_cursos AS $ocid=>$oc) {
+                if(isset($selected_ocs[$ocid])) {
+                    $this->send_users_by_polo($ocid, 0, $send_user_details);
+                } else if(isset($selected_polos[$ocid])) {
+                    foreach($selected_polos[$ocid] AS $polo_id=>$i) {
+                        $this->send_users_by_polo($ocid, $polo_id, $send_user_details);
                     }
                 }
             }
@@ -1056,7 +1056,7 @@ class saas {
     function get_student_roles_menu() {
         global $DB, $CFG;
 
-        $context = context_system::instance();
+        $context = self::get_context_system();
         $roles = role_fix_names(get_all_roles($context), $context);
 
         if(isset($CFG->gradebookroles) && !empty($CFG->gradebookroles)) {
@@ -1074,7 +1074,7 @@ class saas {
     function get_other_roles_menu() {
         global $DB, $CFG;
 
-        $context = context_system::instance();
+        $context = self::get_context_system();
         $roles = role_fix_names(get_all_roles($context), $context);
 
         if(isset($CFG->gradebookroles) && !empty($CFG->gradebookroles)) {
@@ -1174,4 +1174,13 @@ class saas {
             return $ufs;
         }
     }
+
+    static function get_context_system() {
+        if(class_exists('context_system')) {
+            return context_system::instance();
+        } else {
+            return get_context_instance(CONTEXT_SYSTEM);
+        }
+    }
+
 }

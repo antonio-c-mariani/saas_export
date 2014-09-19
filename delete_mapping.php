@@ -2,6 +2,12 @@
 define('AJAX_SCRIPT', true);
 require_once '../../config.php';
 
+if (strpos(__FILE__, '/admin/report/') !== false) {
+    require('../../../config.php');
+} else {
+    require('../../config.php');
+}
+
 $group_map_id = required_param('group_map_id', PARAM_INT);
 $courseid = required_param('courseid', PARAM_INT);
 $action = optional_param('action', 'delete_one', PARAM_TEXT);

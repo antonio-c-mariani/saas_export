@@ -24,7 +24,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 require_once("{$CFG->libdir}/formslib.php");
-require_once("{$CFG->dirroot}/report/saas_export/classes/saas.php");
+require_once("./classes/saas.php");
 
 class saas_export_settings_form extends moodleform {
 
@@ -33,7 +33,7 @@ class saas_export_settings_form extends moodleform {
 
         $mform = $this->_form;
 
-        $syscontext = context_system::instance();
+        $syscontext = saas::get_context_system();
         $may_config = has_capability('report/saas_export:config', $syscontext);
         $attributes = array();
         $text_attr = array('size' => 50);

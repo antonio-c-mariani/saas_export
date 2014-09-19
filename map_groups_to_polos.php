@@ -2,7 +2,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$syscontext = context_system::instance();
+$syscontext = saas::get_context_system();
 $may_export = has_capability('report/saas_export:export', $syscontext);
 
 print html_writer::start_tag('DIV', array('align'=>'center'));

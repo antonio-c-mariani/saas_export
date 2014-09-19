@@ -1,4 +1,4 @@
-
+- não funciona a remoção de mapeamento de cursos-ofertas disciplinas na versão 2.0
 
 - como serão as permissões para quem vai exportar
 
@@ -33,5 +33,5 @@ OK    - não considerar o início e fim de um enrol
 
 OK    - enviar nota final na ofer.disc (curso) junto com a assoc do estudante com oferta-disciplina
 
-- na terça-feira será definido o que será feito com os logs.
-  talvez o plugin receba uma URL indicando onde o gerente pode ver o relatório de ocorrências.
+OK    - na terça-feira será definido o que será feito com os logs.
+        talvez o plugin receba uma URL indicando onde o gerente pode ver o relatório de ocorrências.

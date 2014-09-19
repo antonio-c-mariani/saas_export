@@ -2,28 +2,23 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->dirroot . '/report/saas_export/locallib.php');
-require_once($CFG->dirroot . '/report/saas_export/classes/saas.php');
+require_once('./locallib.php');
+require_once('./classes/saas.php');
 $PAGE->requires->js_init_call('M.report_saas_export.init');
 
-$syscontext = context_system::instance();
+$syscontext = saas::get_context_system();
 $may_export = has_capability('report/saas_export:export', $syscontext);
 
 $one_to_many = $saas->get_config('course_mapping') == 'one_to_many';
-$pocid = optional_param('oc_id', -1, PARAM_INT);
+$pocid = optional_param('ocid', -1, PARAM_INT);
 
 // obtem ofertas de curso
 $ofertas_cursos = $saas->get_ofertas_curso();
-$ofertas_menu = array();
 if($pocid === -1) {
     if(!empty($ofertas_cursos)) {
         $oc = reset($ofertas_cursos);
         $pocid = $oc->id;
     }
-}
-$ofertas_menu[0] = get_string('all');
-foreach($ofertas_cursos AS $oc_id=>$oc) {
-    $ofertas_menu[$oc_id] = $oc->nome;
 }
 
 if(empty($pocid)) {
@@ -34,7 +29,7 @@ if(empty($pocid)) {
     $params = array('ocid'=>$pocid);
 }
 
-$sql = "SELECT oc.id as oc_id, od.id as od_id, od.group_map_id, od.inicio, od.fim, d.nome
+$sql = "SELECT oc.id as ocid, od.id as odid, od.group_map_id, od.inicio, od.fim, d.nome
           FROM {saas_ofertas_cursos} oc
           JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1)
           JOIN {saas_disciplinas} d ON (d.uid = od.disciplina_uid)
@@ -43,7 +38,7 @@ $sql = "SELECT oc.id as oc_id, od.id as od_id, od.group_map_id, od.inicio, od.fi
       ORDER BY oc.nome, od.group_map_id ,d.nome";
 $ofertas = array();
 foreach($DB->get_recordset_sql($sql, $params) AS $rec) {
-    $ofertas[$rec->oc_id][$rec->group_map_id][] = $rec;
+    $ofertas[$rec->ocid][$rec->group_map_id][] = $rec;
 }
 
 // obtem mapeamentos
@@ -60,15 +55,13 @@ print html_writer::start_tag('div', array('class'=>'saas_table_map'));
 if(empty($ofertas_cursos)) {
     print html_writer::tag('h3', get_string('no_ofertas_cursos', 'report_saas_export'));
 } else {
-    print html_writer::start_tag('div', array('align'=>'right'));
-    print get_string('oferta_curso', 'report_saas_export') . ':';
-    print html_writer::select($ofertas_menu, '', $pocid, false, array('class'=>'select_oc_course_mapping'));
-    print html_writer::end_tag('div');
+    $url = new moodle_url('index.php', array('action'=>'course_mapping', 'data'=>'ofertas'));
+    saas_show_menu_ofertas_cursos($pocid, $url);
 
-    foreach($ofertas AS $oc_id=>$maps) {
-        $oc = $ofertas_cursos[$oc_id];
+    foreach($ofertas AS $ocid=>$maps) {
+        $oc = $ofertas_cursos[$ocid];
         $oc_nome_formatado = "{$oc->nome} ({$oc->ano}/{$oc->periodo})";
-        print html_writer::tag('a', html_writer::tag('h3',$oc_nome_formatado), array('id'=>'oc'.$oc_id));
+        print html_writer::tag('a', html_writer::tag('h3',$oc_nome_formatado), array('id'=>'oc'.$ocid));
 
         $group_options = array(0=>'');
         foreach(array_keys($maps) AS $ind=>$group_map_id) {
@@ -112,7 +105,7 @@ if(empty($ofertas_cursos)) {
                     if(count($recs) > 1 || !isset($mapping[$group_map_id])) {
                         $local_group_options = $group_options;
                         unset($local_group_options[$group_map_id]);
-                        $cell->text = html_writer::select($local_group_options, $rec->od_id, 0, false, array('class'=>'select_group_map'));
+                        $cell->text = html_writer::select($local_group_options, $rec->odid, 0, false, array('class'=>'select_group_map'));
                     } else {
                         $cell->text = '';
                     }

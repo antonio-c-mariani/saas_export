@@ -1,5 +1,4 @@
 <?php
-require_once(dirname(__FILE__) . '/../../config.php');
 
 // ----------------------------------------------------------------------------------------------
 // Rotinas auxiliares para mapeamento de ofertas de disciplina para cursos Moodle
@@ -225,7 +224,7 @@ function saas_mount_category_tree_map_courses_polos(&$categories, &$polos, &$row
         $cell = new html_table_cell();
         $cell->attributes['class'] = 'level' . $cat->depth;
         $depth = $cat->depth*2;
-        $cell->text = html_writer::empty_tag('img', array('src'=> $OUTPUT->pix_url('i/folder'), 'class'=>'saas_pix', 'style'=>"padding-left: {$depth}%;"));
+        $cell->text = html_writer::empty_tag('img', array('src'=> $OUTPUT->pix_url('f/folder'), 'class'=>'saas_pix', 'style'=>"padding-left: {$depth}%;"));
         $cell->text .= $cat->name;
         $row->cells[] = $cell;
 
@@ -362,10 +361,61 @@ function saas_show_table_polos() {
     print html_writer::end_tag('DIV');
 }
 
-function saas_show_overview_courses_polos($ocid, $poloid) {
-    global $saas;
+function saas_show_overview_polos($ocid, $poloid) {
+    global $DB, $saas;
 
-    $sql = "SELECT DISTINCT oc.id AS oc_id, sp.*
+    $polo_mapping_type = $saas->get_config('polo_mapping');
+
+    if(!$DB->record_exists('saas_polos', array('enable'=>1))) {
+        print html_writer::tag('h3', get_string('no_polos', 'report_saas_export'));
+    }
+    if($polo_mapping_type == 'no_polo') {
+        print $OUTPUT->heading(get_string('title_no_polo', 'report_saas_export'));
+        return;
+    }
+
+    $url = new moodle_url('index.php', array('action'=>'overview', 'data'=>'polos'));
+    saas_show_menu_ofertas_cursos($ocid, $url);
+
+    if($ocid && $poloid) {
+        switch ($polo_mapping_type) {
+            case 'group_to_polo':
+                list($sql, $params) = $saas->get_sql_users_by_oferta_curso_polo_groups($ocid, $poloid, false);
+                saas_show_users_oferta_curso_polo($ocid, $poloid, $sql, $params);
+                break;
+            case 'category_to_polo':
+                list($sql, $params) = $saas->get_sql_users_by_oferta_curso_polo_categories($ocid, $poloid, false);
+                saas_show_users_oferta_curso_polo($ocid, $poloid, $sql, $params);
+                break;
+            case 'course_to_polo':
+                list($sql, $params) = $saas->get_sql_users_by_oferta_curso_polo_courses($ocid, $poloid, false);
+                saas_show_users_oferta_curso_polo($ocid, $poloid, $sql, $params);
+                break;
+        }
+    } else {
+        switch ($polo_mapping_type) {
+            case 'group_to_polo':
+                saas_show_overview_groups_polos($ocid);
+                break;
+            case 'category_to_polo':
+                saas_show_overview_categories_polos($ocid);
+                break;
+            case 'course_to_polo':
+                saas_show_overview_courses_polos($ocid);
+                break;
+        }
+    }
+}
+
+function saas_show_overview_courses_polos($ocid) {
+    if($ocid) {
+        $cond = "AND oc.id = :ocid";
+        $params = array('ocid'=>$ocid);
+    } else {
+        $cond = '';
+        $params = array();
+    }
+    $sql = "SELECT DISTINCT oc.id AS ocid, sp.*
               FROM {saas_ofertas_cursos} oc
               JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1)
               JOIN {saas_map_course} cm ON (cm.group_map_id = od.group_map_id)
@@ -373,19 +423,20 @@ function saas_show_overview_courses_polos($ocid, $poloid) {
               JOIN {saas_map_catcourses_polos} smcp ON (smcp.type = 'course' AND smcp.instanceid = c.id)
               JOIN {saas_polos} sp ON (sp.id = smcp.polo_id AND sp.enable = 1)
              WHERE oc.enable = 1
+               {$cond}
           ORDER BY oc.id, sp.nome";
-    saas_show_table_overview_polos($sql);
-
-    if($ocid && $poloid) {
-        list($sql, $params) = $saas->get_sql_users_by_oferta_curso_polo_courses($ocid, $poloid, false);
-        saas_show_users_oferta_curso_polo($ocid, $poloid, $sql, $params);
-    }
+    saas_show_table_overview_polos($sql, $params);
 }
 
-function saas_show_overview_categories_polos($ocid, $poloid) {
-    global $saas;
-
-    $sql = "SELECT DISTINCT oc.id AS oc_id, sp.*
+function saas_show_overview_categories_polos($ocid) {
+    if($ocid) {
+        $cond = "AND oc.id = :ocid";
+        $params = array('ocid'=>$ocid);
+    } else {
+        $cond = '';
+        $params = array();
+    }
+    $sql = "SELECT DISTINCT oc.id AS ocid, sp.*
               FROM {saas_ofertas_cursos} oc
               JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1)
               JOIN {saas_map_course} cm ON (cm.group_map_id = od.group_map_id)
@@ -395,19 +446,20 @@ function saas_show_overview_categories_polos($ocid, $poloid) {
               JOIN {saas_map_catcourses_polos} smcp ON (smcp.type = 'category' AND smcp.instanceid = ccp.id)
               JOIN {saas_polos} sp ON (sp.id = smcp.polo_id AND sp.enable = 1)
              WHERE oc.enable = 1
+               {$cond}
           ORDER BY oc.id, sp.nome";
-    saas_show_table_overview_polos($sql);
-
-    if($ocid && $poloid) {
-        list($sql, $params) = $saas->get_sql_users_by_oferta_curso_polo_categories($ocid, $poloid, false);
-        $saas->show_users_oferta_curso_polo($ocid, $poloid, $sql, $params);
-    }
+    saas_show_table_overview_polos($sql, $params);
 }
 
-function saas_show_overview_groups_polos($ocid, $poloid) {
-    global $saas;
-
-    $sql = "SELECT DISTINCT oc.id AS oc_id, sp.*
+function saas_show_overview_groups_polos($ocid) {
+    if($ocid) {
+        $cond = "AND oc.id = :ocid";
+        $params = array('ocid'=>$ocid);
+    } else {
+        $cond = '';
+        $params = array();
+    }
+    $sql = "SELECT DISTINCT oc.id AS ocid, sp.*
               FROM {saas_ofertas_cursos} oc
               JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1)
               JOIN {saas_map_course} cm ON (cm.group_map_id = od.group_map_id)
@@ -416,57 +468,47 @@ function saas_show_overview_groups_polos($ocid, $poloid) {
               JOIN {saas_map_groups_polos} spm ON (spm.groupname = g.name AND spm.polo_id > 0)
               JOIN {saas_polos} sp ON (sp.id = spm.polo_id AND sp.enable = 1)
              WHERE oc.enable = 1
+               {$cond}
           ORDER BY oc.id, sp.nome";
-    saas_show_table_overview_polos($sql);
-
-    if($ocid && $poloid) {
-        list($sql, $params) = $saas->get_sql_users_by_oferta_curso_polo_groups($ocid, $poloid, false);
-        saas_show_users_oferta_curso_polo($ocid, $poloid, $sql, $params);
-    }
+    saas_show_table_overview_polos($sql, $params);
 }
 
-function saas_show_table_overview_polos($sql) {
+function saas_show_table_overview_polos($sql, $params) {
     global $DB, $saas;
 
     $ofertas_cursos = $DB->get_records('saas_ofertas_cursos', array('enable'=>1), 'nome, ano, periodo');
     foreach($ofertas_cursos AS $id=>$oc) {
         $oc->polos = array();
     }
-    foreach($DB->get_recordset_sql($sql) AS $pl) {
-        $ofertas_cursos[$pl->oc_id]->polos[] = $pl;
+    foreach($DB->get_recordset_sql($sql, $params) AS $pl) {
+        $ofertas_cursos[$pl->ocid]->polos[] = $pl;
     }
 
     $counts = $saas->get_polos_count();
     $role_types = $saas->get_role_types('polos');
 
     $data = array();
-    $color = '#E0E0E0';
+    $color_class = '';
     foreach($ofertas_cursos AS $oc) {
-        $color = $color == '#C0C0C0' ? '#E0E0E0 ' : '#C0C0C0';
-        $rows = max(count($oc->polos), 1);
-        $row = new html_table_row();
+        if(!empty($oc->polos)) {
+            $color_class = $color_class == 'saas_normalcolor' ? 'saas_alternatecolor' : 'saas_normalcolor';
+            $rows = max(count($oc->polos), 1);
+            $row = new html_table_row();
 
-        $cell = new html_table_cell();
-        $cell->text = $oc->nome;
-        $cell->rowspan = $rows;
-        $cell->style = "vertical-align: middle; background-color: {$color};";
-        $row->cells[] = $cell;
+            $cell = new html_table_cell();
+            $cell->text = $oc->nome;
+            $cell->rowspan = $rows;
+            $cell->style = "vertical-align: middle;";
+            $cell->attributes['class'] = $color_class;
+            $row->cells[] = $cell;
 
-        $cell = new html_table_cell();
-        $cell->text = "{$oc->ano}/{$oc->periodo}";
-        $cell->rowspan = $rows;
-        $cell->style = "vertical-align: middle; background-color: {$color};";
-        $row->cells[] = $cell;
+            $cell = new html_table_cell();
+            $cell->text = "{$oc->ano}/{$oc->periodo}";
+            $cell->rowspan = $rows;
+            $cell->style = "vertical-align: middle;";
+            $cell->attributes['class'] = $color_class;
+            $row->cells[] = $cell;
 
-        if(empty($oc->polos)) {
-            for($i=1; $i <= count($role_types)+1; $i++) {
-                $cell = new html_table_cell();
-                $cell->text = '';
-                $cell->style = "background-color: {$color};";
-                $row->cells[] = $cell;
-            }
-            $data[] = $row;
-        } else {
             foreach($oc->polos AS $pl) {
                 $texts = array();
                 $show_url = false;
@@ -481,18 +523,19 @@ function saas_show_table_overview_polos($sql) {
 
                 $cell = new html_table_cell();
                 if($show_url) {
-                    $url = new moodle_url('/report/saas_export/index.php', array('action'=>'overview', 'data'=>'polos', 'ocid'=>$oc->id, 'poloid'=>$pl->id));
+                    $url = new moodle_url('index.php', array('action'=>'overview', 'data'=>'polos', 'ocid'=>$oc->id, 'poloid'=>$pl->id));
                     $cell->text = html_writer::link($url, $pl->nome);
                 } else {
                     $cell->text = $pl->nome;
                 }
-                $cell->style = "background-color: {$color};";
+                $cell->attributes['class'] = $color_class;
                 $row->cells[] = $cell;
 
                 foreach($role_types AS $r) {
                     $cell = new html_table_cell();
                     $cell->text = $texts[$r];
-                    $cell->style = "text-align: right; background-color: {$color};";
+                    $cell->style = "text-align: right;";
+                    $cell->attributes['class'] = $color_class;
                     $row->cells[] = $cell;
                 }
 
@@ -526,11 +569,13 @@ function saas_show_users_oferta_curso_polo($ocid, $poloid, $sql, $params) {
 
     $oc = $DB->get_record('saas_ofertas_cursos', array('id'=>$ocid));
     $polo = $DB->get_record('saas_polos', array('id'=>$poloid));
-    $title = "{$oc->nome} ({$oc->ano}/{$oc->periodo}) - {$polo->nome}";
 
     $role_types = $saas->get_role_types('polos');
 
     print html_writer::start_tag('DIV', array('align'=>'center'));
+
+    print html_writer::tag('H3', "Oferta de curso: {$oc->nome} ({$oc->ano}/{$oc->periodo})");
+    print html_writer::tag('H3', "Polo: {$polo->nome}");
 
     $data = array();
     foreach($role_types AS $role) {
@@ -545,7 +590,7 @@ function saas_show_users_oferta_curso_polo($ocid, $poloid, $sql, $params) {
     foreach($role_types AS $role) {
         if(count($data[$role]) > 0) {
             print $OUTPUT->box_start('generalbox boxwidthwide');
-            print $OUTPUT->heading(get_string($role . 's', 'report_saas_export') . ' => ' . $title, '4');
+            print $OUTPUT->heading(get_string($role . 's', 'report_saas_export'), '4');
 
             $table = new html_table();
             $table->head = array('', get_string('name'), get_string('username', 'report_saas_export'), get_string('email'), get_string('cpf', 'report_saas_export'));
@@ -566,9 +611,11 @@ function saas_show_users_oferta_disciplina($ofer_disciplina_id) {
 
     $od = $saas->get_oferta_disciplina($ofer_disciplina_id);
     $oc = $DB->get_record('saas_ofertas_cursos', array('uid'=>$od->oferta_curso_uid));
-    $title = "{$oc->nome} ({$oc->ano}/{$oc->periodo}) - {$od->nome} " . $saas->format_date($od->inicio, $od->fim);
 
     print html_writer::start_tag('DIV', array('align'=>'center'));
+
+    print html_writer::tag('H3', "Oferta de curso: {$oc->nome} ({$oc->ano}/{$oc->periodo})");
+    print html_writer::tag('H3', "Oferta de disciplina: {$od->nome} ". $saas->format_date($od->inicio, $od->fim));
 
     list($sql, $params) =  $saas->get_sql_users_by_oferta_disciplina(0, $ofer_disciplina_id);
     $rs = $DB->get_recordset_sql($sql, $params);
@@ -616,7 +663,7 @@ function saas_show_users_oferta_disciplina($ofer_disciplina_id) {
     foreach($role_types AS $r) {
         if(count($data[$r]) > 0) {
             print $OUTPUT->box_start('generalbox boxwidthwide');
-            print $OUTPUT->heading(get_string($r . 's', 'report_saas_export') . ' => ' . $title, '4');
+            print $OUTPUT->heading(get_string($r . 's', 'report_saas_export'), '4');
 
             $table = new html_table();
             $table->head = array('', get_string('name'), get_string('username', 'report_saas_export'), get_string('email'), get_string('cpf', 'report_saas_export'));
@@ -641,7 +688,29 @@ function saas_show_users_oferta_disciplina($ofer_disciplina_id) {
     print html_writer::end_tag('DIV');
 }
 
-function saas_show_table_ofertas_curso_disciplinas($oferta_curso_id=0, $show_counts=false, $show_oc_menu=false) {
+function saas_show_menu_ofertas_cursos($oferta_curso_id=0, $url) {
+    global $PAGE, $DB, $saas;
+
+    // obtem ofertas de curso
+    $ofertas_cursos = $saas->get_ofertas_curso();
+    $ofertas_menu = array();
+    $ofertas_menu[0] = get_string('all');
+    foreach($ofertas_cursos AS $ocid=>$oc) {
+        $ofertas_menu[$ocid] = "{$oc->nome} ({$oc->ano}/{$oc->periodo})";
+    }
+
+    print html_writer::start_tag('div', array('class'=>'saas_table', 'align'=>'right'));
+    print get_string('oferta_curso', 'report_saas_export') . ':';
+
+    print html_writer::start_tag('form', array('method'=>'post', 'action'=>$url));
+    print html_writer::select($ofertas_menu, 'ocid', $oferta_curso_id, false);
+    print html_writer::empty_tag('input', array('type'=>'submit', 'name'=>'list', 'value'=>get_string('list')));
+    print html_writer::end_tag('form');
+
+    print html_writer::end_tag('div');
+}
+
+function saas_show_table_ofertas_curso_disciplinas($oferta_curso_id=0, $show_counts=false) {
     global $PAGE, $DB, $saas;
 
     $data = array();
@@ -652,43 +721,26 @@ function saas_show_table_ofertas_curso_disciplinas($oferta_curso_id=0, $show_cou
         $rs = $DB->get_recordset_sql($sql, $params);
         $ofertas_disciplinas_counts = array();
         foreach($rs AS $rec) {
-            $ofertas_disciplinas_counts[$rec->od_id][$rec->role] = $rec->count;
+            $ofertas_disciplinas_counts[$rec->odid][$rec->role] = $rec->count;
         }
     }
 
     print html_writer::start_tag('div', array('class'=>'saas_table'));
-
-    if($show_oc_menu) {
-        $PAGE->requires->js_init_call('M.report_saas_export.init');
-
-        // obtem ofertas de curso
-        $ofertas_cursos = $saas->get_ofertas_curso();
-        $ofertas_menu = array();
-        $ofertas_menu[0] = get_string('all');
-        foreach($ofertas_cursos AS $oc_id=>$oc) {
-            $ofertas_menu[$oc_id] = $oc->nome;
-        }
-
-        print html_writer::start_tag('div', array('align'=>'right'));
-        print get_string('oferta_curso', 'report_saas_export') . ':';
-        print html_writer::select($ofertas_menu, '', $oferta_curso_id, false, array('class'=>'select_oc_overview'));
-        print html_writer::end_tag('div');
-    }
 
     $role_types = $saas->get_role_types('disciplinas');
     $ofertas = $saas->get_ofertas($oferta_curso_id);
     if(empty($ofertas)) {
         print html_writer::tag('h3', get_string('no_ofertas_cursos', 'report_saas_export'));
     } else {
-        foreach($ofertas AS $oc_id=>$oc) {
+        foreach($ofertas AS $ocid=>$oc) {
             $oc_nome_formatado = "{$oc->nome} ({$oc->ano}/{$oc->periodo})";
-            print html_writer::tag('a', html_writer::tag('h3',$oc_nome_formatado), array('id'=>'oc'.$oc_id));
+            print html_writer::tag('a', html_writer::tag('h3',$oc_nome_formatado), array('id'=>'oc'.$ocid));
 
             $rows = array();
             $index = 0;
             $color_class = '';
 
-            foreach($oc->ofertas_disciplinas AS $od_id=>$od) {
+            foreach($oc->ofertas_disciplinas AS $odid=>$od) {
                 $row = new html_table_row();
                 $color_class = $color_class == 'saas_normalcolor' ? 'saas_alternatecolor' : 'saas_normalcolor';
                 $cell = new html_table_cell();
@@ -697,8 +749,8 @@ function saas_show_table_ofertas_curso_disciplinas($oferta_curso_id=0, $show_cou
                     $show_url = false;
                     foreach($role_types AS $r) {
                         if($od->mapped) {
-                            if(isset($ofertas_disciplinas_counts[$od_id][$r]) && $ofertas_disciplinas_counts[$od_id][$r] > 0) {
-                                $texts[$r] = $ofertas_disciplinas_counts[$od_id][$r];
+                            if(isset($ofertas_disciplinas_counts[$odid][$r]) && $ofertas_disciplinas_counts[$odid][$r] > 0) {
+                                $texts[$r] = $ofertas_disciplinas_counts[$odid][$r];
                                 $show_url = true;
                             } else {
                                 $texts[$r] = 0;
@@ -708,7 +760,7 @@ function saas_show_table_ofertas_curso_disciplinas($oferta_curso_id=0, $show_cou
                         }
                     }
                     if($show_url) {
-                        $url = new moodle_url('/report/saas_export/index.php', array('action'=>'overview', 'data'=>'ofertas', 'oc_id'=>$oc_id, 'odid'=>$od_id));
+                        $url = new moodle_url('index.php', array('action'=>'overview', 'data'=>'ofertas', 'ocid'=>$ocid, 'odid'=>$odid));
                         $cell->text = html_writer::link($url, $od->nome);
                     } else {
                         $cell->text = $od->nome;
@@ -769,7 +821,7 @@ function saas_show_export_options($url, $selected_ocs=true, $selected_ods=true, 
     $rs = $DB->get_recordset_sql($sql, $params);
     $od_counts = array();
     foreach($rs AS $rec) {
-        $od_counts[$rec->od_id] = true;
+        $od_counts[$rec->odid] = true;
     }
 
     $polos = $saas->get_polos();
@@ -782,35 +834,35 @@ function saas_show_export_options($url, $selected_ocs=true, $selected_ods=true, 
         return;
     }
 
-    foreach($ofertas AS $oc_id=>$oc) {
-        foreach(array_keys($oc->ofertas_disciplinas) AS $od_id) {
-            if(!isset($od_counts[$od_id])) {
-                unset($ofertas[$oc_id]->ofertas_disciplinas[$od_id]);
+    foreach($ofertas AS $ocid=>$oc) {
+        foreach(array_keys($oc->ofertas_disciplinas) AS $odid) {
+            if(!isset($od_counts[$odid])) {
+                unset($ofertas[$ocid]->ofertas_disciplinas[$odid]);
             }
         }
 
-        $ofertas[$oc_id]->polos = array();
-        if(isset($polos_count[$oc_id])) {
-            foreach($polos_count[$oc_id] AS $poloid=>$counts) {
-                $ofertas[$oc_id]->polos[$poloid] = $polos[$poloid];
+        $ofertas[$ocid]->polos = array();
+        if(isset($polos_count[$ocid])) {
+            foreach($polos_count[$ocid] AS $poloid=>$counts) {
+                $ofertas[$ocid]->polos[$poloid] = $polos[$poloid];
             }
         }
     }
 
 
     $rows = array();
-    foreach($ofertas AS $oc_id=>$oc) {
+    foreach($ofertas AS $ocid=>$oc) {
         if(!empty($oc->ofertas_disciplinas) || !empty($oc->polos)) {
             $color = $color == '#C0C0C0' ? '#E0E0E0 ' : '#C0C0C0';
 
-            $tag_checkbox = 'saas_oc_' . $oc_id;
+            $tag_checkbox = 'saas_oc_' . $ocid;
             $row = new html_table_row();
 
             $cell = new html_table_cell();
-            $checked = $selected_ocs===true || isset($selected_ocs[$oc_id]);
+            $checked = $selected_ocs===true || isset($selected_ocs[$ocid]);
             $disabled = $checked ? array('disabled'=>true) : array();
             $lable = "{$oc->nome} ({$oc->ano}/{$oc->periodo})";
-            $cell->text = html_writer::checkbox("oc[{$oc_id}]", $oc_id, $checked, $lable, array('id'=>$tag_checkbox, 'class'=>'oc_checkbox'));
+            $cell->text = html_writer::checkbox("oc[{$ocid}]", $ocid, $checked, $lable, array('id'=>$tag_checkbox, 'class'=>'oc_checkbox'));
             $cell->style = "vertical-align: middle; background-color: {$color};";
             $row->cells[] = $cell;
 
@@ -819,9 +871,9 @@ function saas_show_export_options($url, $selected_ocs=true, $selected_ods=true, 
                 $cell->text = html_writer::start_tag('UL', array('style'=>'list-style-type: none;'));
                 $params = array_merge($disabled, array('class'=>'od_'.$tag_checkbox));
                 foreach($oc->ofertas_disciplinas AS $od) {
-                    $checked = $selected_ocs===true || isset($selected_ods[$oc_id][$od->id]);
+                    $checked = $selected_ocs===true || isset($selected_ods[$ocid][$od->id]);
                     $label = $od->nome . ' (' . $saas->format_date($od->inicio, $od->fim) . ')';
-                    $checkbox = html_writer::checkbox("od[{$oc_id}][{$od->id}]", $oc_id, $checked, $label, $params);
+                    $checkbox = html_writer::checkbox("od[{$ocid}][{$od->id}]", $ocid, $checked, $label, $params);
                     $cell->text .= html_writer::tag('LI', $checkbox);
                 }
 
@@ -839,8 +891,8 @@ function saas_show_export_options($url, $selected_ocs=true, $selected_ods=true, 
                 $cell->text = html_writer::start_tag('UL', array('style'=>'list-style-type: none;'));
                 $params = array_merge($disabled, array('class'=>'polo_'.$tag_checkbox));
                 foreach($oc->polos AS $pl) {
-                    $checked = $selected_ocs===true || isset($selected_polos[$oc_id][$pl->id]);
-                    $checkbox = html_writer::checkbox("polo[{$oc_id}][{$pl->id}]", $oc_id, $checked, $pl->nome, $params);
+                    $checked = $selected_ocs===true || isset($selected_polos[$ocid][$pl->id]);
+                    $checkbox = html_writer::checkbox("polo[{$ocid}][{$pl->id}]", $ocid, $checked, $pl->nome, $params);
                     $cell->text .= html_writer::tag('LI', $checkbox);
                 }
                 $cell->text .= html_writer::empty_tag('img', array('src'=>'img/arrow_ltr.png'));

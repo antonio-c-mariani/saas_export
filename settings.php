@@ -22,5 +22,11 @@
  * @copyright  2014 Caio Doneda and Daniel Neis
  */
 
+if (strpos(__FILE__, '/admin/report/') !== false) {
+    $pluginpath = '/admin/report/saas_export';
+} else {
+    $pluginpath = '/report/saas_export';
+}
+
 $ADMIN->add('reports', new admin_externalpage('report_saas_export', get_string('pluginname', 'report_saas_export'),
-            new moodle_url('/report/saas_export/index.php'), 'report/saas_export:view'));
+            new moodle_url($pluginpath.'/index.php'), 'report/saas_export:view'));
