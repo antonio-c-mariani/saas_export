@@ -50,18 +50,16 @@ foreach($DB->get_recordset_sql($sql) AS $rec) {
     $mapping[$rec->group_map_id][] = $rec;
 }
 
-print html_writer::start_tag('div', array('class'=>'saas_table_map'));
+print html_writer::start_tag('div', array('class'=>'saas_area_large'));
 
 if(empty($ofertas_cursos)) {
-    print html_writer::tag('h3', get_string('no_ofertas_cursos', 'report_saas_export'));
+    print $OUTPUT->heading(get_string('no_ofertas_cursos', 'report_saas_export'));
 } else {
     $url = new moodle_url('index.php', array('action'=>'course_mapping', 'data'=>'ofertas'));
     saas_show_menu_ofertas_cursos($pocid, $url);
 
     foreach($ofertas AS $ocid=>$maps) {
         $oc = $ofertas_cursos[$ocid];
-        $oc_nome_formatado = "{$oc->nome} ({$oc->ano}/{$oc->periodo})";
-        print html_writer::tag('a', html_writer::tag('h3',$oc_nome_formatado), array('id'=>'oc'.$ocid));
 
         $group_options = array(0=>'');
         foreach(array_keys($maps) AS $ind=>$group_map_id) {
@@ -74,6 +72,7 @@ if(empty($ofertas_cursos)) {
         $color_class = '';
         foreach($maps AS $group_map_id=>$recs) {
             $index++;
+            $oc_nome_formatado = "{$oc->nome} ({$oc->ano}/{$oc->periodo})";
             $color_class = $color_class == 'saas_normalcolor' ? 'saas_alternatecolor' : 'saas_normalcolor';
 
             $od_nome_formatado = '';
@@ -91,6 +90,7 @@ if(empty($ofertas_cursos)) {
             $first = true;
             foreach($recs AS $rec) {
                 $row = new html_table_row();
+                $row->attributes['class'] = $color_class;
                 if($first) {
                     $cell = new html_table_cell();
                     $cell->text = $index . '.';
@@ -145,6 +145,7 @@ if(empty($ofertas_cursos)) {
                         $cell->text .= html_writer::end_tag('div');
                     }
 
+                    $cell->attributes['class'] = $color_class;
                     $row->cells[] = $cell;
                 }
 
@@ -155,8 +156,7 @@ if(empty($ofertas_cursos)) {
         }
 
         $table = new html_table();
-
-         $table->head = array();
+        $table->head = array();
         if($one_to_many) {
             $table->head = array('Grupo');
             $table->head[] = 'Mover para';
@@ -167,7 +167,12 @@ if(empty($ofertas_cursos)) {
         $table->head[] = 'Curso Moodle';
         $table->colclasses = array('leftalign', 'leftalign', 'leftalign', 'leftalign');
         $table->data = $rows;
+
+        print $OUTPUT->box_start('generalbox');
+        print $OUTPUT->heading($oc_nome_formatado);
+        $table->tablealign = 'center';
         print html_writer::table($table);
+        print $OUTPUT->box_end();
 
     }
 }

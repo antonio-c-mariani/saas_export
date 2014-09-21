@@ -544,6 +544,12 @@ class saas {
         return array($sql, $params);
     }
 
+    function get_polos_menu() {
+        global $DB;
+        
+        return $DB->get_records_menu('saas_polos', null, 'nome', "id, CONCAT(nome, ' (', cidade, '/', estado, ')') as nome");
+    }
+
     function get_polos_count() {
         global $DB;
 
@@ -787,8 +793,8 @@ class saas {
 
             if($rec->ocid != $ocid || $rec->p_id != $poloid) {
                 if($ocid !== 0) {
-                    $encoded_oferta_uid = urlencode($ofertas[$ocid]->uid);
-                    $encoded_polo_uid = urlencode($polos[$poloid]->uid);
+                    $encoded_oferta_uid = rawurlencode($ofertas[$ocid]->uid);
+                    $encoded_polo_uid = rawurlencode($polos[$poloid]->uid);
                     foreach($users_by_roles AS $r=>$users) {
                         $this->put_ws("ofertas/cursos/{$encoded_oferta_uid}/polos/{$encoded_polo_uid}/".self::$role_types[$r], $users);
                     }
@@ -805,8 +811,8 @@ class saas {
 
         //send the last one
         if($ocid !== 0) {
-            $encoded_oferta_uid = urlencode($ofertas[$ocid]->uid);
-            $encoded_polo_uid = urlencode($polos[$poloid]->uid);
+            $encoded_oferta_uid = rawurlencode($ofertas[$ocid]->uid);
+            $encoded_polo_uid = rawurlencode($polos[$poloid]->uid);
             foreach($users_by_roles AS $r=>$users) {
                 $this->put_ws("ofertas/cursos/{$encoded_oferta_uid}/polos/{$encoded_polo_uid}/".self::$role_types[$r], $users);
             }
@@ -857,7 +863,7 @@ class saas {
     }
 
     function send_users_by_oferta_disciplina($oferta_disciplina, $users_by_roles, $users_lastaccess, $users_suspended, $send_user_details=true) {
-        $oferta_uid_encoded = urlencode($oferta_disciplina->uid);
+        $oferta_uid_encoded = rawurlencode($oferta_disciplina->uid);
         foreach($users_by_roles AS $r=>$users) {
             $this->put_ws("ofertas/disciplinas/{$oferta_uid_encoded}/". self::$role_types[$r], array_values($users));
             if($r == 'student' && $send_user_details) {
@@ -866,7 +872,7 @@ class saas {
                 $obj_lastaccess = new stdClass();
                 foreach($users AS $userid=>$uid) {
                     if(!empty($uid)) {
-                        $user_uid_encoded = urlencode($uid);
+                        $user_uid_encoded = rawurlencode($uid);
                         if(isset($grades[$userid])) {
                             $obj_nota->nota = $grades[$userid];
                             $this->put_ws("ofertas/disciplinas/{$oferta_uid_encoded}/estudantes/{$user_uid_encoded}/nota", $obj_nota);
@@ -883,7 +889,7 @@ class saas {
                 $obj_suspended = new stdClass();
                 foreach($users_suspended AS $userid=>$uid) {
                     if(!empty($uid)) {
-                        $user_uid_encoded = urlencode($uid);
+                        $user_uid_encoded = rawurlencode($uid);
                         $obj_suspended->suspenso = true;
                         $this->put_ws("ofertas/disciplinas/{$oferta_uid_encoded}/estudantes/{$user_uid_encoded}/suspenso", $obj_suspended);
                     }
@@ -894,7 +900,7 @@ class saas {
 
     function send_user($rec, $send_user_details=true) {
         if(!isset($this->sent_users[$rec->userid])) {
-            $user_uid_encoded = urlencode($rec->uid);
+            $user_uid_encoded = rawurlencode($rec->uid);
             $this->put_ws("pessoas/{$user_uid_encoded}",  $this->get_user($rec->role, $rec->userid, $rec->uid));
             if($send_user_details && $rec->role == 'student' && !empty($rec->uid) && !empty($rec->currentlogin)) {
                 $this->put_ws("pessoas/{$user_uid_encoded}/ultimoLogin", array('ultimoLogin'=>$rec->currentlogin));
@@ -957,6 +963,27 @@ class saas {
         $this->post_ws('moodle/configuracoes', $resume);
     }
 
+    function send_polo($data) {
+        $new_polo = new stdClass();
+        $new_polo->nome = trim($data->nome);
+        $new_polo->cidade = trim($data->cidade);
+        $new_polo->estado = $data->estado;
+        $this->post_ws('polos', $new_polo);
+    }
+
+    function send_oferta_disciplina($data) {
+        global $DB;
+
+        $new_oferta = new stdClass();
+        $new_oferta->disciplina = new stdClass();
+        $new_oferta->disciplina->uid = $DB->get_field('saas_disciplinas', 'uid', array('id'=>$data->disciplina_id), MUST_EXIST);
+        $new_oferta->ofertaCurso = new stdClass();
+        $new_oferta->ofertaCurso->uid = $DB->get_field('saas_ofertas_cursos', 'uid', array('id'=>$data->oferta_curso_id), MUST_EXIST);
+        $new_oferta->inicio = $data->inicio;
+        $new_oferta->fim = $data->fim;
+        $this->post_ws('ofertas/disciplinas', $new_oferta);
+    }
+
     //Métodos para acesso ao webservice.
     function make_ws_url($functionname='') {
         if(empty($functionname)) {
@@ -1001,8 +1028,7 @@ class saas {
         $info = $this->curl->get_info();
         if($info['http_code'] <= 299) {
             return true;
-        // } else if($info['http_code'] <= 499) {
-        } else if($info['http_code'] <= 599) {
+        } else if($info['http_code'] <= 499) {
             $this->count_errors++;
             if(count($this->errors) < 5) {
                 $this->errors[] = "Falha {$info['http_code']} no acesso ao SAAS para: ". $info['url'];

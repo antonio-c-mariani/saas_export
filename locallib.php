@@ -169,12 +169,6 @@ function saas_show_categories(&$categories, $open_catids = array()){
 // ----------------------------------------------------------------------------------------------
 // Rotinas auxiliara para mapeamento de cursos para categorias
 
-function saas_get_polos_menu() {
-    global $DB;
-
-    return $DB->get_records_menu('saas_polos', null, 'nome', "id, CONCAT(nome, ' (', cidade, '/', estado, ')') as nome");
-}
-
 function saas_get_category_tree_map_courses_polos() {
     global $DB;
 
@@ -220,27 +214,31 @@ function saas_mount_category_tree_map_courses_polos(&$categories, &$polos, &$row
 
     foreach($categories AS $cat) {
         $row = new html_table_row();
+        $row->attributes['class'] = 'saas_level' . $cat->depth;
 
         $cell = new html_table_cell();
-        $cell->attributes['class'] = 'level' . $cat->depth;
+        $cell->attributes['class'] = 'saas_level' . $cat->depth;
         $depth = $cat->depth*2;
         $cell->text = html_writer::empty_tag('img', array('src'=> $OUTPUT->pix_url('f/folder'), 'class'=>'saas_pix', 'style'=>"padding-left: {$depth}%;"));
         $cell->text .= $cat->name;
         $row->cells[] = $cell;
 
         $cell = new html_table_cell();
-        $cell->attributes['class'] = 'level' . $cat->depth;
+        $cell->attributes['class'] = 'saas_level' . $cat->depth;
         $row->cells[] = $cell;
 
         $rows[] = $row;
 
         if(count($cat->courses) > 0) {
             $depth += 2;
+            $color_class = 'saas_normalcolor';
             foreach($cat->courses AS $c) {
+                $color_class = $color_class == 'saas_normalcolor' ? 'saas_alternatecolor' : 'saas_normalcolor';
                 $row = new html_table_row();
+                $row->attributes['class'] = $color_class;
 
                 $cell = new html_table_cell();
-                $cell->attributes['class'] = 'level' . $cat->depth;
+                $cell->attributes['class'] = $color_class;
                 $depth = ($cat->depth+2)*2;
                 $cell->text = html_writer::empty_tag('img', array('src'=> $OUTPUT->pix_url('i/course'), 'class'=>'saas_pix', 'style'=>"padding-left: {$depth}%;"));
                 $cell->text .= $c->name;
@@ -248,7 +246,7 @@ function saas_mount_category_tree_map_courses_polos(&$categories, &$polos, &$row
 
                 $poloid = empty($c->polo_id) ? 0 : $c->polo_id;
                 $cell = new html_table_cell();
-                $cell->attributes['class'] = 'level' . $cat->depth;
+                $cell->attributes['class'] = $color_class;
                 $cell->text = html_writer::select($polos, "map_polos[{$c->id}]", $poloid);
 
                 $row->cells[] = $cell;
@@ -298,16 +296,17 @@ function saas_mount_category_tree_map_categories_polos($categories, &$polos, &$r
 
     foreach($categories AS $cat) {
         $row = new html_table_row();
+        $row->attributes['class'] = 'saas_level' . $cat->depth;
 
         $cell = new html_table_cell();
-        $cell->attributes['class'] = 'level' . $cat->depth;
+        $cell->attributes['class'] = 'saas_level' . $cat->depth;
         $depth = $cat->depth*2;
-        $cell->text = html_writer::empty_tag('img', array('src'=> $OUTPUT->pix_url('i/course'), 'class'=>'saas_pix', 'style'=>"padding-left: {$depth}%;"));
+        $cell->text = html_writer::empty_tag('img', array('src'=> $OUTPUT->pix_url('f/folder'), 'class'=>'saas_pix', 'style'=>"padding-left: {$depth}%;"));
         $cell->text .= $cat->name;
         $row->cells[] = $cell;
 
         $cell = new html_table_cell();
-        $cell->attributes['class'] = 'level' . $cat->depth;
+        $cell->attributes['class'] = 'saas_level' . $cat->depth;
         $poloid = empty($cat->polo_id) ? 0 : $cat->polo_id;
         $cell->text = html_writer::select($polos, "map_polos[{$cat->id}]", $poloid);
         $row->cells[] = $cell;
@@ -327,35 +326,36 @@ function saas_show_table_polos() {
     global $DB, $OUTPUT;
 
     $polos = $DB->get_records('saas_polos', array('enable'=>1), 'nome');
-    $color = '#E0E0E0';
 
-    print html_writer::start_tag('DIV', array('align'=>'center'));
+    print html_writer::start_tag('div', array('class'=>'saas_area_normal'));
 
     if(empty($polos)) {
-        print html_writer::tag('h3', get_string('no_polos', 'report_saas_export'));
+        print $OUTPUT->heading(get_string('no_polos', 'report_saas_export'));
     } else {
+        $rows = array();
+        $index = 0;
+        foreach($polos as $pl) {
+            $index++;
+            $row = array($index . '.');
+            $row[] = $pl->nome;
+            $row[] = $pl->cidade;
+            $row[] = $pl->estado;
+            $rows[] = $row;
+        }
+
         $table = new html_table();
-        $table->head = array(get_string('nome_polo', 'report_saas_export'),
+        $table->head = array('',
+                             get_string('nome_polo', 'report_saas_export'),
                              get_string('cidade', 'report_saas_export'),
                              get_string('estado', 'report_saas_export'));
-        $table->colclasses = array('leftalign', 'leftalign', 'leftalign');
+        $table->colclasses = array('leftalign', 'leftalign', 'leftalign', 'leftalign');
+        $table->data = $rows;
+
+        print $OUTPUT->box_start('generalbox boxwidthwide boxaligncenter');
         $table->attributes = array('class'=>'saas_table');
-        $table->data = array();
-
-        foreach($polos as $pl) {
-            $color = $color == '#C0C0C0' ? '#E0E0E0 ' : '#C0C0C0';
-            $row = new html_table_row();
-
-            foreach(array('nome', 'cidade', 'estado') AS $field) {
-                $cell = new html_table_cell();
-                $cell->text = $pl->$field;
-                $cell->style = "background-color: {$color};";
-                $row->cells[] = $cell;
-            }
-
-            $table->data[] = $row;
-        }
+        $table->tablealign = 'center';
         print html_writer::table($table);
+        print $OUTPUT->box_end();
     }
 
     print html_writer::end_tag('DIV');
@@ -474,7 +474,7 @@ function saas_show_overview_groups_polos($ocid) {
 }
 
 function saas_show_table_overview_polos($sql, $params) {
-    global $DB, $saas;
+    global $DB, $OUTPUT, $saas;
 
     $ofertas_cursos = $DB->get_records('saas_ofertas_cursos', array('enable'=>1), 'nome, ano, periodo');
     foreach($ofertas_cursos AS $id=>$oc) {
@@ -487,29 +487,13 @@ function saas_show_table_overview_polos($sql, $params) {
     $counts = $saas->get_polos_count();
     $role_types = $saas->get_role_types('polos');
 
-    $data = array();
-    $color_class = '';
     foreach($ofertas_cursos AS $oc) {
         if(!empty($oc->polos)) {
-            $color_class = $color_class == 'saas_normalcolor' ? 'saas_alternatecolor' : 'saas_normalcolor';
-            $rows = max(count($oc->polos), 1);
-            $row = new html_table_row();
 
-            $cell = new html_table_cell();
-            $cell->text = $oc->nome;
-            $cell->rowspan = $rows;
-            $cell->style = "vertical-align: middle;";
-            $cell->attributes['class'] = $color_class;
-            $row->cells[] = $cell;
-
-            $cell = new html_table_cell();
-            $cell->text = "{$oc->ano}/{$oc->periodo}";
-            $cell->rowspan = $rows;
-            $cell->style = "vertical-align: middle;";
-            $cell->attributes['class'] = $color_class;
-            $row->cells[] = $cell;
-
+            $rows = array();
             foreach($oc->polos AS $pl) {
+                $row = array();
+
                 $texts = array();
                 $show_url = false;
                 foreach($role_types AS $r) {
@@ -521,47 +505,43 @@ function saas_show_table_overview_polos($sql, $params) {
                     }
                 }
 
-                $cell = new html_table_cell();
                 if($show_url) {
                     $url = new moodle_url('index.php', array('action'=>'overview', 'data'=>'polos', 'ocid'=>$oc->id, 'poloid'=>$pl->id));
-                    $cell->text = html_writer::link($url, $pl->nome);
+                    $row[] = html_writer::link($url, $pl->nome);
                 } else {
-                    $cell->text = $pl->nome;
+                    $row[] = $pl->nome;
                 }
-                $cell->attributes['class'] = $color_class;
-                $row->cells[] = $cell;
+                $row[] = $pl->cidade;
+                $row[] = $pl->estado;
 
                 foreach($role_types AS $r) {
-                    $cell = new html_table_cell();
-                    $cell->text = $texts[$r];
-                    $cell->style = "text-align: right;";
-                    $cell->attributes['class'] = $color_class;
-                    $row->cells[] = $cell;
+                    $row[] = $texts[$r];
                 }
 
-                $data[] = $row;
-                $row = new html_table_row();
+                $rows[] = $row;
             }
+
+            print html_writer::start_tag('DIV', array('class'=>'saas_area_normal'));
+            print $OUTPUT->box_start('generalbox boxwidthwide boxaligncenter');
+            print $OUTPUT->heading("Oferta de curso: {$oc->nome} ({$oc->ano}/{$oc->periodo})");
+
+            $table = new html_table();
+            $table->head = array(get_string('nome_polo', 'report_saas_export'), 'Cidade', 'UF');
+            $table->colclasses = array('leftalign', 'leftalign', 'leftalign');
+            foreach($role_types AS $r) {
+                $table->head[] = get_string($r, 'report_saas_export');
+                $table->colclasses[] = 'rightalign';
+            }
+            $table->data = $rows;
+            $table->attributes = array('class'=>'saas_table');
+            $table->tablealign = 'center';
+            print html_writer::table($table);
+
+            print $OUTPUT->box_end();
+            print html_writer::end_tag('DIV');
         }
     }
 
-    print html_writer::start_tag('DIV', array('align'=>'center'));
-
-    $table = new html_table();
-    $table->head = array(get_string('oferta_curso', 'report_saas_export'),
-                         get_string('periodo', 'report_saas_export'),
-                         get_string('nome_polo', 'report_saas_export'));
-    $table->colclasses = array('leftalign', 'leftalign', 'leftalign');
-    foreach($role_types AS $r) {
-        $table->head[] = get_string($r, 'report_saas_export');
-        $table->colclasses[] = 'rightalign';
-    }
-
-    $table->attributes = array('class'=>'saas_table');
-    $table->data = $data;
-    print html_writer::table($table);
-
-    print html_writer::end_tag('DIV');
 }
 
 function saas_show_users_oferta_curso_polo($ocid, $poloid, $sql, $params) {
@@ -572,36 +552,39 @@ function saas_show_users_oferta_curso_polo($ocid, $poloid, $sql, $params) {
 
     $role_types = $saas->get_role_types('polos');
 
-    print html_writer::start_tag('DIV', array('align'=>'center'));
+    print html_writer::start_tag('DIV', array('class'=>'saas_area_normal'));
+    print $OUTPUT->heading("Oferta de curso: {$oc->nome} ({$oc->ano}/{$oc->periodo})");
+    print $OUTPUT->heading("Polo: {$polo->nome} ({$polo->cidade}/{$polo->estado})");
+    print html_writer::end_tag('DIV');
 
-    print html_writer::tag('H3', "Oferta de curso: {$oc->nome} ({$oc->ano}/{$oc->periodo})");
-    print html_writer::tag('H3', "Polo: {$polo->nome}");
-
-    $data = array();
+    $rows = array();
     foreach($role_types AS $role) {
-        $data[$role] = array();
+        $rows[$role] = array();
     }
     $rs = $DB->get_recordset_sql($sql, $params);
     foreach($rs AS $rec) {
         $user = $saas->get_user($rec->role, $rec->userid, $rec->uid);
-        $data[$rec->role][] = array((count($data[$rec->role])+1) . '.', $user->nome, $user->uid, $user->email, $user->cpf);
+        $rows[$rec->role][] = array((count($rows[$rec->role])+1) . '.', $user->nome, $user->uid, $user->email, $user->cpf);
     }
 
     foreach($role_types AS $role) {
-        if(count($data[$role]) > 0) {
-            print $OUTPUT->box_start('generalbox boxwidthwide');
-            print $OUTPUT->heading(get_string($role . 's', 'report_saas_export'), '4');
+        if(count($rows[$role]) > 0) {
+            print html_writer::start_tag('DIV', array('class'=>'saas_area_normal'));
+            print $OUTPUT->box_start('generalbox boxwidthwide boxaligncenter');
+
+            print $OUTPUT->heading(get_string($role . 's', 'report_saas_export'));
 
             $table = new html_table();
             $table->head = array('', get_string('name'), get_string('username', 'report_saas_export'), get_string('email'), get_string('cpf', 'report_saas_export'));
+            $table->data = $rows[$role];
             $table->attributes = array('class'=>'saas_table');
-            $table->data = $data[$role];
+            $table->tablealign = 'center';
             print html_writer::table($table);
             print $OUTPUT->box_end();
+            print html_writer::end_tag('DIV');
         }
     }
 
-    print html_writer::end_tag('DIV');
 }
 
 function saas_show_users_oferta_disciplina($ofer_disciplina_id) {
@@ -612,42 +595,40 @@ function saas_show_users_oferta_disciplina($ofer_disciplina_id) {
     $od = $saas->get_oferta_disciplina($ofer_disciplina_id);
     $oc = $DB->get_record('saas_ofertas_cursos', array('uid'=>$od->oferta_curso_uid));
 
-    print html_writer::start_tag('DIV', array('align'=>'center'));
-
-    print html_writer::tag('H3', "Oferta de curso: {$oc->nome} ({$oc->ano}/{$oc->periodo})");
-    print html_writer::tag('H3', "Oferta de disciplina: {$od->nome} ". $saas->format_date($od->inicio, $od->fim));
+    print html_writer::start_tag('DIV', array('class'=>'saas_area_normal'));
+    print $OUTPUT->heading("Oferta de curso: {$oc->nome} ({$oc->ano}/{$oc->periodo})");
+    print $OUTPUT->heading("Oferta de disciplina: {$od->nome} ". $saas->format_date($od->inicio, $od->fim));
+    print html_writer::end_tag('DIV');
 
     list($sql, $params) =  $saas->get_sql_users_by_oferta_disciplina(0, $ofer_disciplina_id);
     $rs = $DB->get_recordset_sql($sql, $params);
-    $data = array();
+    $rows = array();
     $suspended = array();
     $role_types = $saas->get_role_types('disciplinas');
     foreach($role_types AS $r) {
-        $data[$r] = array();
+        $rows[$r] = array();
     }
     foreach($rs AS $rec) {
         if(empty($rec->suspended)) {
             $user = $saas->get_user($rec->role, $rec->userid, $rec->uid);
-            $row = array((count($data[$rec->role])+1) . '.', $user->nome, $user->uid, $user->email, $user->cpf);
+            $row = array((count($rows[$rec->role])+1) . '.', $user->nome, $user->uid, $user->email, $user->cpf);
             if($rec->role == 'student') {
                 $row[] = get_string('no');
                 $row[] = empty($rec->currentlogin) ? '-' : date('d-m-Y H:i', $rec->currentlogin);
                 $row[] = empty($rec->lastaccess) ? '-' : date('d-m-Y H:i', $rec->lastaccess);
                 $row[] = isset($grades[$rec->userid]) && $grades[$rec->userid] >= 0 ? $grades[$rec->userid] : '-';
             }
-            $data[$rec->role][] = $row;
+            $rows[$rec->role][] = $row;
         } else {
             $suspended[] = $rec;
         }
     }
 
-    $color = '#D0D0D0';
     foreach($suspended AS $rec) {
         $user = $saas->get_user($rec->role, $rec->userid, $rec->uid);
         $row = new html_table_row();
 
-        $row->style = "background-color: {$color};";
-        $row->cells[] = (count($data[$rec->role])+1) . '.';
+        $row->cells[] = (count($rows[$rec->role])+1) . '.';
         $row->cells[] = $user->nome;
         $row->cells[] = $user->uid;
         $row->cells[] = $user->email;
@@ -657,18 +638,18 @@ function saas_show_users_oferta_disciplina($ofer_disciplina_id) {
         $row->cells[] = empty($rec->lastaccess) ? '-' : date('d-m-Y H:i', $rec->lastaccess);
         $row->cells[] = isset($grades[$rec->userid]) && $grades[$rec->userid] >= 0 ? $grades[$rec->userid] : '-';
 
-        $data[$rec->role][] = $row;
+        $rows[$rec->role][] = $row;
     }
 
     foreach($role_types AS $r) {
-        if(count($data[$r]) > 0) {
-            print $OUTPUT->box_start('generalbox boxwidthwide');
-            print $OUTPUT->heading(get_string($r . 's', 'report_saas_export'), '4');
-
+        if(count($rows[$r]) > 0) {
             $table = new html_table();
             $table->head = array('', get_string('name'), get_string('username', 'report_saas_export'), get_string('email'), get_string('cpf', 'report_saas_export'));
             $table->colclasses = array('rightalign', 'leftalign', 'leftalign', 'leftalign', 'leftalign');
             if($r == 'student') {
+                print html_writer::start_tag('DIV', array('class'=>'saas_area_large'));
+                print $OUTPUT->box_start('generalbox boxaligncenter');
+
                 $table->head[] = get_string('suspended', 'report_saas_export');
                 $table->head[] = get_string('lastlogin');
                 $table->head[] = get_string('lastcourseaccess', 'report_saas_export');
@@ -677,15 +658,21 @@ function saas_show_users_oferta_disciplina($ofer_disciplina_id) {
                 $table->colclasses[] = 'centeralign';
                 $table->colclasses[] = 'centeralign';
                 $table->colclasses[] = 'rightalign';
+            } else {
+                print html_writer::start_tag('DIV', array('class'=>'saas_area_normal'));
+                print $OUTPUT->box_start('generalbox boxwidthwide boxaligncenter');
             }
-            $table->data = $data[$r];
+            $table->data = $rows[$r];
+            $table->attributes['class'] = 'saas_table';
+
+            print $OUTPUT->heading(get_string($r . 's', 'report_saas_export'));
             $table->attributes = array('class'=>'saas_table');
+            $table->tablealign = 'center';
             print html_writer::table($table);
             print $OUTPUT->box_end();
+            print html_writer::end_tag('DIV');
         }
     }
-
-    print html_writer::end_tag('DIV');
 }
 
 function saas_show_menu_ofertas_cursos($oferta_curso_id=0, $url) {
@@ -699,22 +686,25 @@ function saas_show_menu_ofertas_cursos($oferta_curso_id=0, $url) {
         $ofertas_menu[$ocid] = "{$oc->nome} ({$oc->ano}/{$oc->periodo})";
     }
 
-    print html_writer::start_tag('div', array('class'=>'saas_table', 'align'=>'right'));
-    print get_string('oferta_curso', 'report_saas_export') . ':';
+    print html_writer::start_tag('div', array('class'=>'saas_oferta_curso_menu'));
 
+    print html_writer::start_tag('div', array('style'=>'position:relative; float: right;'));
     print html_writer::start_tag('form', array('method'=>'post', 'action'=>$url));
     print html_writer::select($ofertas_menu, 'ocid', $oferta_curso_id, false);
     print html_writer::empty_tag('input', array('type'=>'submit', 'name'=>'list', 'value'=>get_string('list')));
     print html_writer::end_tag('form');
+    print html_writer::end_tag('div');
+
+    print html_writer::tag('div', get_string('oferta_curso', 'report_saas_export') . ': ', array('style'=>'position:relative; float: right;'));
 
     print html_writer::end_tag('div');
+
+    print html_writer::empty_tag('div', array('style'=>'clear: both;'));
 }
 
 function saas_show_table_ofertas_curso_disciplinas($oferta_curso_id=0, $show_counts=false) {
-    global $PAGE, $DB, $saas;
+    global $OUTPUT, $DB, $saas;
 
-    $data = array();
-    $color = '#E0E0E0';
 
     if($show_counts) {
         list($sql, $params) =  $saas->get_sql_users_by_oferta_disciplina($oferta_curso_id, 0, true);
@@ -725,25 +715,20 @@ function saas_show_table_ofertas_curso_disciplinas($oferta_curso_id=0, $show_cou
         }
     }
 
-    print html_writer::start_tag('div', array('class'=>'saas_table'));
+    print html_writer::start_tag('div', array('class'=>'saas_area_normal'));
 
     $role_types = $saas->get_role_types('disciplinas');
     $ofertas = $saas->get_ofertas($oferta_curso_id);
     if(empty($ofertas)) {
-        print html_writer::tag('h3', get_string('no_ofertas_cursos', 'report_saas_export'));
+        print $OUTPUT->heading(get_string('no_ofertas_cursos', 'report_saas_export'));
     } else {
         foreach($ofertas AS $ocid=>$oc) {
-            $oc_nome_formatado = "{$oc->nome} ({$oc->ano}/{$oc->periodo})";
-            print html_writer::tag('a', html_writer::tag('h3',$oc_nome_formatado), array('id'=>'oc'.$ocid));
-
             $rows = array();
             $index = 0;
-            $color_class = '';
 
             foreach($oc->ofertas_disciplinas AS $odid=>$od) {
-                $row = new html_table_row();
-                $color_class = $color_class == 'saas_normalcolor' ? 'saas_alternatecolor' : 'saas_normalcolor';
-                $cell = new html_table_cell();
+                $index++;
+                $row = array($index . '.');
                 if($show_counts) {
                     $texts = array();
                     $show_url = false;
@@ -761,32 +746,20 @@ function saas_show_table_ofertas_curso_disciplinas($oferta_curso_id=0, $show_cou
                     }
                     if($show_url) {
                         $url = new moodle_url('index.php', array('action'=>'overview', 'data'=>'ofertas', 'ocid'=>$ocid, 'odid'=>$odid));
-                        $cell->text = html_writer::link($url, $od->nome);
+                        $row[] = html_writer::link($url, $od->nome);
                     } else {
-                        $cell->text = $od->nome;
+                        $row[] = $od->nome;
                     }
                 } else {
-                    $cell->text = $od->nome;
+                    $row[] = $od->nome;
                 }
-                $cell->attributes['class'] = $color_class;
-                $row->cells[] = $cell;
 
-                $cell = new html_table_cell();
-                $cell->text = $saas->format_date($od->inicio);
-                $cell->attributes['class'] = $color_class;
-                $row->cells[] = $cell;
-
-                $cell = new html_table_cell();
-                $cell->text = $saas->format_date($od->fim);
-                $cell->attributes['class'] = $color_class;
-                $row->cells[] = $cell;
+                $row[] = $saas->format_date($od->inicio);
+                $row[] = $saas->format_date($od->fim);
 
                 if($show_counts) {
                     foreach($role_types AS $r) {
-                        $cell = new html_table_cell();
-                        $cell->text = $texts[$r];
-                        $cell->attributes['class'] = $color_class;
-                        $row->cells[] = $cell;
+                        $row[] = $texts[$r];
                     }
                 }
 
@@ -794,8 +767,8 @@ function saas_show_table_ofertas_curso_disciplinas($oferta_curso_id=0, $show_cou
             }
 
             $table = new html_table();
-            $table->head = array('Oferta de disciplina', 'Início', 'Fim');
-            $table->colclasses = array('leftalign', 'leftalign', 'leftalign');
+            $table->head = array('', 'Oferta de disciplina', 'Início', 'Fim');
+            $table->colclasses = array('leftalign', 'leftalign', 'leftalign', 'leftalign');
             if($show_counts) {
                 foreach($role_types AS $r) {
                     $table->head[] = get_string($r, 'report_saas_export');
@@ -803,7 +776,17 @@ function saas_show_table_ofertas_curso_disciplinas($oferta_curso_id=0, $show_cou
                 }
             }
             $table->data = $rows;
+
+            if($show_counts) {
+                print $OUTPUT->box_start('generalbox boxaligncenter');
+            } else {
+                print $OUTPUT->box_start('generalbox boxwidthwide boxaligncenter');
+            }
+            print $OUTPUT->heading("{$oc->nome} ({$oc->ano}/{$oc->periodo})");
+            $table->attributes = array('class'=>'saas_table');
+            $table->tablealign = 'center';
             print html_writer::table($table);
+            print $OUTPUT->box_end();
         }
     }
     print html_writer::end_tag('DIV');
@@ -813,9 +796,6 @@ function saas_show_export_options($url, $selected_ocs=true, $selected_ods=true, 
     global $DB, $saas, $PAGE, $OUTPUT;
 
     $PAGE->requires->js_init_call('M.report_saas_export.init');
-
-    $data = array();
-    $color = '#E0E0E0';
 
     list($sql, $params) =  $saas->get_sql_users_by_oferta_disciplina(0, 0, true);
     $rs = $DB->get_recordset_sql($sql, $params);
@@ -830,7 +810,7 @@ function saas_show_export_options($url, $selected_ocs=true, $selected_ods=true, 
     $ofertas = $saas->get_ofertas();
 
     if(empty($ofertas)) {
-        print html_writer::tag('h3', get_string('no_ofertas_cursos', 'report_saas_export'));
+        print $OUTPUT->heading(get_string('no_ofertas_cursos', 'report_saas_export'));
         return;
     }
 
@@ -849,12 +829,9 @@ function saas_show_export_options($url, $selected_ocs=true, $selected_ods=true, 
         }
     }
 
-
     $rows = array();
     foreach($ofertas AS $ocid=>$oc) {
         if(!empty($oc->ofertas_disciplinas) || !empty($oc->polos)) {
-            $color = $color == '#C0C0C0' ? '#E0E0E0 ' : '#C0C0C0';
-
             $tag_checkbox = 'saas_oc_' . $ocid;
             $row = new html_table_row();
 
@@ -863,7 +840,7 @@ function saas_show_export_options($url, $selected_ocs=true, $selected_ods=true, 
             $disabled = $checked ? array('disabled'=>true) : array();
             $lable = "{$oc->nome} ({$oc->ano}/{$oc->periodo})";
             $cell->text = html_writer::checkbox("oc[{$ocid}]", $ocid, $checked, $lable, array('id'=>$tag_checkbox, 'class'=>'oc_checkbox'));
-            $cell->style = "vertical-align: middle; background-color: {$color};";
+            $cell->style = "vertical-align: middle;";
             $row->cells[] = $cell;
 
             $cell = new html_table_cell();
@@ -883,7 +860,7 @@ function saas_show_export_options($url, $selected_ocs=true, $selected_ods=true, 
 
                 $cell->text .= html_writer::end_tag('UL');
             }
-            $cell->style = "vertical-align: middle; background-color: {$color};";
+            $cell->style = "vertical-align: middle;";
             $row->cells[] = $cell;
 
             $cell = new html_table_cell();
@@ -901,31 +878,39 @@ function saas_show_export_options($url, $selected_ocs=true, $selected_ods=true, 
 
                 $cell->text .= html_writer::end_tag('UL');
             }
-            $cell->style = "vertical-align: middle; background-color: {$color};";
+            $cell->style = "vertical-align: middle;";
             $row->cells[] = $cell;
 
             $rows[] = $row;
         }
     }
 
-    print html_writer::start_tag('DIV', array('align'=>'center'));
-
-    print $OUTPUT->box_start('generalbox boxwidthwide');
+    print html_writer::start_tag('div', array('class'=>'saas_area_normal'));
+    print $OUTPUT->box_start('generalbox boxwidthwide boxaligncenter');
     print html_writer::tag('p', 'Selecione abaixo as ofertas de curso, de disciplinas e polos cujos dados devam ser exportados para o SAAS');
     print $OUTPUT->box_end();
+    print html_writer::end_tag('div');
 
+    print html_writer::start_tag('div', array('class'=>'saas_area_large'));
+    print $OUTPUT->box_start('generalbox boxaligncenter');
     print html_writer::start_tag('form', array('method'=>'post', 'action'=>$url));
 
     $table = new html_table();
     $table->head = array('Oferta de Curso', 'Ofertas de disciplina', 'Polos');
-    $table->attributes = array('class'=>'saas_table_map');
     $table->colclasses = array('leftalign', 'leftalign', 'leftalign', 'leftalign');
     $table->data = $rows;
+    $table->attributes = array('class'=>'saas_table');
+    $table->tablealign = 'center';
     print html_writer::table($table);
 
+
+    print html_writer::start_tag('div', array('class'=>'centeralign'));
     print html_writer::checkbox('send_user_details', 'ok', true, 'Enviar detalhes de estudantes (últimos acessos e notas)');
     print html_writer::empty_tag('br');
-    print html_writer::empty_tag('input', array('type'=>'submit', 'name'=>'export', 'value'=>s(get_string('saas_export:export', 'report_saas_export'))));
+    print html_writer::empty_tag('input', array('type'=>'submit', 'name'=>'export', 'value'=>s(get_string('saas_export:export', 'report_saas_export')), 'class'=>'boxaligncenter'));
+    print html_writer::end_tag('div');
     print html_writer::end_tag('form');
+
+    print $OUTPUT->box_end();
     print html_writer::end_tag('DIV');
 }

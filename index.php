@@ -102,7 +102,7 @@ switch ($action) {
         $saas->load_saas_data();
 
         $saas_data_tab_items = array('ofertas'    => false,
-                                     // 'add_oferta' => 'report/saas_export:export'
+                                     'add_oferta' => 'report/saas_export:export'
                                      );
         if($polo_mapping != 'no_polo') {
             $saas_data_tab_items['polos'] = false;
@@ -132,14 +132,7 @@ switch ($action) {
                     if ($oferta_form->is_cancelled()) {
                         redirect($url);
                     } else if ($oferta = $oferta_form->get_data()) {
-                        $new_oferta = new stdClass();
-                        $new_oferta->disciplina = new stdClass();
-                        $new_oferta->disciplina->uid = $DB->get_field('saas_disciplinas', 'uid', array('id'=>$oferta->disciplina_id), MUST_EXIST);
-                        $new_oferta->ofertaCurso = new stdClass();
-                        $new_oferta->ofertaCurso->uid = $DB->get_field('saas_ofertas_cursos', 'uid', array('id'=>$oferta->oferta_curso_id), MUST_EXIST);
-                        $new_oferta->inicio = $oferta->inicio;
-                        $new_oferta->fim = $oferta->fim;
-                        $saas->post_ws('ofertas/disciplinas', $new_oferta);
+                        $saas->send_oferta_disciplina($oferta);
                         $saas->load_ofertas_disciplinas_saas();
                         $url->param('data', 'ofertas');
                         $url->param('reload', 0);
@@ -151,11 +144,7 @@ switch ($action) {
                     if ($polo_form->is_cancelled()) {
                         redirect($url);
                     } else if ($polo = $polo_form->get_data()) {
-                        $new_polo = new stdClass();
-                        $new_polo->nome = trim($polo->nome);
-                        $new_polo->cidade = trim($polo->cidade);
-                        $new_polo->estado = $polo->estado;
-                        $saas->post_ws('polos', $new_polo);
+                        $saas->send_polo($polo);
                         $saas->load_polos_saas();
                         $url->param('data', 'polos');
                         redirect($url);
@@ -227,7 +216,7 @@ switch ($action) {
         echo $OUTPUT->header();
         print_tabs(array($tabs), $action);
 
-        include('group_ofertas.php');
+        include('course_mapping.php');
 
         echo $OUTPUT->footer();
         break;
@@ -254,7 +243,7 @@ switch ($action) {
                     print $OUTPUT->heading('Mapeamento ainda não implementado: ' . $polo_mapping_type);
             }
         } else {
-            print html_writer::tag('h3', get_string('no_polos', 'report_saas_export'));
+            print $OUTPUT->heading(get_string('no_polos', 'report_saas_export'));
         }
 
         echo $OUTPUT->footer();

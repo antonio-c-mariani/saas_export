@@ -1,13 +1,20 @@
-.saas_table {
+.saas_area_normal {
     width: 80%;
     margin-left: auto;
     margin-right: auto;
 }
 
-.saas_table_map {
+.saas_area_large {
     width: 95%;
     margin-left: auto;
     margin-right: auto;
+}
+
+.saas_oferta_curso_menu {
+    width: 80%;
+    margin-left: auto;
+    margin-right: 10%;
+    padding-bottom: 2em;
 }
 
 .saas_export_message {color: green; text-align: center; margin-top: 1em; margin-bottom: 1em;}
@@ -21,26 +28,21 @@
 
 .centerimg {display: block; margin-left: 20%; margin-right: auto;}
 
-.saas_category_tree {
-    width: 90%;
-    margin-left: auto;
-    margin-right: auto;
+tr.saas_level1 td.saas_level1 {background-color: #707070;}
+tr.saas_level2 td.saas_level2 {background-color: #808080;}
+tr.saas_level3 td.saas_level3 {background-color: #909090;}
+tr.saas_level4 td.saas_level4 {background-color: #000000;}
+tr.saas_level5 td.saas_level5 {background-color: #A0A0a0;}
+
+tr.saas_normalcolor td.saas_normalcolor {
+    background-color: #C8C8C8;
 }
 
-.saas_category_tree .level1 {background-color: #C0C0C0;}
-.saas_category_tree .level2 {background-color: #D0D0D0;}
-.saas_category_tree .level3 {background-color: #E0E0E0;}
-.saas_category_tree .level4 {background-color: #F0F0F0;}
-.saas_category_tree .level5 {background-color: #FFFFFF;}
-
-.saas_normalcolor {
-    background-color: #D0D0D0;
-}
-
-.saas_alternatecolor {
+tr.saas_alternatecolor td.saas_alternatecolor {
     background-color: #E8E8E8;
 }
 
-.saas_category_tree .saas_pix {
-    padding-right: 0.3em;
-}
+.saas_table tr.r0 {background-color: #C8C8C8;}
+.saas_table tr.r1 {background-color: #E8E8E8;}
+
+.saas_pix {padding-right: 0.3em;}
