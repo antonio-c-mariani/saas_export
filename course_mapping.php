@@ -129,7 +129,7 @@ if(empty($ofertas_cursos)) {
                     if(isset($mapping[$group_map_id])) {
                         foreach($mapping[$group_map_id] AS $r) {
                             $cell->text .= $r->fullname;
-                            $cell->text .= html_writer::tag('input', '', array('class'=>'delete_bt', 'type'=>'image', 'src' =>'img/delete.png',
+                            $cell->text .= html_writer::tag('input', '', array('class'=>'delete_map_bt', 'type'=>'image', 'src' =>'img/delete.png',
                                             'alt'=>'Apagar mapeamento', 'height'=>'15', 'width'=>'15', 'group_map_id'=>$group_map_id,
                                             'courseid'=>$r->courseid, 'ocid'=>$ocid, 'style'=>'margin-left:2px;'));
                             $cell->text .= html_writer::empty_tag('br');
@@ -140,7 +140,7 @@ if(empty($ofertas_cursos)) {
                     if (!$has_mapping || $saas->get_config('course_mapping') == 'many_to_one') {
                         $cell->text .= html_writer::start_tag('div');
                         $cell->text .= html_writer::tag('button', 'Adicionar', array('type'=>'button', 'id'=>$group_map_id,
-                                'class'=>'btn btn-default btn-xs moodle_map_bt',
+                                'class'=>'btn btn-default btn-xs add_map_bt',
                                 'style'=>'margin-top:5px;', 'od_nome'=>$od_nome_formatado, 'oc_nome'=>$oc_nome_formatado));
                         $cell->text .= html_writer::end_tag('div');
                     }

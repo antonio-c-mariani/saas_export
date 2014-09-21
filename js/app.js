@@ -17,21 +17,21 @@ jQuery( document ).ready(function( $ ) {
     });
 
     //Controles da Modal da árvore de categorias do Moodle.
-    $('.moodle_map_bt').click(function(saas) {
+    $('.add_map_bt').click(function(saas) {
 
         saas.preventDefault();
-        //Não permite que a modal feche ao receber um click fora da área da modal, e desativa as teclas do teclado.        
+        //Não permite que a modal feche ao receber um click fora da área da modal, e desativa as teclas do teclado.
         $('#cursos_moodle_modal').modal({
-  	    backdrop: 'static',
-	    keyboard: false
-	});
+            backdrop: 'static',
+            keyboard: false
+	    });
 
         //Mostra a modal
         $('#cursos_moodle_modal').modal('show');
 
         //Adiciona o nome da oferta de disciplina que está sendo mapeada na modal.
         $('<h5 style="margin-left: 2em;"> Oferta de disciplina: <font color="darkblue">' +saas.target.getAttribute('od_nome')+ '</font></h5>').insertAfter('.modal_cursos_moodle_title');
-         $('<h5 style="margin-left: 2em;"> Oferta de curso:  <font color="darkblue">' +saas.target.getAttribute('oc_nome')+ '</font></h5>').insertAfter('.modal_cursos_moodle_title');
+        $('<h5 style="margin-left: 2em;"> Oferta de curso: <font color="darkblue">' +saas.target.getAttribute('oc_nome')+ '</font></h5>').insertAfter('.modal_cursos_moodle_title');
 
         //Define inicialmente as categorias que estão abertas
         $('.tree li:has(ul)').addClass('parent_li');

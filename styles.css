@@ -21,12 +21,12 @@
 .saas_export_warning {color: darkblue; font-weight: bold;}
 .saas_export_error {color: red;}
 
-.leftalign {text-align: left;}
-.rightalign {text-align: right;}
-.centeralign {text-align: center;}
+.saas_table .leftalign {text-align: left;}
+.saas_table .rightalign {text-align: right;}
+.saas_table .centeralign {text-align: center;}
 .saas_justifiedalign {text-align: justify;}
 
-.centerimg {display: block; margin-left: 20%; margin-right: auto;}
+.saas_centerimg {display: block; margin-left: 20%; margin-right: auto;}
 
 tr.saas_level1 td.saas_level1 {background-color: #707070;}
 tr.saas_level2 td.saas_level2 {background-color: #808080;}

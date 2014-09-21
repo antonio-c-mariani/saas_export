@@ -47,6 +47,6 @@ M.report_saas_export.init = function(Y) {
         group_map_id = this.getAttribute('group_map_id');
         ocid = this.getAttribute('ocid');
         window.location="index.php?action=course_mapping&&subaction=delete&courseid="+courseid+"&group_map_id="+group_map_id+"&ocid="+ocid;
-    }, '.delete_bt');
+    }, '.delete_map_bt');
 
 }
