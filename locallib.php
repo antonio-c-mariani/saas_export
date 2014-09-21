@@ -552,10 +552,10 @@ function saas_show_users_oferta_curso_polo($ocid, $poloid, $sql, $params) {
 
     $role_types = $saas->get_role_types('polos');
 
-    print html_writer::start_tag('DIV', array('class'=>'saas_area_normal'));
+    print $OUTPUT->box_start('generalbox boxwidthwide boxaligncenter');
     print $OUTPUT->heading("Oferta de curso: {$oc->nome} ({$oc->ano}/{$oc->periodo})");
     print $OUTPUT->heading("Polo: {$polo->nome} ({$polo->cidade}/{$polo->estado})");
-    print html_writer::end_tag('DIV');
+    print $OUTPUT->box_end();
 
     $rows = array();
     foreach($role_types AS $role) {
@@ -595,10 +595,10 @@ function saas_show_users_oferta_disciplina($ofer_disciplina_id) {
     $od = $saas->get_oferta_disciplina($ofer_disciplina_id);
     $oc = $DB->get_record('saas_ofertas_cursos', array('uid'=>$od->oferta_curso_uid));
 
-    print html_writer::start_tag('DIV', array('class'=>'saas_area_normal'));
+    print $OUTPUT->box_start('generalbox boxwidthwide boxaligncenter');
     print $OUTPUT->heading("Oferta de curso: {$oc->nome} ({$oc->ano}/{$oc->periodo})");
     print $OUTPUT->heading("Oferta de disciplina: {$od->nome} ". $saas->format_date($od->inicio, $od->fim));
-    print html_writer::end_tag('DIV');
+    print $OUTPUT->box_end();
 
     list($sql, $params) =  $saas->get_sql_users_by_oferta_disciplina(0, $ofer_disciplina_id);
     $rs = $DB->get_recordset_sql($sql, $params);
