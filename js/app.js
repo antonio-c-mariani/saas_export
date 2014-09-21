@@ -16,19 +16,6 @@ jQuery( document ).ready(function( $ ) {
         $(this).tooltip('destroy');
     });
 
-    //Desfaz um mapeamento.
-    $('.delete_bt').click(function(element) {
-        $.post("delete_mapping.php",
-        {
-            group_map_id:element.target.getAttribute('group_map_id'),
-            courseid:element.target.getAttribute('courseid'),
-            action:'delete_one'
-        })
-        .done(function() {
-            window.location.reload();
-        });
-    });
-
     //Controles da Modal da árvore de categorias do Moodle.
     $('.moodle_map_bt').click(function(saas) {
 

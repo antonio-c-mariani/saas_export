@@ -55,7 +55,7 @@ print html_writer::start_tag('div', array('class'=>'saas_area_large'));
 if(empty($ofertas_cursos)) {
     print $OUTPUT->heading(get_string('no_ofertas_cursos', 'report_saas_export'));
 } else {
-    $url = new moodle_url('index.php', array('action'=>'course_mapping', 'data'=>'ofertas'));
+    $url = new moodle_url('index.php', array('action'=>'course_mapping', 'subaction'=>'ofertas'));
     saas_show_menu_ofertas_cursos($pocid, $url);
 
     foreach($ofertas AS $ocid=>$maps) {
@@ -131,7 +131,7 @@ if(empty($ofertas_cursos)) {
                             $cell->text .= $r->fullname;
                             $cell->text .= html_writer::tag('input', '', array('class'=>'delete_bt', 'type'=>'image', 'src' =>'img/delete.png',
                                             'alt'=>'Apagar mapeamento', 'height'=>'15', 'width'=>'15', 'group_map_id'=>$group_map_id,
-                                            'courseid'=>$r->courseid, 'style'=>'margin-left:2px;'));
+                                            'courseid'=>$r->courseid, 'ocid'=>$ocid, 'style'=>'margin-left:2px;'));
                             $cell->text .= html_writer::empty_tag('br');
                             $has_mapping = true;
                         }

@@ -37,9 +37,16 @@ M.report_saas_export.init = function(Y) {
     }, '.oc_checkbox');
 
     Y.on('change', function(e) {
-        name = this.get('name');
-        value = this.get('value');
-        window.location="index.php?action=course_mapping&odid="+name+"&group_map_id="+value;
+        odid = this.get('name');
+        group_map_id = this.get('value');
+        window.location="index.php?action=course_mapping&subaction=map&odid="+odid+"&group_map_id="+group_map_id;
     }, '.select_group_map');
+
+    Y.on('click', function(e) {
+        courseid = this.getAttribute('courseid');
+        group_map_id = this.getAttribute('group_map_id');
+        ocid = this.getAttribute('ocid');
+        window.location="index.php?action=course_mapping&&subaction=delete&courseid="+courseid+"&group_map_id="+group_map_id+"&ocid="+ocid;
+    }, '.delete_bt');
 
 }

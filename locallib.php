@@ -374,7 +374,7 @@ function saas_show_overview_polos($ocid, $poloid) {
         return;
     }
 
-    $url = new moodle_url('index.php', array('action'=>'overview', 'data'=>'polos'));
+    $url = new moodle_url('index.php', array('action'=>'overview', 'subaction'=>'polos'));
     saas_show_menu_ofertas_cursos($ocid, $url);
 
     if($ocid && $poloid) {
@@ -506,7 +506,7 @@ function saas_show_table_overview_polos($sql, $params) {
                 }
 
                 if($show_url) {
-                    $url = new moodle_url('index.php', array('action'=>'overview', 'data'=>'polos', 'ocid'=>$oc->id, 'poloid'=>$pl->id));
+                    $url = new moodle_url('index.php', array('action'=>'overview', 'subaction'=>'polos', 'ocid'=>$oc->id, 'poloid'=>$pl->id));
                     $row[] = html_writer::link($url, $pl->nome);
                 } else {
                     $row[] = $pl->nome;
@@ -523,7 +523,7 @@ function saas_show_table_overview_polos($sql, $params) {
 
             print html_writer::start_tag('DIV', array('class'=>'saas_area_normal'));
             print $OUTPUT->box_start('generalbox boxwidthwide boxaligncenter');
-            print $OUTPUT->heading("Oferta de curso: {$oc->nome} ({$oc->ano}/{$oc->periodo})");
+            print $OUTPUT->heading("{$oc->nome} ({$oc->ano}/{$oc->periodo})");
 
             $table = new html_table();
             $table->head = array(get_string('nome_polo', 'report_saas_export'), 'Cidade', 'UF');
@@ -699,12 +699,10 @@ function saas_show_menu_ofertas_cursos($oferta_curso_id=0, $url) {
 
     print html_writer::end_tag('div');
 
-    print html_writer::empty_tag('div', array('style'=>'clear: both;'));
 }
 
 function saas_show_table_ofertas_curso_disciplinas($oferta_curso_id=0, $show_counts=false) {
     global $OUTPUT, $DB, $saas;
-
 
     if($show_counts) {
         list($sql, $params) =  $saas->get_sql_users_by_oferta_disciplina($oferta_curso_id, 0, true);
@@ -715,7 +713,7 @@ function saas_show_table_ofertas_curso_disciplinas($oferta_curso_id=0, $show_cou
         }
     }
 
-    print html_writer::start_tag('div', array('class'=>'saas_area_normal'));
+    print html_writer::start_tag('div', array('class'=>'saas_area_large'));
 
     $role_types = $saas->get_role_types('disciplinas');
     $ofertas = $saas->get_ofertas($oferta_curso_id);
@@ -745,7 +743,7 @@ function saas_show_table_ofertas_curso_disciplinas($oferta_curso_id=0, $show_cou
                         }
                     }
                     if($show_url) {
-                        $url = new moodle_url('index.php', array('action'=>'overview', 'data'=>'ofertas', 'ocid'=>$ocid, 'odid'=>$odid));
+                        $url = new moodle_url('index.php', array('action'=>'overview', 'subaction'=>'ofertas', 'ocid'=>$ocid, 'odid'=>$odid));
                         $row[] = html_writer::link($url, $od->nome);
                     } else {
                         $row[] = $od->nome;

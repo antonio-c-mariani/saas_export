@@ -114,16 +114,16 @@ switch ($action) {
             if(!$capability || has_capability($capability, $syscontext)) {
                 $url = clone($baseurl);
                 $url->param('action', $action);
-                $url->param('data', $act);
+                $url->param('subaction', $act);
                 $saas_data_tabs[$act] = new tabobject($act, $url, get_string($act, 'report_saas_export'));
             }
         }
-        $saas_data_action = optional_param('data', 'ofertas' , PARAM_TEXT);
+        $saas_data_action = optional_param('subaction', 'ofertas' , PARAM_TEXT);
         $saas_data_action = isset($saas_data_tabs[$saas_data_action]) ? $saas_data_action : 'ofertas';
 
         $url = clone($baseurl);
         $url->param('action', $action);
-        $url->param('data', $saas_data_action);
+        $url->param('subaction', $saas_data_action);
 
         if(has_capability('report/saas_export:export', $syscontext)) {
             switch($saas_data_action) {
@@ -134,7 +134,7 @@ switch ($action) {
                     } else if ($oferta = $oferta_form->get_data()) {
                         $saas->send_oferta_disciplina($oferta);
                         $saas->load_ofertas_disciplinas_saas();
-                        $url->param('data', 'ofertas');
+                        $url->param('subaction', 'ofertas');
                         $url->param('reload', 0);
                         redirect($url);
                     }
@@ -146,7 +146,7 @@ switch ($action) {
                     } else if ($polo = $polo_form->get_data()) {
                         $saas->send_polo($polo);
                         $saas->load_polos_saas();
-                        $url->param('data', 'polos');
+                        $url->param('subaction', 'polos');
                         redirect($url);
                     }
                     break;
@@ -197,22 +197,30 @@ switch ($action) {
         break;
     case 'course_mapping':
         $may_export = has_capability('report/saas_export:export', $syscontext);
-
-        $odid = optional_param('odid', 0, PARAM_INT);
-        $group_map_id = optional_param('group_map_id', 0, PARAM_INT);
-        if(!empty($odid) && !empty($group_map_id) && $may_export) {
-            $od = $DB->get_record('saas_ofertas_disciplinas', array('id'=>$odid), 'id, group_map_id, oferta_curso_uid', MUST_EXIST);
-            if($group_map_id == -1) {
-                $max = $DB->get_field_sql("SELECT MAX(group_map_id) FROM {saas_ofertas_disciplinas}");
-                $od->group_map_id = empty($max) ? 1 : $max+1;
-            } else {
-                $od->group_map_id = $group_map_id;
+        $subaction = optional_param('subaction', '', PARAM_TEXT);
+        if($may_export) {
+            if($subaction == 'map') {
+                $odid = required_param('odid', PARAM_INT);
+                $group_map_id = required_param('group_map_id', PARAM_INT);
+                $od = $DB->get_record('saas_ofertas_disciplinas', array('id'=>$odid), 'id, group_map_id, oferta_curso_uid', MUST_EXIST);
+                if($group_map_id == -1) {
+                    $max = $DB->get_field_sql("SELECT MAX(group_map_id) FROM {saas_ofertas_disciplinas}");
+                    $od->group_map_id = empty($max) ? 1 : $max+1;
+                } else {
+                    $od_group = $DB->get_record('saas_ofertas_disciplinas', array('id'=>$odid, 'group_map_id'=>$group_map_id), 'id, group_map_id, oferta_curso_uid', MUST_EXIST);
+                    $od->group_map_id = $group_map_id;
+                }
+                $DB->update_record('saas_ofertas_disciplinas', $od);
+                $ocid = $DB->get_field('saas_ofertas_cursos', 'id', array('uid'=>$od->oferta_curso_uid), MUST_EXISTS);
+                redirect(new moodle_url('index.php', array('action'=>'course_mapping', 'ocid'=>$ocid)));
+            } else if($subaction == 'delete') {
+                $courseid = required_param('courseid', PARAM_INT);
+                $group_map_id = required_param('group_map_id', PARAM_INT);
+                $ocid = required_param('ocid', PARAM_INT);
+                $DB->delete_records('saas_map_course', array('courseid' => $courseid, 'group_map_id' => $group_map_id));
+                redirect(new moodle_url('index.php', array('action'=>'course_mapping', 'ocid'=>$ocid)));
             }
-            $DB->update_record('saas_ofertas_disciplinas', $od);
-            $id = $DB->get_field('saas_ofertas_cursos', 'id', array('uid'=>$od->oferta_curso_uid));
-            redirect(new moodle_url('index.php', array('action'=>'course_mapping', 'ocid'=>$id), 'oc'.$id));
         }
-
         echo $OUTPUT->header();
         print_tabs(array($tabs), $action);
 
@@ -260,16 +268,16 @@ switch ($action) {
         foreach($saas_data_tab_items AS $act) {
             $url = clone($baseurl);
             $url->param('action', $action);
-            $url->param('data', $act);
+            $url->param('subaction', $act);
             $saas_data_tabs[$act] = new tabobject($act, $url, get_string($act, 'report_saas_export'));
         }
-        $saas_data_action = optional_param('data', 'ofertas' , PARAM_TEXT);
+        $saas_data_action = optional_param('subaction', 'ofertas' , PARAM_TEXT);
         $saas_data_action = isset($saas_data_tabs[$saas_data_action]) ? $saas_data_action : 'ofertas';
         print_tabs(array($saas_data_tabs), $saas_data_action);
 
         if($saas_data_action == 'ofertas') {
             $ocid = optional_param('ocid', 0 , PARAM_INT);
-            $url = new moodle_url('index.php', array('action'=>'overview', 'data'=>'ofertas'));
+            $url = new moodle_url('index.php', array('action'=>'overview', 'subaction'=>'ofertas'));
             saas_show_menu_ofertas_cursos($ocid, $url);
             if($odid = optional_param('odid', 0 , PARAM_INT)) {
                 saas_show_users_oferta_disciplina($odid);
