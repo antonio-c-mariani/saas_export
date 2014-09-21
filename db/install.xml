@@ -4,46 +4,46 @@
     xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
 >
   <TABLES>
-    <TABLE NAME="saas_config_roles" COMMENT="" NEXT="saas_map_course">
+    <TABLE NAME="saas_config_roles" COMMENT="Mapeamento de papeis do SAAS para roles do Moodle" NEXT="saas_map_course">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" NEXT="role"/>
         <FIELD NAME="role" TYPE="char" LENGTH="20" NOTNULL="true" SEQUENCE="false" PREVIOUS="id" NEXT="roleid"/>
         <FIELD NAME="roleid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" PREVIOUS="role"/>
       </FIELDS>
       <KEYS>
-        <KEY NAME="primary" TYPE="primary" FIELDS="id" NEXT="saas_config_unique"/>
-        <KEY NAME="saas_config_unique" TYPE="unique" FIELDS="role, roleid" COMMENT="must be unique" PREVIOUS="primary"/>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id" NEXT="role_roleid"/>
+        <KEY NAME="role_roleid" TYPE="unique" FIELDS="role, roleid" COMMENT="must be unique" PREVIOUS="primary"/>
       </KEYS>
     </TABLE>
-    <TABLE NAME="saas_map_course" COMMENT="" PREVIOUS="saas_config_roles" NEXT="saas_map_groups_polos">
+    <TABLE NAME="saas_map_course" COMMENT="Mapeamento de cursos Moodle para ofertas de disciplinas do SAAS" PREVIOUS="saas_config_roles" NEXT="saas_map_groups_polos">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" NEXT="courseid"/>
         <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" PREVIOUS="id" NEXT="group_map_id"/>
         <FIELD NAME="group_map_id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" PREVIOUS="courseid"/>
       </FIELDS>
       <KEYS>
-        <KEY NAME="primary" TYPE="primary" FIELDS="id" NEXT="saas_map_course_unique"/>
-        <KEY NAME="saas_map_course_unique" TYPE="unique" FIELDS="courseid, group_map_id" COMMENT="must be unique" PREVIOUS="primary"/>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id" NEXT="course_group"/>
+        <KEY NAME="course_group" TYPE="unique" FIELDS="courseid, group_map_id" COMMENT="must be unique" PREVIOUS="primary"/>
       </KEYS>
       <INDEXES>
         <INDEX NAME="group_map_id" UNIQUE="false" FIELDS="group_map_id"/>
       </INDEXES>
     </TABLE>
-    <TABLE NAME="saas_map_groups_polos" COMMENT="" PREVIOUS="saas_map_course" NEXT="saas_ofertas_cursos">
+    <TABLE NAME="saas_map_groups_polos" COMMENT="Mapeamento de grupos do Moodle para polos do SAAS" PREVIOUS="saas_map_course" NEXT="saas_ofertas_cursos">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" NEXT="groupname"/>
-        <FIELD NAME="groupname" TYPE="char" LENGTH="254" NOTNULL="true" SEQUENCE="false" PREVIOUS="id" NEXT="polo_id"/>
-        <FIELD NAME="polo_id" TYPE="char" LENGTH="254" NOTNULL="true" SEQUENCE="false" PREVIOUS="groupname"/>
+        <FIELD NAME="groupname" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="id" NEXT="polo_id"/>
+        <FIELD NAME="polo_id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" PREVIOUS="groupname"/>
       </FIELDS>
       <KEYS>
-        <KEY NAME="primary" TYPE="primary" FIELDS="id" NEXT="saas_map_polos_unique"/>
-        <KEY NAME="saas_map_polos_unique" TYPE="unique" FIELDS="groupname" PREVIOUS="primary"/>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id" NEXT="groupname"/>
+        <KEY NAME="groupname" TYPE="unique" FIELDS="groupname" PREVIOUS="primary"/>
       </KEYS>
       <INDEXES>
         <INDEX NAME="polo_id" UNIQUE="false" FIELDS="polo_id"/>
       </INDEXES>
     </TABLE>
-    <TABLE NAME="saas_ofertas_cursos" COMMENT="Table that will save the relation between moodle courses offers and saas courses offers" PREVIOUS="saas_map_groups_polos" NEXT="saas_ofertas_disciplinas">
+    <TABLE NAME="saas_ofertas_cursos" COMMENT="Ofertas de cursos do SAAS" PREVIOUS="saas_map_groups_polos" NEXT="saas_ofertas_disciplinas">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" NEXT="uid"/>
         <FIELD NAME="uid" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="id" NEXT="nome"/>
@@ -53,20 +53,20 @@
         <FIELD NAME="enable" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" SEQUENCE="false" PREVIOUS="periodo"/>
       </FIELDS>
       <KEYS>
-        <KEY NAME="primary" TYPE="primary" FIELDS="id" NEXT="offer_curso_saas_id_unique"/>
-        <KEY NAME="offer_curso_saas_id_unique" TYPE="unique" FIELDS="uid" COMMENT="must be unique" PREVIOUS="primary"/>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id" NEXT="uid"/>
+        <KEY NAME="uid" TYPE="unique" FIELDS="uid" COMMENT="must be unique" PREVIOUS="primary"/>
       </KEYS>
       <INDEXES>
         <INDEX NAME="enable" UNIQUE="false" FIELDS="enable"/>
       </INDEXES>
     </TABLE>
-    <TABLE NAME="saas_ofertas_disciplinas" COMMENT="Table that will save the relation between moodle courses and saas courses" PREVIOUS="saas_ofertas_cursos" NEXT="saas_polos">
+    <TABLE NAME="saas_ofertas_disciplinas" COMMENT="Ofertas de disciplinas do SAAS" PREVIOUS="saas_ofertas_cursos" NEXT="saas_polos">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" NEXT="uid"/>
         <FIELD NAME="uid" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="id" NEXT="disciplina_uid"/>
         <FIELD NAME="disciplina_uid" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="uid" NEXT="inicio"/>
-        <FIELD NAME="inicio" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="disciplina_uid" NEXT="fim"/>
-        <FIELD NAME="fim" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="inicio" NEXT="oferta_curso_uid"/>
+        <FIELD NAME="inicio" TYPE="char" LENGTH="15" NOTNULL="true" SEQUENCE="false" PREVIOUS="disciplina_uid" NEXT="fim"/>
+        <FIELD NAME="fim" TYPE="char" LENGTH="15" NOTNULL="true" SEQUENCE="false" PREVIOUS="inicio" NEXT="oferta_curso_uid"/>
         <FIELD NAME="oferta_curso_uid" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="fim" NEXT="group_map_id"/>
         <FIELD NAME="group_map_id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" PREVIOUS="oferta_curso_uid" NEXT="enable"/>
         <FIELD NAME="enable" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" SEQUENCE="false" PREVIOUS="group_map_id"/>
@@ -82,24 +82,24 @@
         <INDEX NAME="enable" UNIQUE="false" FIELDS="enable" PREVIOUS="group_map_id"/>
       </INDEXES>
     </TABLE>
-    <TABLE NAME="saas_polos" COMMENT="Table that will save only the moodle groups that are polos" PREVIOUS="saas_ofertas_disciplinas" NEXT="saas_map_catcourses_polos">
+    <TABLE NAME="saas_polos" COMMENT="Polos do SAAS" PREVIOUS="saas_ofertas_disciplinas" NEXT="saas_map_catcourses_polos">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" NEXT="uid"/>
         <FIELD NAME="uid" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="id" NEXT="nome"/>
         <FIELD NAME="nome" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="uid" NEXT="cidade"/>
         <FIELD NAME="cidade" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="nome" NEXT="estado"/>
-        <FIELD NAME="estado" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="cidade" NEXT="enable"/>
+        <FIELD NAME="estado" TYPE="char" LENGTH="2" NOTNULL="true" SEQUENCE="false" PREVIOUS="cidade" NEXT="enable"/>
         <FIELD NAME="enable" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" SEQUENCE="false" PREVIOUS="estado"/>
       </FIELDS>
       <KEYS>
-        <KEY NAME="primary" TYPE="primary" FIELDS="id" NEXT="saas_polos_uid_unique"/>
-        <KEY NAME="saas_polos_uid_unique" TYPE="unique" FIELDS="uid" COMMENT="must be unique" PREVIOUS="primary"/>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id" NEXT="uid"/>
+        <KEY NAME="uid" TYPE="unique" FIELDS="uid" COMMENT="must be unique" PREVIOUS="primary"/>
       </KEYS>
       <INDEXES>
         <INDEX NAME="enable" UNIQUE="false" FIELDS="enable"/>
       </INDEXES>
     </TABLE>
-    <TABLE NAME="saas_map_catcourses_polos" COMMENT="" PREVIOUS="saas_polos" NEXT="saas_disciplinas">
+    <TABLE NAME="saas_map_catcourses_polos" COMMENT="Mapeamento de categories e cursos Moodle para polos do SAAS" PREVIOUS="saas_polos" NEXT="saas_disciplinas">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" NEXT="type"/>
         <FIELD NAME="type" TYPE="char" LENGTH="10" NOTNULL="true" SEQUENCE="false" PREVIOUS="id" NEXT="instanceid"/>
@@ -107,15 +107,15 @@
         <FIELD NAME="polo_id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" PREVIOUS="instanceid"/>
       </FIELDS>
       <KEYS>
-        <KEY NAME="primary" TYPE="primary" FIELDS="id" NEXT="saas_map_inst_polo_unique"/>
-        <KEY NAME="saas_map_inst_polo_unique" TYPE="unique" FIELDS="type, instanceid, polo_id" COMMENT="must be unique" PREVIOUS="primary"/>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id" NEXT="type_inst_polo"/>
+        <KEY NAME="type_inst_polo" TYPE="unique" FIELDS="type, instanceid, polo_id" COMMENT="must be unique" PREVIOUS="primary"/>
       </KEYS>
       <INDEXES>
         <INDEX NAME="instanceid" UNIQUE="false" FIELDS="instanceid" NEXT="polo_id"/>
         <INDEX NAME="polo_id" UNIQUE="false" FIELDS="polo_id" PREVIOUS="instanceid"/>
       </INDEXES>
     </TABLE>
-    <TABLE NAME="saas_disciplinas" COMMENT="" PREVIOUS="saas_map_catcourses_polos">
+    <TABLE NAME="saas_disciplinas" COMMENT="Disciplinas do SAAS" PREVIOUS="saas_map_catcourses_polos">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" NEXT="uid"/>
         <FIELD NAME="uid" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="id" NEXT="nome"/>
@@ -123,8 +123,8 @@
         <FIELD NAME="enable" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" SEQUENCE="false" PREVIOUS="nome"/>
       </FIELDS>
       <KEYS>
-        <KEY NAME="primary" TYPE="primary" FIELDS="id" NEXT="saas_disciplinas_unique"/>
-        <KEY NAME="saas_disciplinas_unique" TYPE="unique" FIELDS="uid" COMMENT="must be unique" PREVIOUS="primary"/>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id" NEXT="uid"/>
+        <KEY NAME="uid" TYPE="unique" FIELDS="uid" COMMENT="must be unique" PREVIOUS="primary"/>
       </KEYS>
       <INDEXES>
         <INDEX NAME="enable" UNIQUE="false" FIELDS="enable"/>

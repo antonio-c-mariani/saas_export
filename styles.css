@@ -26,6 +26,8 @@
 .saas_table .centeralign {text-align: center;}
 .saas_justifiedalign {text-align: justify;}
 
+.saas_area_large .centeralign {text-align: center;}
+
 .saas_centerimg {display: block; margin-left: 20%; margin-right: auto;}
 
 tr.saas_level1 td.saas_level1 {background-color: #707070;}
