@@ -60,7 +60,7 @@ $sql = "SELECT DISTINCT g.name as groupname, spm.polo_id
 $map = $DB->get_records_sql($sql);
 
 print html_writer::start_tag('DIV', array('align'=>'center'));
-print $OUTPUT->heading(get_string('group_to_polo', 'report_saas_export'));
+print $OUTPUT->heading(get_string('group_to_polo', 'report_saas_export'), 3);
 print $OUTPUT->box_start('generalbox boxwidthwide');
 print html_writer::tag('P', get_string('group_to_polo_msg1', 'report_saas_export'), array('class'=>'saas_justifiedalign'));
 print html_writer::tag('P', get_string('group_to_polo_msg2', 'report_saas_export'), array('class'=>'saas_justifiedalign'));
@@ -118,7 +118,7 @@ foreach(array(1, -1) AS $tipo) {
 
     print $OUTPUT->box_start('generalbox boxwidthwide');
     $title = $tipo == 1 ? 'Grupos corresponentes a polos SAAS' : 'Grupos que não correspondem a polos SAAS';
-    print $OUTPUT->heading($title);
+    print $OUTPUT->heading($title, 3);
     $table->tablealign = 'center';
     print html_writer::table($table);
     print $OUTPUT->box_end();

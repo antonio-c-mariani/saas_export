@@ -69,8 +69,10 @@ switch ($action) {
     case 'guidelines':
         echo $OUTPUT->header();
         print_tabs(array($tabs), $action);
-        print $OUTPUT->heading('Exportação de dados do Moodle para SAAS');
+        print html_writer::start_tag('DIV', array('class'=>'saas_area_large'));
+        print $OUTPUT->heading('Exportação de dados do Moodle para SAAS', 3);
         include('orientacoes.html');
+        print html_writer::end_tag('DIV');
         echo $OUTPUT->footer();
         break;
     case 'settings':
@@ -92,7 +94,7 @@ switch ($action) {
         print_tabs(array($tabs), $action);
 
         if(!has_capability('report/saas_export:config', $syscontext)) {
-            print $OUTPUT->heading(get_string('no_permission_to_config', 'report_saas_export'), '3');
+            print $OUTPUT->heading(get_string('no_permission_to_config', 'report_saas_export'), 4);
         }
 
         $mform->display();
@@ -169,7 +171,7 @@ switch ($action) {
                 print html_writer::start_tag('DIV', array('align'=>'center'));
                 print $OUTPUT->box_start('generalbox boxwidthnormal');
                 if($DB->record_exists('saas_ofertas_cursos', array('enable'=>1))) {
-                    print $OUTPUT->heading(get_string('add_oferta', 'report_saas_export'));
+                    print $OUTPUT->heading(get_string('add_oferta', 'report_saas_export'), 3);
                     $oferta_form->display();
                 } else {
                     print html_writer::tag('h3', get_string('no_ofertas_cursos', 'report_saas_export'));
@@ -185,7 +187,7 @@ switch ($action) {
                 if(has_capability('report/saas_export:export', $syscontext)) {
                     print html_writer::start_tag('DIV', array('align'=>'center'));
                     print $OUTPUT->box_start('generalbox boxwidthnormal');
-                    print $OUTPUT->heading(get_string('add_polo', 'report_saas_export'));
+                    print $OUTPUT->heading(get_string('add_polo', 'report_saas_export'), 3);
                     $polo_form->display();
                     print $OUTPUT->box_end();
                     print html_writer::end_tag('DIV');
@@ -236,7 +238,7 @@ switch ($action) {
             $polo_mapping_type = $saas->get_config('polo_mapping');
             switch ($polo_mapping_type) {
                 case 'no_polo':
-                    print $OUTPUT->heading(get_string('title_no_polo', 'report_saas_export'));
+                    print $OUTPUT->heading(get_string('title_no_polo', 'report_saas_export'), 4);
                     break;
                 case 'group_to_polo':
                     include('map_groups_to_polos.php');
@@ -248,10 +250,10 @@ switch ($action) {
                     include('map_courses_to_polos.php');
                     break;
                 default:
-                    print $OUTPUT->heading('Mapeamento ainda não implementado: ' . $polo_mapping_type);
+                    print $OUTPUT->heading('Mapeamento ainda não implementado: ' . $polo_mapping_type, 4);
             }
         } else {
-            print $OUTPUT->heading(get_string('no_polos', 'report_saas_export'));
+            print $OUTPUT->heading(get_string('no_polos', 'report_saas_export'), 4);
         }
 
         echo $OUTPUT->footer();
@@ -343,7 +345,7 @@ switch ($action) {
         echo $OUTPUT->header();
         print_tabs(array($tabs), $action);
         print $OUTPUT->box_start('generalbox boxwidthormal');
-        print $OUTPUT->heading('Ainda estamos trabalhando. Disponível em breve ...');
+        print $OUTPUT->heading('Ainda estamos trabalhando. Disponível em breve ...', 4);
         print $OUTPUT->box_end();
         print $OUTPUT->footer();
 }

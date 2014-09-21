@@ -53,7 +53,7 @@ foreach($DB->get_recordset_sql($sql) AS $rec) {
 print html_writer::start_tag('div', array('class'=>'saas_area_large'));
 
 if(empty($ofertas_cursos)) {
-    print $OUTPUT->heading(get_string('no_ofertas_cursos', 'report_saas_export'));
+    print $OUTPUT->heading(get_string('no_ofertas_cursos', 'report_saas_export'), 4);
 } else {
     $url = new moodle_url('index.php', array('action'=>'course_mapping', 'subaction'=>'ofertas'));
     saas_show_menu_ofertas_cursos($pocid, $url);
@@ -169,7 +169,7 @@ if(empty($ofertas_cursos)) {
         $table->data = $rows;
 
         print $OUTPUT->box_start('generalbox');
-        print $OUTPUT->heading($oc_nome_formatado);
+        print $OUTPUT->heading($oc_nome_formatado, 3);
         $table->tablealign = 'center';
         print html_writer::table($table);
         print $OUTPUT->box_end();
