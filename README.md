@@ -78,7 +78,7 @@ ACESSO AO RELATÓRIO
 ===================
 
 Conforme padrão do Moodle, o acesso ao módulo esta disponível no item:
-    "Relatórios"=>"Exportar dados SAAS"
+    "Administração do site" => "Relatórios"=>"Exportar dados SAAS"
 da caixa de "Administração". Este item só aparece, contudo, para usuários do Moodle que possuam a permissão
 "report/saas_export:view" em nível global (de sistema). Veja detalhes sobre o esquema de permissões no tópico seguinte.
 
@@ -94,7 +94,8 @@ Qualquer pessoa que utilize o módulo precisa no mínimo ter a permissão "repor
 
 O caso normal é a mesma pessoa poder tanto visualizar como configurar o módulo e exportar os dados para o SAAS.
 Neste caso a sugestão é:
-    1) defina (crie) um novo papel no Moodle chamado "Gerente SAAS" com as três permissões acima indicadas marcadas como "Permitir";
+    1) defina (crie) um novo papel no Moodle chamado "Gerente SAAS", selecionando a opção "Sistema" no item
+       "Tipos de contexto onde esse papel pode ser atribuído" e marcando como "Permitir" as três permissões acima indicadas;
     2) atribua em nível global (de sistema) este papel às pessoas que devam ter estas permissões.
 As ações acima descritas estão disponíveis, respectivamente, nos itens:
     "Administração do site" => "Usuários" => "Definir papéis" e

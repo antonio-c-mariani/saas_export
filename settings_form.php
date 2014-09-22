@@ -31,28 +31,29 @@ class saas_export_settings_form extends moodleform {
     function definition() {
         global $DB, $CFG, $OUTPUT, $saas;
 
-        $mform = $this->_form;
-
         $syscontext = saas::get_context_system();
         $may_config = has_capability('report/saas_export:config', $syscontext);
-        $attributes = array();
-        $text_attr = array('size' => 50);
-        // ----------------------------------------------------------------------------------------------
+
         if($may_config) {
-            $mform->addElement('header', 'saas_settings', get_string('saas_settings', 'report_saas_export'));
-
-            $mform->addElement('text', 'ws_url', get_string('ws_url', 'report_saas_export'), $text_attr);
-            $mform->setDefault('ws_url', 'http://saas.ufsc.br/service');
-            $mform->addHelpButton('ws_url', 'ws_url', 'report_saas_export');
-            $mform->setType('ws_url', PARAM_URL);
-
-            $mform->addElement('text', 'api_key', get_string('api_key', 'report_saas_export'), $text_attr);
-            $mform->addHelpButton('api_key', 'api_key', 'report_saas_export');
-            $mform->setType('api_key', PARAM_TEXT);
+            $attributes = array();
+            $text_attr = array('size' => 50);
         } else {
             $attributes['disabled'] = 'disabled';
             $text_attr['disabled'] = 'disabled';
         }
+
+        $mform = $this->_form;
+
+        // ----------------------------------------------------------------------------------------------
+        $mform->addElement('header', 'saas_settings', get_string('saas_settings', 'report_saas_export'));
+
+        $mform->addElement('text', 'ws_url', get_string('ws_url', 'report_saas_export'), $text_attr);
+        $mform->setDefault('ws_url', 'http://saas.ufsc.br/service');
+        $mform->addHelpButton('ws_url', 'ws_url', 'report_saas_export');
+        $mform->setType('ws_url', PARAM_URL);
+
+        $mform->addElement('text', 'api_key', get_string('api_key', 'report_saas_export'), $text_attr);
+        $mform->addHelpButton('api_key', 'api_key', 'report_saas_export');
 
         // ----------------------------------------------------------------------------------------------
         $mform->addElement('header', 'course_settings', get_string('course_settings', 'report_saas_export'));

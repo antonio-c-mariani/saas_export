@@ -4,10 +4,13 @@ defined('MOODLE_INTERNAL') || die();
 
 require_once('./locallib.php');
 require_once('./classes/saas.php');
-$PAGE->requires->js_init_call('M.report_saas_export.init');
 
 $syscontext = saas::get_context_system();
 $may_export = has_capability('report/saas_export:export', $syscontext);
+
+if($may_export) {
+    $PAGE->requires->js_init_call('M.report_saas_export.init');
+}
 
 $one_to_many = $saas->get_config('course_mapping') == 'one_to_many';
 $pocid = optional_param('ocid', -1, PARAM_INT);
@@ -129,9 +132,11 @@ if(empty($ofertas_cursos)) {
                     if(isset($mapping[$group_map_id])) {
                         foreach($mapping[$group_map_id] AS $r) {
                             $cell->text .= $r->fullname;
-                            $cell->text .= html_writer::tag('input', '', array('class'=>'delete_map_bt', 'type'=>'image', 'src' =>'img/delete.png',
-                                            'alt'=>'Apagar mapeamento', 'height'=>'15', 'width'=>'15', 'group_map_id'=>$group_map_id,
-                                            'courseid'=>$r->courseid, 'ocid'=>$ocid, 'style'=>'margin-left:2px;'));
+                            if($may_export) {
+                                $cell->text .= html_writer::tag('input', '', array('class'=>'delete_map_bt', 'type'=>'image', 'src' =>'img/delete.png',
+                                                'alt'=>'Apagar mapeamento', 'height'=>'15', 'width'=>'15', 'group_map_id'=>$group_map_id,
+                                                'courseid'=>$r->courseid, 'ocid'=>$ocid, 'style'=>'margin-left:2px;'));
+                            }
                             $cell->text .= html_writer::empty_tag('br');
                             $has_mapping = true;
                         }
@@ -139,9 +144,11 @@ if(empty($ofertas_cursos)) {
 
                     if (!$has_mapping || $saas->get_config('course_mapping') == 'many_to_one') {
                         $cell->text .= html_writer::start_tag('div');
-                        $cell->text .= html_writer::tag('button', 'Adicionar', array('type'=>'button', 'id'=>$group_map_id,
-                                'class'=>'btn btn-default btn-xs add_map_bt',
-                                'style'=>'margin-top:5px;', 'od_nome'=>$od_nome_formatado, 'oc_nome'=>$oc_nome_formatado));
+                        if($may_export) {
+                            $cell->text .= html_writer::tag('button', 'Adicionar', array('type'=>'button', 'id'=>$group_map_id,
+                                    'class'=>'btn btn-default btn-xs add_map_bt',
+                                    'style'=>'margin-top:5px;', 'od_nome'=>$od_nome_formatado, 'oc_nome'=>$oc_nome_formatado));
+                        }
                         $cell->text .= html_writer::end_tag('div');
                     }
 
