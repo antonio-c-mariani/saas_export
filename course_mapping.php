@@ -184,21 +184,15 @@ if(empty($ofertas_cursos)) {
     }
 }
 print html_writer::end_tag('div');
-
 ?>
 
 <div class="saas-styles">
 
 <link rel="stylesheet" href="css/bootstrap.css" type="text/css">
 
-<script src="js/jquery-1.7.1.min.js"></script>
-<script type="text/javascript" src="js/bootstrap.min.js"></script>
-<script type="text/javascript" src="js/app.js"></script>
-
-
   <!-- Modal para Cursos Moodle-->
-  <div class="modal bs-example-modal-lg" id="cursos_moodle_modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+  <div class="modal" id="cursos_moodle_modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
       <div class="modal-content">
 
         <div class="modal-header">
@@ -221,3 +215,6 @@ print html_writer::end_tag('div');
   </div>
 
 </div>
+
+<script type="text/javascript" src="js/bootstrap.min.js"></script>
+<script type="text/javascript" src="js/app.js"></script>

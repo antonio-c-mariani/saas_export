@@ -54,6 +54,7 @@ class saas_export_settings_form extends moodleform {
 
         $mform->addElement('text', 'api_key', get_string('api_key', 'report_saas_export'), $text_attr);
         $mform->addHelpButton('api_key', 'api_key', 'report_saas_export');
+        $mform->setType('api_key', PARAM_RAW);
 
         // ----------------------------------------------------------------------------------------------
         $mform->addElement('header', 'course_settings', get_string('course_settings', 'report_saas_export'));

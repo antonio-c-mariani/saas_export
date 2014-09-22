@@ -37,6 +37,8 @@ $syscontext = saas::get_context_system();
 require_capability('report/saas_export:view', $syscontext);
 admin_externalpage_setup('report_saas_export', '', null, '', array('pagelayout'=>'report'));
 
+$PAGE->requires->jquery();
+
 $baseurl = new moodle_url('index.php');
 
 $saas = new saas();
