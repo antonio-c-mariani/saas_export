@@ -1,19 +1,20 @@
 Moodle SAAS Export
 ==================
 
-Este módulo possibilita a exportação de dados do Moodle (versões 2.2 a 2.6) para o 
+Este módulo possibilita a exportação de dados do Moodle (versões 2.0 a 2.6) para o
 SAAS (Sistema de Acompanhamento e Avaliação dos Cursos da Rede e-Tec Brasil).
 Os dados exportados incluem:
 
 - Identificador, nome, e-mail e CPF de professores, estudantes e tutores vinculados às ofertas de disciplinas;
 - Relacionamento de professores, estudantes e tutores a distância com ofertas de disciplinas;
 - Relacionamento de estudantes e tutores presenciais com polos.
+- Dados adicionais de estudantes (últimos acesssos e notas)
 
 DOWNLOAD
 ========
 
 O plugin está disponível no seguinte endereço:
-    
+
     https://github.com/saasexport/saas_export
 
 Para o download na forma de um .zip, basta clicar no Botão "Download ZIP" no canto inferior direito.
@@ -21,38 +22,81 @@ Para o download na forma de um .zip, basta clicar no Botão "Download ZIP" no ca
 INSTALAÇÃO
 ==========
 
-O relatório saas_export segue o procedimento padrão de instalação do Moodle:
+O módulo saas para o Moodle está implementado na forma de um relatório (report). A instalação do módulo saas_export
+segue o procedimento padrão de instalação do Moodle.
 
-Caso o método escolhido seja o download na forma de um .zip, é necessário que o arquivo seja descompactado dentro da pasta 'report' 
-da sua instalação do Moodle. 
+INSTALAÇÃO VIA ARQUIVO .zip
+---------------------------
 
-A pasta 'report' encontra-se no primeiro nível dentro da raiz do Moodle e pode ser encontrada da seguinte maneira:
+Caso o método escolhido seja via arquivo .zip, é necessário que o arquivo seja descompactado dentro
+da pasta "report" da sua instalação do Moodle, tomando o cuidado de que seja criada uma sub-pasta de nome "saas_export"
+(por padrão esta pasta é automaticamente criada quando se descompacta o arquivo .zip).
 
-"caminho para o seu moodle/report"
+Nas versões 2.0 e 2.1 do Moodle, a pasta "report" encontra-se em:
+    <pasta_de_instalação_do_moodle>/admin/report.
+Para as versões 2.2 em diante ela encontra-se em:
+    <pasta_de_instalação_do_moodle>/report.
 
-Após, a pasta deve ser renomeada de "saas_export-master" para "saas_export".
+Após a descompactação, a estrutura de pastas e arquivos deve ficar conforme abaixo:
+     report/saas_export/
+                    classes
+                    course_mapping.php
+                    css
+                    db
+                    img
+                    index.php
+                    ...
+                    version.php
 
+Caso a pasta do módulo apareça com outro nome ("saas_export-master", por exemplo), ela deve ser renomeada para
+"saas_export", de forma a manter a estrutura indicada acima.
 
-Caso queira clonar o repositório via GIT, execute um dos seguintes comando dentro da pasta 'report' da sua instalação do Moodle. 
-Escolha entre https ou ssh.
+INSTALAÇÃO VIA COMANDO git
+--------------------------
 
-        https: 
+Outra opção para instalação é via comando "git clone" que resulta numa cópia local do repositório disponível no GITHUB
+(esta opção pressupõe que o aplicativo "git" esteja disponível em seu servidor). Estando na pasta "report",
+execute uma das opções abaixo do comando "git clone":
+
+        https:
             git clone https://github.com/saasexport/saas.git saas_export
         SSH:
             git clone git@github.com:saasexport/saas_export.git saas_export
 
+COMPLETANDO INSTALAÇÃO
+----------------------
 
-Após extrair os arquivos ou clonar o repositório, Como administrador, 
-visite a página "Administração do site ► Avisos" da caixa de "Administração" de forma a completar a instalação.
+Independente da forma de instalação (via arquivo .zip ou comando git) é necessário completar o processo de instalação.
+Para tal, acesse o Moodle via navegador e como administrador visite a página:
+    "Administração do site" => "Avisos"
+da caixa de "Administração". O Moodle deve automaticamente reconhecer a existência o plugin e completar a instalação.
+Caso isto não ocorra, verifique se a estrutura de pastas e arquivos está conforme indicado acima e se a pasta
+"saas_export" (e suas sub-pastas e arquivos) estão com permissões tais que o servidor de www (apache, nginx, etc)
+tenham acesso de leitura a elas.
 
-Para configurar o plugin, acesse a página "Plugins" ► "Relatórios" ► "Relatório SAAS" da caixa de "Administração".
-A "URL SAAS" e a "Chave da Instituição" devem ser obtidas com os administradores do SAAS (saas@etec.ufsc.br).
+ACESSO AO RELATÓRIO
+===================
 
-ACESSO
-======
-Para acessar o relatório e enviar dados para o SAAS, viste a página "Relatórios"=>"Relatório SAAS" da caixa de "Administração".
+Conforme padrão do Moodle, o acesso ao módulo esta disponível no item:
+    "Relatórios"=>"Exportar dados SAAS"
+da caixa de "Administração". Este item só aparece, contudo, para usuários do Moodle que possuam a permissão
+"report/saas_export:view" em nível global (de sistema). Veja detalhes sobre o esquema de permissões no tópico seguinte.
 
-O acesso a este relatório é controlado pela permissão "report/saas_export:view" em nível de sistema. Assim, para delegar a tarefa
-de exportar dados para o SAAS a um usuário, é necessário atribuir esta permissão a algum papel que este usuário tenha em nível de sistema.
-Neste caso todos os usuários que tenham este papel poderão realizar esta tarefa. Para controlar de forma mais precisa esta delegação
-pode ser necessário definir um novo papel com esta única permissão e, então, atribuir este papel aos usuários em nível de sistema.
+PERMISSÕES DE ACESSO
+====================
+
+O módulo SAAS define três permissões que controlam o acesso às suas funções:
+    report/saas_export:view     - visualizar as configurações e dados a serem exportados
+    report/saas_export:config   - configurar o módulo
+    report/saas_export:export   - mapear ofertas de disciplinas e polos e exportar dados para SAAS
+Qualquer pessoa que utilize o módulo precisa no mínimo ter a permissão "report/saas_export:view" em nível global
+(de sistema). Adicionalmente ela pode ter uma ou as duas outras permissões, conforme o tipo de ação que ela deva realizar.
+
+O caso normal é a mesma pessoa poder tanto visualizar como configurar o módulo e exportar os dados para o SAAS.
+Neste caso a sugestão é:
+    1) defina (crie) um novo papel no Moodle chamado "Gerente SAAS" com as três permissões acima indicadas marcadas como "Permitir";
+    2) atribua em nível global (de sistema) este papel às pessoas que devam ter estas permissões.
+As ações acima descritas estão disponíveis, respectivamente, nos itens:
+    "Administração do site" => "Usuários" => "Definir papéis" e
+    "Administração do site" => "Usuários" => "Atribuir papéis globais"
+da caixa de "Administração".
