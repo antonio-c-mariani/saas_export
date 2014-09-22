@@ -45,7 +45,7 @@ function xmldb_report_saas_export_upgrade($oldversion) {
 
     $dbman = $DB->get_manager(); // Loads ddl manager and xmldb classes.
 
-    if ($oldversion < 20140092100) {
+    if ($oldversion < 2014092100) {
 
         // --------------------------------------------------------------------------------------------
         $table = new xmldb_table('saas_config_roles');
@@ -81,19 +81,15 @@ function xmldb_report_saas_export_upgrade($oldversion) {
         $table = new xmldb_table('saas_polos');
         if ($dbman->table_exists($table)) {
             $dbman->drop_table($table);
-            $dbman->install_one_table_from_xmldb_file(dirname(__FILE__). '/install.xml', 'saas_polos');
-        } else {
-            $dbman->install_one_table_from_xmldb_file(dirname(__FILE__). '/install.xml', 'saas_polos');
         }
+        $dbman->install_one_table_from_xmldb_file(dirname(__FILE__). '/install.xml', 'saas_polos');
 
         // --------------------------------------------------------------------------------------------
         $table = new xmldb_table('saas_ofertas_cursos');
         if ($dbman->table_exists($table)) {
             $dbman->drop_table($table);
-            $dbman->install_one_table_from_xmldb_file(dirname(__FILE__). '/install.xml', 'saas_ofertas_cursos');
-        } else {
-            $dbman->install_one_table_from_xmldb_file(dirname(__FILE__). '/install.xml', 'saas_ofertas_cursos');
         }
+        $dbman->install_one_table_from_xmldb_file(dirname(__FILE__). '/install.xml', 'saas_ofertas_cursos');
 
         // --------------------------------------------------------------------------------------------
         $table = new xmldb_table('saas_ofertas_disciplinas');
@@ -115,7 +111,6 @@ function xmldb_report_saas_export_upgrade($oldversion) {
                 if ($dbman->index_exists($table, $index)) {
                     $dbman->drop_index($table, $index);
                 }
-
                 $dbman->drop_field($table, $field);
             }
 
@@ -176,30 +171,30 @@ function xmldb_report_saas_export_upgrade($oldversion) {
 
                     $dbman->drop_field($table, $field);
                 }
+            }
 
-                $index = new xmldb_index('disciplina_uid', XMLDB_INDEX_NOTUNIQUE, array('disciplina_uid'));
-                if (!$dbman->index_exists($table, $index)) {
-                    $dbman->add_index($table, $index);
-                }
-                $index = new xmldb_index('oferta_curso_uid', XMLDB_INDEX_NOTUNIQUE, array('oferta_curso_uid'));
-                if (!$dbman->index_exists($table, $index)) {
-                    $dbman->add_index($table, $index);
-                }
-                $index = new xmldb_index('group_map_id', XMLDB_INDEX_NOTUNIQUE, array('group_map_id'));
-                if (!$dbman->index_exists($table, $index)) {
-                    $dbman->add_index($table, $index);
-                }
-                $index = new xmldb_index('enable', XMLDB_INDEX_NOTUNIQUE, array('enable'));
-                if (!$dbman->index_exists($table, $index)) {
-                    $dbman->add_index($table, $index);
-                }
+            $index = new xmldb_index('disciplina_uid', XMLDB_INDEX_NOTUNIQUE, array('disciplina_uid'));
+            if (!$dbman->index_exists($table, $index)) {
+                $dbman->add_index($table, $index);
+            }
+            $index = new xmldb_index('oferta_curso_uid', XMLDB_INDEX_NOTUNIQUE, array('oferta_curso_uid'));
+            if (!$dbman->index_exists($table, $index)) {
+                $dbman->add_index($table, $index);
+            }
+            $index = new xmldb_index('group_map_id', XMLDB_INDEX_NOTUNIQUE, array('group_map_id'));
+            if (!$dbman->index_exists($table, $index)) {
+                $dbman->add_index($table, $index);
+            }
+            $index = new xmldb_index('enable', XMLDB_INDEX_NOTUNIQUE, array('enable'));
+            if (!$dbman->index_exists($table, $index)) {
+                $dbman->add_index($table, $index);
             }
 
         } else {
             $dbman->install_one_table_from_xmldb_file(dirname(__FILE__). '/install.xml', 'saas_ofertas_disciplinas');
         }
 
-        upgrade_plugin_savepoint(true, 20140092100, 'report', 'saas_export');
+        upgrade_plugin_savepoint(true, 2014092100, 'report', 'saas_export');
     }
 
     return true;
