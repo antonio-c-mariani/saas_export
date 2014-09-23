@@ -37,8 +37,6 @@ $syscontext = saas::get_context_system();
 require_capability('report/saas_export:view', $syscontext);
 admin_externalpage_setup('report_saas_export', '', null, '', array('pagelayout'=>'report'));
 
-$PAGE->requires->jquery();
-
 $baseurl = new moodle_url('index.php');
 
 $saas = new saas();
@@ -211,11 +209,10 @@ switch ($action) {
                     $max = $DB->get_field_sql("SELECT MAX(group_map_id) FROM {saas_ofertas_disciplinas}");
                     $od->group_map_id = empty($max) ? 1 : $max+1;
                 } else {
-                    $od_group = $DB->get_record('saas_ofertas_disciplinas', array('id'=>$odid, 'group_map_id'=>$group_map_id), 'id, group_map_id, oferta_curso_uid', MUST_EXIST);
                     $od->group_map_id = $group_map_id;
                 }
                 $DB->update_record('saas_ofertas_disciplinas', $od);
-                $ocid = $DB->get_field('saas_ofertas_cursos', 'id', array('uid'=>$od->oferta_curso_uid), MUST_EXISTS);
+                $ocid = $DB->get_field('saas_ofertas_cursos', 'id', array('uid'=>$od->oferta_curso_uid), MUST_EXIST);
                 redirect(new moodle_url('index.php', array('action'=>'course_mapping', 'ocid'=>$ocid)));
             } else if($subaction == 'delete') {
                 $courseid = required_param('courseid', PARAM_INT);

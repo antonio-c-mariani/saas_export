@@ -358,6 +358,7 @@ class saas {
         global $DB;
 
         $condition = '';
+	$field = '';
         $params = array('contextcourse'=>CONTEXT_COURSE, 'enable'=>ENROL_INSTANCE_ENABLED, 'active'=>ENROL_USER_ACTIVE);
         if($ocid) {
             $condition .= ' AND oc.id = :ocid';
@@ -371,28 +372,29 @@ class saas {
         $join_user_info_data = '';
         if($only_count) {
             $group_by = 'GROUP BY oc.id, sp.id, scr.role';
-            $field = 'COUNT(DISTINCT ra.userid) AS count';
+            $field .= ', COUNT(DISTINCT ra.userid) AS count';
             $distinct = '';
             $orderby = '';
         } else {
             $group_by = '';
             $userid_field = $this->get_config('userid_field');
             if($userid_field == 'username' || $userid_field == 'idnumber') {
-                $field = "ra.userid, u.{$userid_field} AS uid";
+                $field .= ", ra.userid, u.{$userid_field} AS uid";
             } else {
                 if($fieldid = $DB->get_field('user_info_field', 'id', array('shortname'=>$userid_field))) {
                     $join_user_info_data = "JOIN {user_info_data} udt ON (udt.fieldid = :fieldid AND udt.userid = u.id AND udt.data != '')";
                     $params['fieldid'] = $fieldid;
-                    $field = "ra.userid, udt.data AS uid";
+                    $field = ", ra.userid, udt.data AS uid";
                 } else {
                     print_error('userid_field_unknown', 'report_saas_export', '', $userid_field);
                 }
             }
             $distinct = 'DISTINCT';
             $orderby = ', CONCAT(u.firstname, u.lastname)';
+	    $field .= ', CONCAT(u.firstname, u.lastname) as nome';
         }
 
-        $sql = "SELECT {$distinct} oc.id AS ocid, sp.id AS p_id, scr.role, $field
+        $sql = "SELECT {$distinct} oc.id AS ocid, sp.id AS p_id, scr.role $field
                   FROM {saas_ofertas_cursos} oc
                   JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1)
                   JOIN {saas_map_course} cm ON (cm.group_map_id = od.group_map_id)
@@ -422,6 +424,7 @@ class saas {
         global $DB;
 
         $condition = '';
+	$field = '';
         $params = array('contextcourse'=>CONTEXT_COURSE, 'enable'=>ENROL_INSTANCE_ENABLED, 'active'=>ENROL_USER_ACTIVE);
         if($ocid) {
             $condition .= ' AND oc.id = :ocid';
@@ -435,28 +438,29 @@ class saas {
         $join_user_info_data = '';
         if($only_count) {
             $group_by = 'GROUP BY oc.id, sp.id, scr.role';
-            $field = 'COUNT(DISTINCT ra.userid) AS count';
+            $field = ', COUNT(DISTINCT ra.userid) AS count';
             $distinct = '';
             $orderby = '';
         } else {
             $group_by = '';
             $userid_field = $this->get_config('userid_field');
             if($userid_field == 'username' || $userid_field == 'idnumber') {
-                $field = "ra.userid, u.{$userid_field} AS uid";
+                $field = ", ra.userid, u.{$userid_field} AS uid";
             } else {
                 if($fieldid = $DB->get_field('user_info_field', 'id', array('shortname'=>$userid_field))) {
                     $join_user_info_data = "JOIN {user_info_data} udt ON (udt.fieldid = :fieldid AND udt.userid = u.id AND udt.data != '')";
                     $params['fieldid'] = $fieldid;
-                    $field = "ra.userid, udt.data AS uid";
+                    $field = ", ra.userid, udt.data AS uid";
                 } else {
                     print_error('userid_field_unknown', 'report_saas_export', '', $userid_field);
                 }
             }
             $distinct = 'DISTINCT';
             $orderby = ', CONCAT(u.firstname, u.lastname)';
+            $field .= ', CONCAT(u.firstname, u.lastname) as nome';
         }
 
-        $sql = "SELECT {$distinct} oc.id AS ocid, sp.id AS p_id, scr.role, $field
+        $sql = "SELECT {$distinct} oc.id AS ocid, sp.id AS p_id, scr.role $field
                   FROM {saas_ofertas_cursos} oc
                   JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1)
                   JOIN {saas_map_course} cm ON (cm.group_map_id = od.group_map_id)
@@ -484,6 +488,7 @@ class saas {
         global $DB;
 
         $condition = '';
+	$field = '';
         $params = array('contextcourse'=>CONTEXT_COURSE, 'enable'=>ENROL_INSTANCE_ENABLED, 'active'=>ENROL_USER_ACTIVE);
         if($ocid) {
             $condition .= ' AND oc.id = :ocid';
@@ -497,28 +502,29 @@ class saas {
         $join_user_info_data = '';
         if($only_count) {
             $group_by = 'GROUP BY oc.id, sp.id, scr.role';
-            $field = 'COUNT(DISTINCT ra.userid) AS count';
+            $field .= ', COUNT(DISTINCT ra.userid) AS count';
             $distinct = '';
             $orderby = '';
         } else {
             $group_by = '';
             $userid_field = $this->get_config('userid_field');
             if($userid_field == 'username' || $userid_field == 'idnumber') {
-                $field = "ra.userid, u.{$userid_field} AS uid";
+                $field .= ", ra.userid, u.{$userid_field} AS uid";
             } else {
                 if($fieldid = $DB->get_field('user_info_field', 'id', array('shortname'=>$userid_field))) {
                     $join_user_info_data = "JOIN {user_info_data} udt ON (udt.fieldid = :fieldid AND udt.userid = u.id AND udt.data != '')";
                     $params['fieldid'] = $fieldid;
-                    $field = "ra.userid, udt.data AS uid";
+                    $field .= ", ra.userid, udt.data AS uid";
                 } else {
                     print_error('userid_field_unknown', 'report_saas_export', '', $userid_field);
                 }
             }
             $distinct = 'DISTINCT';
             $orderby = ', CONCAT(u.firstname, u.lastname)';
+	    $field .= ', CONCAT(u.firstname, u.lastname) as nome';
         }
 
-        $sql = "SELECT {$distinct} oc.id AS ocid, sp.id AS p_id, scr.role, $field
+        $sql = "SELECT {$distinct} oc.id AS ocid, sp.id AS p_id, scr.role $field
                   FROM {saas_ofertas_cursos} oc
                   JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1)
                   JOIN {saas_map_course} cm ON (cm.group_map_id = od.group_map_id)
@@ -615,6 +621,7 @@ class saas {
             $join_user_lastaccess = 'LEFT JOIN {user_lastaccess} ul ON (ul.userid = u.id AND ul.courseid = c.id)';
             $fields .= ', MAX(ue.status) as suspended, MAX(u.currentlogin) AS currentlogin, MAX(ul.timeaccess) AS lastaccess';
             $orderby = ', CONCAT(u.firstname, u.lastname)';
+            $group_by .= ', u.firstname, u.lastname';
         }
 
         $condition = '';

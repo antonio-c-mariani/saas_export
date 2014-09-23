@@ -14,7 +14,7 @@ function saas_build_tree_categories() {
                       JOIN {course} c ON (c.category = cc.id)
                  LEFT JOIN {saas_map_course} mc ON (mc.courseid = c.id)
                      WHERE c.id > 1
-                       AND ISNULL(mc.id)) cat
+                       AND mc.id IS NULL) cat
                 ON (ccp.id = cat.id OR cat.path LIKE CONCAT('%/',ccp.id,'/%'))
           ORDER BY ccp.depth, ccp.name";
     $categories = $DB->get_records_sql($sql);
@@ -49,7 +49,7 @@ function saas_build_tree_categories() {
               FROM {course} c
          LEFT JOIN {saas_map_course} mc ON (mc.courseid = c.id)
              WHERE c.id > 1
-               AND ISNULL(mc.id)
+               AND mc.id IS NULL
           ORDER BY c.fullname";
     foreach($DB->get_records_sql($sql) AS $course) {
         $categories[$course->category]->courses[$course->id] = $course;

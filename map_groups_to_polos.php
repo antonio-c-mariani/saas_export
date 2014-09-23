@@ -44,7 +44,7 @@ $sql = "SELECT DISTINCT g.name, pl.id
           JOIN {groups} g ON (g.courseid = c.id)
           JOIN {saas_polos} pl ON (pl.nome = g.name AND pl.enable = 1)
      LEFT JOIN {saas_polos} pl2 ON (pl2.enable = 1 AND pl2.nome = pl.nome AND pl2.id != pl.id)
-         WHERE ISNULL(pl2.id)";
+         WHERE pl2.id IS NULL";
 $group_names = $DB->get_records_sql_menu($sql);
 
 $polos = $saas->get_polos_menu();
