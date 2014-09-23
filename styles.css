@@ -30,21 +30,78 @@
 
 .saas_centerimg {display: block; margin-left: 20%; margin-right: auto;}
 
-tr.saas_level1 td.saas_level1 {background-color: #707070;}
-tr.saas_level2 td.saas_level2 {background-color: #808080;}
-tr.saas_level3 td.saas_level3 {background-color: #909090;}
-tr.saas_level4 td.saas_level4 {background-color: #A0A0A0;}
-tr.saas_level5 td.saas_level5 {background-color: #B0B0B0;}
+tr.saas_level1 td.saas_level1 {background-color: #A0A0A0;}
+tr.saas_level2 td.saas_level2 {background-color: #B0B0B0;}
+tr.saas_level3 td.saas_level3 {background-color: #C0C0C0;}
+tr.saas_level4 td.saas_level4 {background-color: #D0D0D0;}
+tr.saas_level5 td.saas_level5 {background-color: #D8D8D8;}
 
 tr.saas_normalcolor td.saas_normalcolor {
-    background-color: #C8C8C8;
+    background-color: #E0E0E0;
 }
 
 tr.saas_alternatecolor td.saas_alternatecolor {
-    background-color: #E8E8E8;
+    background-color: #F8F8F8;
 }
 
-.saas_table tr.r0 {background-color: #C8C8C8;}
-.saas_table tr.r1 {background-color: #E8E8E8;}
+.saas_table tr.r0 {background-color: #E0E0E0;}
+.saas_table tr.r1 {background-color: #F8F8F8;}
 
 .saas_pix {padding-right: 0.3em;}
+
+
+/* --------------------------------------------- */
+/* CSS Tree menu styles */
+
+.saas_tree li {
+    position: relative;
+    margin-left: -15px;
+    list-style: none;
+}
+
+.saas_tree li input {
+    position: absolute;
+    left: 0;
+    margin-left: 0;
+    opacity: 0;
+    z-index: 2;
+    cursor: pointer;
+    height: 1em;
+    width: 1em;
+    top: 0;
+}
+
+.saas_tree li input + ul {
+    background: url(/ead2/report/saas_export/img/toggle-small-expand.png) 40px 0 no-repeat;
+    margin: -0.938em 0 0 -44px; /* 15px */
+    height: 1em;
+}
+
+.saas_tree li input + ul > li {
+    display: none;
+    margin-left: -14px !important;
+    padding-left: 1px;
+}
+
+.saas_tree li label {
+    background: url(/ead2/report/saas_export/img/folder-horizontal.png) 15px 1px no-repeat;
+    cursor: pointer;
+    display: block;
+    padding-left: 37px;
+}
+
+.saas_tree li input:checked + ul {
+    background: url(/ead2/report/saas_export/img/toggle-small.png) 40px 5px no-repeat;
+    margin: -1.25em 0 0 -44px; /* 20px */
+    padding: 1.563em 0 0 80px;
+    height: auto;
+}
+
+.saas_tree li input:checked + ul > li {
+    display: block;
+    margin: 0 0 0.125em;  /* 2px */
+}
+
+.saas_tree li input:checked + ul > li:last-child {
+    margin: 0 0 0.063em; /* 1px */
+}

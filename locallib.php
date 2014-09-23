@@ -3,8 +3,10 @@
 // ----------------------------------------------------------------------------------------------
 // Rotinas auxiliares para mapeamento de ofertas de disciplina para cursos Moodle
 
-function saas_build_tree_categories() {
-    global $DB, $SESSION;
+function saas_show_categories_tree($group_map_id) {
+    global $DB, $SESSION, $PAGE, $OUTPUT, $saas;
+
+    $PAGE->requires->js_init_call('M.report_saas_export.init');
 
     // Hierarquia de categorias com cursos a selecionar (não vazias)
     $sql = "SELECT DISTINCT ccp.id, ccp.depth, ccp.path, ccp.name
@@ -61,11 +63,34 @@ function saas_build_tree_categories() {
         }
     }
 
-    echo html_writer::start_tag('DIV', array('class'=>'tree well'));
+    $sql = "SELECT od.*, d.nome
+              FROM {saas_ofertas_disciplinas} od
+              JOIN {saas_disciplinas} d ON (d.uid = od.disciplina_uid)
+             WHERE od.enable = 1
+               AND d.enable = 1
+               AND od.group_map_id = :group_map_id";
+    $ods = $DB->get_records_sql($sql, array('group_map_id'=>$group_map_id));
+    if(count($ods) == 1) {
+        $od = reset($ods);
+        $title_ods = 'Disciplina: ' . $od->nome . ' (' . $saas->format_date($od->inicio, $od->fim) . ')';
+    } else {
+        $title_ods = '';
+        foreach($ods AS $od) {
+            $title_ods .= html_writer::tag('LI', $od->nome . ' (' . $saas->format_date($od->inicio, $od->fim) . ')');
+        }
+        $title_ods = 'Disciplinas:' . html_writer::tag('UL', $title_ods);
+    }
+    $oc = $DB->get_record('saas_ofertas_cursos', array('uid'=>$od->oferta_curso_uid));
+
+    echo html_writer::tag('div', $OUTPUT->heading('Seleção de curso Moodle', 3), array('align'=>'center'));
+    echo html_writer::start_tag('div', array('class'=>'saas_tree saas_area_normal'));
+    print $OUTPUT->heading("Curso: {$oc->nome} ({$oc->ano}/{$oc->periodo})", 4);
+    print $OUTPUT->heading($title_ods, 4);
+
     echo html_writer::start_tag('ul');
-    saas_show_categories($categories, $category_path);
+    saas_show_categories($group_map_id, $categories, $category_path);
     echo html_writer::end_tag('ul');
-    echo html_writer::end_tag('DIV');
+    echo html_writer::end_tag('div');
 }
 
 function saas_get_moodle_categories(){
@@ -127,38 +152,29 @@ function saas_get_courses_from_categories(&$categories, $repeat_allowed = true) 
 
 }
 
-function saas_show_categories(&$categories, $open_catids = array()){
+function saas_show_categories($group_map_id, &$categories, $open_catids = array()){
     global $OUTPUT;
 
+    $index = 0;
     foreach ($categories as $cat){
-        $cat_class = $cat->depth == 1 ? 'category-root' : '';
-
-        $open = in_array($cat->id, $open_catids);
-        $cat_class .= $open ? " folder-open" : " folder-close";
-        $icon_class = $open ? "icon-folder-open" : "icon-folder-close";
-
-        echo html_writer::start_tag('li', array('class'=>$cat_class));
-        echo html_writer::start_tag('span');
-        echo html_writer::tag('i', '', array('class'=>$icon_class));
-        echo $cat->name;
-        echo html_writer::end_tag('span');
+        echo html_writer::start_tag('li');
+        $index++;
+        $label = 'level'.$cat->depth.'_'.$index;
+        echo html_writer::tag('label', $cat->name, array('for'=>$label));
+        $checked = in_array($cat->id, $open_catids);
+        echo html_writer::checkbox(null, null, $checked, '', array('id'=>$label));
 
         echo html_writer::start_tag('ul');
 
         foreach ($cat->courses as $c){
-            echo html_writer::start_tag('li');
-
-            echo html_writer::start_tag('span', array('id'=>$c->id, 'class'=>'select_moodle_course', 'rel'=>'tooltip',
-                                    'data-placement'=>'right', 'data-original-title'=>'Selecionar'));
+            echo html_writer::start_tag('li', array('class'=>'course'));
             echo $OUTPUT->pix_icon("i/course", '', 'moodle', array('class' => 'icon smallicon'));
-            echo html_writer::tag('html', $c->fullname);
-            echo html_writer::end_tag('span');
-
+            echo html_writer::tag('span', $c->fullname, array('id'=>$c->id, 'group_map_id'=>$group_map_id, 'class'=>'select_moodle_course'));
             echo html_writer::end_tag('li');
         }
 
         if(!empty($cat->subs)){
-            saas_show_categories($cat->subs, $open_catids);
+            saas_show_categories($group_map_id, $cat->subs, $open_catids);
         }
 
         echo html_writer::end_tag('ul');
@@ -911,4 +927,186 @@ function saas_show_export_options($url, $selected_ocs=true, $selected_ods=true, 
 
     print $OUTPUT->box_end();
     print html_writer::end_tag('DIV');
+}
+
+function saas_show_course_mappings($pocid=0) {
+    global $saas, $DB, $OUTPUT, $PAGE;
+
+    $syscontext = saas::get_context_system();
+    $may_export = has_capability('report/saas_export:export', $syscontext);
+
+    if($may_export) {
+        $PAGE->requires->js_init_call('M.report_saas_export.init');
+    }
+
+    $one_to_many = $saas->get_config('course_mapping') == 'one_to_many';
+
+    // obtem ofertas de curso
+    $ofertas_cursos = $saas->get_ofertas_curso();
+    if($pocid === -1) {
+        if(!empty($ofertas_cursos)) {
+            $oc = reset($ofertas_cursos);
+            $pocid = $oc->id;
+        }
+    }
+
+    if(empty($pocid)) {
+        $cond = '';
+        $params = array();
+    } else {
+        $cond = 'AND oc.id = :ocid';
+        $params = array('ocid'=>$pocid);
+    }
+
+    $sql = "SELECT oc.id as ocid, od.id as odid, od.group_map_id, od.inicio, od.fim, d.nome
+              FROM {saas_ofertas_cursos} oc
+              JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1)
+              JOIN {saas_disciplinas} d ON (d.uid = od.disciplina_uid)
+             WHERE oc.enable = 1
+               {$cond}
+          ORDER BY oc.nome, od.group_map_id ,d.nome";
+    $ofertas = array();
+    foreach($DB->get_recordset_sql($sql, $params) AS $rec) {
+        $ofertas[$rec->ocid][$rec->group_map_id][] = $rec;
+    }
+
+    // obtem mapeamentos
+    $sql = "SELECT mc.courseid, mc.group_map_id, c.fullname
+              FROM {saas_map_course} mc
+              JOIN {course} c ON (c.id = mc.courseid)";
+    $mapping = array();
+    foreach($DB->get_recordset_sql($sql) AS $rec) {
+        $mapping[$rec->group_map_id][] = $rec;
+    }
+
+    print html_writer::start_tag('div', array('class'=>'saas_area_large'));
+
+    if(empty($ofertas_cursos)) {
+        print $OUTPUT->heading(get_string('no_ofertas_cursos', 'report_saas_export'), 4);
+    } else {
+        $url = new moodle_url('index.php', array('action'=>'course_mapping', 'subaction'=>'ofertas'));
+        saas_show_menu_ofertas_cursos($pocid, $url);
+
+        foreach($ofertas AS $ocid=>$maps) {
+            $oc = $ofertas_cursos[$ocid];
+
+            $group_options = array(0=>'');
+            foreach(array_keys($maps) AS $ind=>$group_map_id) {
+                $group_options[$group_map_id] = 'Grupo ' . ($ind+1);
+            }
+            $group_options[-1] = 'Novo grupo';
+
+            $rows = array();
+            $index = 0;
+            $color_class = '';
+            foreach($maps AS $group_map_id=>$recs) {
+                $index++;
+                $oc_nome_formatado = "{$oc->nome} ({$oc->ano}/{$oc->periodo})";
+                $color_class = $color_class == 'saas_normalcolor' ? 'saas_alternatecolor' : 'saas_normalcolor';
+
+                $od_nome_formatado = '';
+                if(count($recs) == 1) {
+                    $rec = reset($recs);
+                    $od_nome_formatado =  $rec->nome . ' (' . $saas->format_date($rec->inicio, $rec->fim) . ')';
+                } else if(count($recs) > 1) {
+                    $od_nome_formatado = html_writer::start_tag('UL');
+                    foreach($recs AS $rec) {
+                        $od_nome_formatado .= html_writer::tag('LI', $rec->nome . ' (' . $saas->format_date($rec->inicio, $rec->fim) . ')');
+                    }
+                    $od_nome_formatado .= html_writer::end_tag('UL');
+                }
+
+                $first = true;
+                foreach($recs AS $rec) {
+                    $row = new html_table_row();
+                    $row->attributes['class'] = $color_class;
+                    if($first) {
+                        $cell = new html_table_cell();
+                        $cell->text = $index . '.';
+                        $cell->rowspan = count($recs);
+                        $cell->style = "vertical-align: middle;";
+                        $cell->attributes['class'] = $color_class;
+                        $row->cells[] = $cell;
+                    }
+
+                    if($one_to_many) {
+                        $cell = new html_table_cell();
+                        if(count($recs) > 1 || !isset($mapping[$group_map_id])) {
+                            $local_group_options = $group_options;
+                            unset($local_group_options[$group_map_id]);
+                            $cell->text = html_writer::select($local_group_options, $rec->odid, 0, false, array('class'=>'select_group_map'));
+                        } else {
+                            $cell->text = '';
+                        }
+                        $cell->attributes['class'] = $color_class;
+                        $row->cells[] = $cell;
+                    }
+
+                    $cell = new html_table_cell();
+                    $cell->text = $rec->nome . ' (' . $saas->format_date($rec->inicio, $rec->fim) . ')';
+                    $cell->style = "vertical-align: middle;";
+                    $cell->attributes['class'] = $color_class;
+                    $row->cells[] = $cell;
+
+                    if($first) {
+                        $cell = new html_table_cell();
+                        $cell->rowspan = count($recs);
+                        $cell->style = "vertical-align: middle;";
+                        $cell->attributes['class'] = $color_class;
+                        $cell->text = '';
+                        $has_mapping = false;
+                        if(isset($mapping[$group_map_id])) {
+                            foreach($mapping[$group_map_id] AS $r) {
+                                $cell->text .= $r->fullname;
+                                if($may_export) {
+                                    $cell->text .= html_writer::tag('input', '', array('class'=>'delete_map_bt', 'type'=>'image', 'src' =>'img/delete.png',
+                                                    'alt'=>'Apagar mapeamento', 'height'=>'15', 'width'=>'15', 'group_map_id'=>$group_map_id,
+                                                    'courseid'=>$r->courseid, 'ocid'=>$ocid, 'style'=>'margin-left:2px;'));
+                                }
+                                $cell->text .= html_writer::empty_tag('br');
+                                $has_mapping = true;
+                            }
+                        }
+
+                        if (!$has_mapping || $saas->get_config('course_mapping') == 'many_to_one') {
+                            $cell->text .= html_writer::start_tag('div');
+                            if($may_export) {
+                                $cell->text .= html_writer::tag('button', 'Adicionar', array('type'=>'button', 'id'=>$group_map_id,
+                                                                    'class'=>'add_map_bt', 'style'=>'margin-top:5px;'));
+                            }
+                            $cell->text .= html_writer::end_tag('div');
+                        }
+
+                        $cell->attributes['class'] = $color_class;
+                        $row->cells[] = $cell;
+                    }
+
+                    $rows[] = $row;
+                    $first = false;
+                }
+
+            }
+
+            $table = new html_table();
+            $table->head = array();
+            if($one_to_many) {
+                $table->head = array('Grupo');
+                $table->head[] = 'Mover para';
+            } else {
+                $table->head = array('');
+            }
+            $table->head[] = 'Oferta de disciplina';
+            $table->head[] = 'Curso Moodle';
+            $table->colclasses = array('leftalign', 'leftalign', 'leftalign', 'leftalign');
+            $table->data = $rows;
+
+            print $OUTPUT->box_start('generalbox');
+            print $OUTPUT->heading($oc_nome_formatado, 3);
+            $table->tablealign = 'center';
+            print html_writer::table($table);
+            print $OUTPUT->box_end();
+
+        }
+    }
+    print html_writer::end_tag('div');
 }

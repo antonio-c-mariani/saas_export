@@ -201,31 +201,55 @@ switch ($action) {
         $may_export = has_capability('report/saas_export:export', $syscontext);
         $subaction = optional_param('subaction', '', PARAM_TEXT);
         if($may_export) {
-            if($subaction == 'map') {
-                $odid = required_param('odid', PARAM_INT);
-                $group_map_id = required_param('group_map_id', PARAM_INT);
-                $od = $DB->get_record('saas_ofertas_disciplinas', array('id'=>$odid), 'id, group_map_id, oferta_curso_uid', MUST_EXIST);
-                if($group_map_id == -1) {
-                    $max = $DB->get_field_sql("SELECT MAX(group_map_id) FROM {saas_ofertas_disciplinas}");
-                    $od->group_map_id = empty($max) ? 1 : $max+1;
-                } else {
-                    $od->group_map_id = $group_map_id;
-                }
-                $DB->update_record('saas_ofertas_disciplinas', $od);
-                $ocid = $DB->get_field('saas_ofertas_cursos', 'id', array('uid'=>$od->oferta_curso_uid), MUST_EXIST);
-                redirect(new moodle_url('index.php', array('action'=>'course_mapping', 'ocid'=>$ocid)));
-            } else if($subaction == 'delete') {
-                $courseid = required_param('courseid', PARAM_INT);
-                $group_map_id = required_param('group_map_id', PARAM_INT);
-                $ocid = required_param('ocid', PARAM_INT);
-                $DB->delete_records('saas_map_course', array('courseid' => $courseid, 'group_map_id' => $group_map_id));
-                redirect(new moodle_url('index.php', array('action'=>'course_mapping', 'ocid'=>$ocid)));
+            switch($subaction) {
+                case 'change_group':
+                    $odid = required_param('odid', PARAM_INT);
+                    $group_map_id = required_param('group_map_id', PARAM_INT);
+                    $od = $DB->get_record('saas_ofertas_disciplinas', array('id'=>$odid), 'id, group_map_id, oferta_curso_uid', MUST_EXIST);
+                    if($group_map_id == -1) {
+                        $max = $DB->get_field_sql("SELECT MAX(group_map_id) FROM {saas_ofertas_disciplinas}");
+                        $od->group_map_id = empty($max) ? 1 : $max+1;
+                    } else {
+                        $od->group_map_id = $group_map_id;
+                    }
+                    $DB->update_record('saas_ofertas_disciplinas', $od);
+                    $ocid = $DB->get_field('saas_ofertas_cursos', 'id', array('uid'=>$od->oferta_curso_uid), MUST_EXIST);
+                    break;
+                case 'delete':
+                    $courseid = required_param('courseid', PARAM_INT);
+                    $group_map_id = required_param('group_map_id', PARAM_INT);
+                    $ocid = required_param('ocid', PARAM_INT);
+                    $DB->delete_records('saas_map_course', array('courseid' => $courseid, 'group_map_id' => $group_map_id));
+                    break;
+                case 'add':
+                    $courseid = required_param('courseid', PARAM_INT);
+                    $course = $DB->get_record('course', array('id'=>$courseid), 'id, category');
+
+                    $group_map_id = required_param('group_map_id', PARAM_INT);
+                    $map = new stdClass();
+                    $map->courseid = $courseid;
+                    $map->group_map_id = $group_map_id;
+                    $DB->insert_record('saas_map_course', $map);
+                    $ods = $DB->get_records('saas_ofertas_disciplinas', array('group_map_id'=>$group_map_id), null, 'id, oferta_curso_uid');
+                    $od = reset($ods);
+                    $ocid = $DB->get_field('saas_ofertas_cursos', 'id', array('uid'=>$od->oferta_curso_uid));
+
+                    $SESSION->last_categoryid = $course->category;
+                    break;
             }
         }
         echo $OUTPUT->header();
         print_tabs(array($tabs), $action);
 
-        include('course_mapping.php');
+        if($subaction == 'show_tree') {
+            $group_map_id = required_param('group_map_id', PARAM_INT);
+            saas_show_categories_tree($group_map_id);
+        } else {
+            if(!isset($ocid)) {
+                $ocid = optional_param('ocid', -1, PARAM_INT);
+            }
+            saas_show_course_mappings($ocid);
+        }
 
         echo $OUTPUT->footer();
         break;
