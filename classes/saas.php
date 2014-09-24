@@ -60,10 +60,12 @@ class saas {
             print_error('api_key_unknown', 'report_saas_export', $url);
         }
 
-        if(empty($this->get_config('roles_teacher')) &&
-                empty($this->get_config('roles_student')) &&
-                empty($this->get_config('roles_tutor_polo')) &&
-                empty($this->get_config('roles_tutor_inst')) ) {
+        $rteacher = $this->get_config('roles_teacher');
+        $rstudent = $this->get_config('roles_student');
+        $rtutor_polo = $this->get_config('roles_tutor_polo');
+        $rtutor_inst = $this->get_config('roles_tutor_inst');
+
+        if(empty($rteacher) && empty($rstudent) && empty($rtutor_polo) && empty($rtutor_inst)) {
             print_error('no_roles', 'report_saas_export', $url);
         }
     }
@@ -244,90 +246,73 @@ class saas {
     // Gets para os dados já salvos no plugin
     //---------------------------------------------------------------------------------------------------
 
+    // retorna todos os polos da Institutição
     function get_polos() {
         global $DB;
 
         return $DB->get_records('saas_polos', array('enable'=>1), 'nome, cidade, estado');
     }
 
-    function get_ofertas_curso() {
+    // retorna os polos por oferta de curso
+    function get_polos_by_oferta_curso($oferta_curso_id=0) {
+        global $DB;
+
+        $polo_mapping_type = $this->get_config('polo_mapping');
+
+        $sql = "SELECT DISTINCT sp.*, oc.id as ocid
+                  FROM {saas_ofertas_cursos} oc
+                  JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1)
+                  JOIN {saas_map_course} cm ON (cm.group_map_id = od.group_map_id)
+                  JOIN {course} c ON (c.id = cm.courseid)";
+
+        switch ($polo_mapping_type) {
+            case 'group_to_polo':
+                $sql .= " JOIN {groups} g ON (g.courseid = c.id)
+                          JOIN {saas_map_groups_polos} spm ON (spm.groupname = g.name)
+                          JOIN {saas_polos} sp ON (sp.id = spm.polo_id AND sp.enable = 1)";
+                break;
+            case 'category_to_polo':
+                $sql .= " JOIN {course_categories} cc ON (cc.id = c.category)
+                          JOIN {course_categories} ccp ON (ccp.id = cc.id OR cc.path LIKE CONCAT('%/',ccp.id,'/%'))
+                          JOIN {saas_map_catcourses_polos} smcp ON (smcp.type = 'category' AND smcp.instanceid = ccp.id)
+                          JOIN {saas_polos} sp ON (sp.id = smcp.polo_id AND sp.enable = 1)";
+                break;
+            case 'course_to_polo':
+                $sql .= " JOIN {saas_map_catcourses_polos} smcp ON (smcp.type = 'course' AND smcp.instanceid = c.id)
+                          JOIN {saas_polos} sp ON (sp.id = smcp.polo_id AND sp.enable = 1)";
+                break;
+        }
+
+        $sql .= " WHERE oc.enable = 1";
+        $params = array();
+        if($oferta_curso_id) {
+            $sql .= " AND oc.id = :ocid";
+            $params['ocid'] = $oferta_curso_id;
+        }
+
+        $sql .= " ORDER BY sp.nome, sp.cidade, sp.estado";
+
+        $recs = $DB->get_recordset_sql($sql, $params);
+        $polos = array();
+        foreach($recs as $rec) {
+            $polos[$rec->ocid][$rec->id] = $rec;
+        }
+        return $polos;
+    }
+
+    // retorna todas as ofertas de curso
+    function get_ofertas_cursos() {
         global $DB;
 
         return $DB->get_records('saas_ofertas_cursos', array('enable'=>1), 'nome, ano, periodo');
     }
 
-    function get_oferta_disciplina($oferta_disciplina_id = 0) {
-        global $DB;
-
-        if(empty($oferta_disciplina_id)) {
-            $where = '';
-            $params = array();
-        } else {
-            $where = 'AND od.id = :odid';
-            $params = array('odid' => $oferta_disciplina_id);
-        }
-        $sql = "SELECT od.*, d.nome
-                  FROM {saas_ofertas_disciplinas} od
-                  JOIN {saas_disciplinas} d ON (d.uid = od.disciplina_uid)
-                 WHERE od.enable = 1
-                   AND d.enable = 1
-                   {$where}";
-        return $DB->get_record_sql($sql, $params);
-    }
-
-    function get_ofertas_disciplinas($oferta_de_curso_uid='') {
-        global $DB;
-
-        if(empty($oferta_de_curso_uid)) {
-            $where = '';
-            $params = array();
-        } else {
-            $where = 'AND oferta_curso_uid = :oferta_curso_uid';
-            $params = array('oferta_curso_uid' => $oferta_de_curso_uid);
-        }
-        $sql = "SELECT od.*, d.nome
-                  FROM {saas_ofertas_disciplinas} od
-                  JOIN {saas_disciplinas} d ON (d.uid = od.disciplina_uid)
-                 WHERE od.enable = 1
-                   AND d.enable = 1
-                   {$where}";
-        return $DB->get_records_sql($sql, $params);
-    }
-
-    function get_mapeamento_cursos() {
-        global $DB;
-
-        return $DB->get_records('saas_map_course');
-    }
-
-    function get_mapped_polos_by_name() {
-        global $DB;
-
-        $polos = $DB->get_records('saas_polos', array('enable'=>1), null , 'id, is_polo, groupname');
-        $mapped_polos = array();
-        foreach ($polos as $p){
-            $mapped_polos[$p->groupname] = $p->is_polo;
-        }
-        return $mapped_polos;
-    }
-
-    function get_ofertas_cursos_info() {
-        global $DB;
-
-        $offers = array();
-        $courses_offer =  $DB->get_records('saas_ofertas_cursos', array('enable'=>1));
-        foreach ($courses_offer as $c){
-            $offers[$c->saas_id] = $c;
-        }
-        return $offers;
-    }
-
-
+    // retorna array com ofertas de curso e respectivas ofertas de disciplinas, mapeadas ou não
     function get_ofertas($oferta_curso_id=0) {
         global $DB;
 
         $cond = '';
-        $params = array('enable'=>1);
+        $params = array();
         if(!empty($oferta_curso_id)) {
             $cond = 'AND oc.id = :id';
             $params['id'] = $oferta_curso_id;
@@ -340,7 +325,7 @@ class saas {
              LEFT JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1)
              LEFT JOIN {saas_disciplinas} d ON (d.uid = od.disciplina_uid AND d.enable = 1)
              LEFT JOIN {saas_map_course} cm ON (cm.group_map_id = od.group_map_id)
-                 WHERE oc.enable = :enable
+                 WHERE oc.enable = 1
                    {$cond}
               ORDER BY d.nome";
         $recs = $DB->get_recordset_sql($sql, $params);
@@ -354,11 +339,56 @@ class saas {
         return $ofertas;
     }
 
+    // retorna oferta de disciplina dado seu id
+    function get_oferta_disciplina($oferta_disciplina_id) {
+        global $DB;
+
+        $sql = "SELECT od.*, d.nome
+                  FROM {saas_ofertas_disciplinas} od
+                  JOIN {saas_disciplinas} d ON (d.uid = od.disciplina_uid)
+                 WHERE od.id = :odid";
+        return $DB->get_record_sql($sql, array('odid' => $oferta_disciplina_id));
+    }
+
+    // retorna ofertas de disciplina de uma oferta de curso dado seu id, num array onde a chave é a id da oferta de curso.
+    // retorna todas as oferta de disciplina caso não seja informado o id da oferta de curso.
+    function get_ofertas_disciplinas($ocid=0, $only_mapped=true) {
+        global $DB;
+
+        if(empty($ocid)) {
+            $where = '';
+            $params = array();
+        } else {
+            $where = 'AND oc.id = :ocid';
+            $params = array('ocid' => $ocid);
+        }
+
+        $join = '';
+        if($only_mapped) {
+            $join = 'JOIN {saas_map_course} cm ON (cm.group_map_id = od.group_map_id)';
+        }
+
+        $sql = "SELECT DISTINCT od.*, d.nome, oc.id as ocid
+                  FROM {saas_ofertas_disciplinas} od
+                  JOIN {saas_ofertas_cursos} oc ON (oc.uid = od.oferta_curso_uid)
+                  JOIN {saas_disciplinas} d ON (d.uid = od.disciplina_uid)
+                  {$join}
+                 WHERE od.enable = 1
+                   AND oc.enable = 1
+                   {$where}";
+        $recs = $DB->get_recordset_sql($sql, $params);
+        $ofertas = array();
+        foreach($recs as $rec) {
+            $ofertas[$rec->ocid][$rec->id] = $rec;
+        }
+        return $ofertas;
+    }
+
     function get_sql_users_by_oferta_curso_polo_categories($ocid=0, $poloid=0, $only_count=false) {
         global $DB;
 
         $condition = '';
-	$field = '';
+	    $field = '';
         $params = array('contextcourse'=>CONTEXT_COURSE, 'enable'=>ENROL_INSTANCE_ENABLED, 'active'=>ENROL_USER_ACTIVE);
         if($ocid) {
             $condition .= ' AND oc.id = :ocid';
@@ -391,7 +421,7 @@ class saas {
             }
             $distinct = 'DISTINCT';
             $orderby = ', CONCAT(u.firstname, u.lastname)';
-	    $field .= ', CONCAT(u.firstname, u.lastname) as nome';
+	        $field .= ', CONCAT(u.firstname, u.lastname) as nome';
         }
 
         $sql = "SELECT {$distinct} oc.id AS ocid, sp.id AS p_id, scr.role $field
@@ -424,7 +454,7 @@ class saas {
         global $DB;
 
         $condition = '';
-	$field = '';
+	    $field = '';
         $params = array('contextcourse'=>CONTEXT_COURSE, 'enable'=>ENROL_INSTANCE_ENABLED, 'active'=>ENROL_USER_ACTIVE);
         if($ocid) {
             $condition .= ' AND oc.id = :ocid';
@@ -488,7 +518,7 @@ class saas {
         global $DB;
 
         $condition = '';
-	$field = '';
+	    $field = '';
         $params = array('contextcourse'=>CONTEXT_COURSE, 'enable'=>ENROL_INSTANCE_ENABLED, 'active'=>ENROL_USER_ACTIVE);
         if($ocid) {
             $condition .= ' AND oc.id = :ocid';
@@ -521,7 +551,7 @@ class saas {
             }
             $distinct = 'DISTINCT';
             $orderby = ', CONCAT(u.firstname, u.lastname)';
-	    $field .= ', CONCAT(u.firstname, u.lastname) as nome';
+	        $field .= ', CONCAT(u.firstname, u.lastname) as nome';
         }
 
         $sql = "SELECT {$distinct} oc.id AS ocid, sp.id AS p_id, scr.role $field
@@ -766,75 +796,89 @@ class saas {
     //----------------------------------------------------------------------------------------------------------
 
     //envia os usuários com seus devidos papéis nos pólos.
-    function send_users_by_polo($id_oferta_curso=0, $id_polo=0, $send_user_details=true) {
+    function send_users_by_polos($pocid, $id_polo=0, $send_user_details=true) {
         global $DB;
 
+        $oc = $DB->get_record('saas_ofertas_cursos', array('id'=>$pocid));
         $role_types = $this->get_role_types('polos');
-        $ofertas = $this->get_ofertas_curso();
-        $polos = $this->get_polos();
-        $mapped = array();
-        foreach($ofertas AS $ocid=>$of) {
-            foreach($polos AS $poloid=>$p) {
-                $mapped[$ocid][$poloid] = true;
-            }
+
+        if($id_polo) {
+            $polos = array($id_polo=>$DB->get_record('saas_polo', array('id'=>$id_polo)));
+        } else {
+            $polos = $this->get_polos_by_oferta_curso($pocid);
+            $polos = $polos[$pocid];
         }
 
         $polo_mapping_type = $this->get_config('polo_mapping');
         switch ($polo_mapping_type) {
             case 'group_to_polo':
-                list($sql, $params) = $this->get_sql_users_by_oferta_curso_polo_groups($id_oferta_curso, $id_polo);
+                list($sql, $params) = $this->get_sql_users_by_oferta_curso_polo_groups($pocid, $id_polo);
                 break;
             case 'category_to_polo':
-                list($sql, $params) = $this->get_sql_users_by_oferta_curso_polo_categories($id_oferta_curso, $id_polo);
+                list($sql, $params) = $this->get_sql_users_by_oferta_curso_polo_categories($pocid, $id_polo);
                 break;
             case 'course_to_polo':
-                list($sql, $params) = $this->get_sql_users_by_oferta_curso_polo_courses($id_oferta_curso, $id_polo);
+                list($sql, $params) = $this->get_sql_users_by_oferta_curso_polo_courses($pocid, $id_polo);
                 break;
         }
         $rs = $DB->get_recordset_sql($sql, $params);
-        $ocid = 0;
         $poloid = 0;
         $users_by_roles = array();
         foreach($rs AS $rec) {
             $this->send_user($rec, $send_user_details);
 
-            if($rec->ocid != $ocid || $rec->p_id != $poloid) {
-                if($ocid !== 0) {
-                    $encoded_oferta_uid = rawurlencode($ofertas[$ocid]->uid);
-                    $encoded_polo_uid = rawurlencode($polos[$poloid]->uid);
-                    foreach($users_by_roles AS $r=>$users) {
-                        $this->put_ws("ofertas/cursos/{$encoded_oferta_uid}/polos/{$encoded_polo_uid}/".self::$role_types[$r], $users);
-                    }
-                    unset($mapped[$ocid][$poloid]);
+            if($rec->p_id != $poloid) {
+                if($poloid !== 0) {
+                    $this->send_users_by_polo($oc->uid, $polos[$poloid]->uid, $users_by_roles);
+                    unset($polos[$poloid]);
                 }
                 foreach($role_types AS $r) {
                     $users_by_roles[$r] = array();
                 }
-                $ocid = $rec->ocid;
                 $poloid = $rec->p_id;
             }
             $users_by_roles[$rec->role][] = $rec->uid;
         }
 
         //send the last one
-        if($ocid !== 0) {
-            $encoded_oferta_uid = rawurlencode($ofertas[$ocid]->uid);
-            $encoded_polo_uid = rawurlencode($polos[$poloid]->uid);
-            foreach($users_by_roles AS $r=>$users) {
-                $this->put_ws("ofertas/cursos/{$encoded_oferta_uid}/polos/{$encoded_polo_uid}/".self::$role_types[$r], $users);
-            }
-            unset($mapped[$ocid][$poloid]);
+        if($poloid !== 0) {
+            $this->send_users_by_polo($oc->uid, $polos[$poloid]->uid, $users_by_roles);
+            unset($polos[$poloid]);
+        }
+
+        foreach($role_types AS $r) {
+            $users_by_roles[$r] = array();
+        }
+        foreach($polos AS $pid=>$polo) {
+            $this->send_users_by_polo($oc->uid, $polo->uid, $users_by_roles);
         }
     }
 
+    function send_users_by_polo($oc_uid, $polo_uid, $users_by_roles) {
+        $encoded_oferta_uid = rawurlencode($oc_uid);
+        $encoded_polo_uid = rawurlencode($polo_uid);
+        foreach($users_by_roles AS $r=>$users) {
+            $this->put_ws("ofertas/cursos/{$encoded_oferta_uid}/polos/{$encoded_polo_uid}/".self::$role_types[$r], $users);
+        }
+        $this->count_sent_polos++;
+    }
+
     //envia os usuários com os seus devidos papéis em cada oferta de disciplina.
-    function send_users_by_ofertas_disciplinas($id_oferta_curso=0, $id_oferta_disciplina=0, $send_user_details=true) {
+    function send_users_by_ofertas_disciplinas($pocid=0, $podid=0, $send_user_details=true) {
         global $DB;
 
-        $ofertas = $this->get_ofertas_disciplinas();
+        if($pocid) {
+            $ofertas = $this->get_ofertas_disciplinas($pocid, true);
+            $ofertas = $ofertas[$pocid];
+        } else if($odid) {
+            $ofertas = array($podid=>$this->get_oferta_disciplina($podid));
+        } else {
+            return;
+        }
+
         $role_types = $this->get_role_types('disciplinas');
 
-        list($sql, $params) = $this->get_sql_users_by_oferta_disciplina($id_oferta_curso, $id_oferta_disciplina);
+        list($sql, $params) = $this->get_sql_users_by_oferta_disciplina($pocid, $podid);
         $rs = $DB->get_recordset_sql($sql, $params);
         $odid = 0;
         $users_by_roles = array();
@@ -844,6 +888,7 @@ class saas {
             if($rec->odid != $odid) {
                 if($odid !== 0) {
                     $this->send_users_by_oferta_disciplina($ofertas[$odid], $users_by_roles, $users_lastaccess, $users_suspended, $send_user_details);
+                    unset($ofertas[$odid]);
                 }
                 foreach($role_types AS $r) {
                     $users_by_roles[$r] = array();
@@ -866,6 +911,14 @@ class saas {
         //send the last one
         if($odid !== 0) {
             $this->send_users_by_oferta_disciplina($ofertas[$odid], $users_by_roles, $users_lastaccess, $users_suspended, $send_user_details);
+            unset($ofertas[$odid]);
+        }
+
+        foreach($role_types AS $r) {
+            $users_by_roles[$r] = array();
+        }
+        foreach($ofertas AS $odid=>$od) {
+            $this->send_users_by_oferta_disciplina($od, $users_by_roles, array(), array(), false);
         }
     }
 
@@ -903,6 +956,8 @@ class saas {
                 }
             }
         }
+
+        $this->count_sent_ods++;
     }
 
     function send_user($rec, $send_user_details=true) {
@@ -920,14 +975,15 @@ class saas {
     function send_data($selected_ocs=array(), $selected_ods=array(), $selected_polos=array(), $send_user_details=true) {
         $this->count_errors = 0;
         $this->errors = array();
-
+        $this->count_sent_ods = 0;
+        $this->count_sent_polos = 0;
         $this->sent_users = array();
         $this->count_sent_users = array();
         foreach(self::$role_types AS $r=>$rname) {
             $this->count_sent_users[$r] = 0;
         }
 
-        $ofertas_cursos = $this->get_ofertas_curso();
+        $ofertas_cursos = $this->get_ofertas_cursos();
 
         foreach($ofertas_cursos AS $ocid=>$oc) {
             if(isset($selected_ocs[$ocid])) {
@@ -943,10 +999,10 @@ class saas {
         if($polo_mapping_type != 'no_polo') {
             foreach($ofertas_cursos AS $ocid=>$oc) {
                 if(isset($selected_ocs[$ocid])) {
-                    $this->send_users_by_polo($ocid, 0, $send_user_details);
+                    $this->send_users_by_polos($ocid, 0, $send_user_details);
                 } else if(isset($selected_polos[$ocid])) {
                     foreach($selected_polos[$ocid] AS $polo_id=>$i) {
-                        $this->send_users_by_polo($ocid, $polo_id, $send_user_details);
+                        $this->send_users_by_polos($ocid, $polo_id, $send_user_details);
                     }
                 }
             }
@@ -954,11 +1010,7 @@ class saas {
 
         $this->send_resume();
 
-        $result = array($this->count_errors, $this->errors);
-        unset($this->count_errors);
-        unset($this->errors);
-        unset($this->count_sent_users);
-        unset($this->sent_users);
+        $result = array($this->count_errors, $this->errors, $this->count_sent_users, $this->count_sent_ods, $this->count_sent_polos);
         return $result;
     }
 

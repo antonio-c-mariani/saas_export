@@ -54,10 +54,4 @@ M.report_saas_export.init = function(Y) {
         window.location="index.php?action=course_mapping&subaction=show_tree&group_map_id="+group_map_id;
     }, '.add_map_bt');
 
-    Y.on('click', function(e) {
-        courseid = this.get('id');
-        group_map_id = this.getAttribute('group_map_id');
-        window.location="index.php?action=course_mapping&subaction=add&courseid="+courseid+"&group_map_id="+group_map_id;
-    }, '.select_moodle_course');
-
 }

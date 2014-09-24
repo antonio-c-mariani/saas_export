@@ -53,7 +53,8 @@ function saas_show_categories_tree($group_map_id) {
              WHERE c.id > 1
                AND mc.id IS NULL
           ORDER BY c.fullname";
-    foreach($DB->get_records_sql($sql) AS $course) {
+    $courses = $DB->get_records_sql($sql);
+    foreach($courses AS $course) {
         $categories[$course->category]->courses[$course->id] = $course;
     }
 
@@ -70,9 +71,30 @@ function saas_show_categories_tree($group_map_id) {
                AND d.enable = 1
                AND od.group_map_id = :group_map_id";
     $ods = $DB->get_records_sql($sql, array('group_map_id'=>$group_map_id));
+    $best_options = array();
     if(count($ods) == 1) {
         $od = reset($ods);
         $title_ods = 'Disciplina: ' . $od->nome . ' (' . $saas->format_date($od->inicio, $od->fim) . ')';
+
+        if(count($ods) == 1) {
+            $distances = array();
+            foreach($courses AS $c) {
+                $distances[$c->id] = levenshtein($c->fullname, $od->nome);
+            }
+            asort($distances);
+            $count = 0;
+            foreach($distances AS $cid=>$dist) {
+                $c = $courses[$cid];
+                $c->distance = $dist;
+                $best_options[$cid] = $c;
+
+                $count++;
+                if($count >= 5) {
+                    break;
+                }
+            }
+        }
+
     } else {
         $title_ods = '';
         foreach($ods AS $od) {
@@ -83,14 +105,41 @@ function saas_show_categories_tree($group_map_id) {
     $oc = $DB->get_record('saas_ofertas_cursos', array('uid'=>$od->oferta_curso_uid));
 
     echo html_writer::tag('div', $OUTPUT->heading('Seleção de curso Moodle', 3), array('align'=>'center'));
-    echo html_writer::start_tag('div', array('class'=>'saas_tree saas_area_normal'));
+    if (strpos(__FILE__, '/admin/report/') !== false) {
+        $versionclass = "saas_tree_20";
+    } else {
+        $versionclass = "saas_tree_22";
+    }
+    echo html_writer::start_tag('div', array('class'=>'saas_tree saas_area_normal '.$versionclass));
     print $OUTPUT->heading("Curso: {$oc->nome} ({$oc->ano}/{$oc->periodo})", 4);
     print $OUTPUT->heading($title_ods, 4);
+
+    if(!empty($best_options)) {
+        print $OUTPUT->box_start('generalbox boxwidthwide boxaligncenter');
+        print $OUTPUT->heading('Melhores opções', 4);
+        $table = new html_table();
+        $table->attributes = array('class'=>'saas_table');
+        $table->head = array('Curso Moodle', 'Distância de Levenshtein');
+        $table->colclasses = array('leftalign', 'centeralign');
+        $table->tablealign = 'center';
+
+        $table->data = array();
+        foreach($best_options AS $c) {
+            $url = new moodle_url('index.php', array('action'=>'course_mapping', 'subaction'=>'add', 'courseid'=>$c->id,'group_map_id'=>$group_map_id));
+            $link = html_writer::link($url, $c->fullname);
+            $table->data[] = array($link, $c->distance);
+        }
+
+        print html_writer::table($table);
+
+        print $OUTPUT->box_end();
+    }
 
     echo html_writer::start_tag('ul');
     saas_show_categories($group_map_id, $categories, $category_path);
     echo html_writer::end_tag('ul');
     echo html_writer::end_tag('div');
+
 }
 
 function saas_get_moodle_categories(){
@@ -155,11 +204,9 @@ function saas_get_courses_from_categories(&$categories, $repeat_allowed = true) 
 function saas_show_categories($group_map_id, &$categories, $open_catids = array()){
     global $OUTPUT;
 
-    $index = 0;
     foreach ($categories as $cat){
         echo html_writer::start_tag('li');
-        $index++;
-        $label = 'level'.$cat->depth.'_'.$index;
+        $label = 'cat_'.$cat->id;
         echo html_writer::tag('label', $cat->name, array('for'=>$label));
         $checked = in_array($cat->id, $open_catids);
         echo html_writer::checkbox(null, null, $checked, '', array('id'=>$label));
@@ -169,7 +216,8 @@ function saas_show_categories($group_map_id, &$categories, $open_catids = array(
         foreach ($cat->courses as $c){
             echo html_writer::start_tag('li', array('class'=>'course'));
             echo $OUTPUT->pix_icon("i/course", '', 'moodle', array('class' => 'icon smallicon'));
-            echo html_writer::tag('span', $c->fullname, array('id'=>$c->id, 'group_map_id'=>$group_map_id, 'class'=>'select_moodle_course'));
+            $url = new moodle_url('index.php', array('action'=>'course_mapping', 'subaction'=>'add', 'courseid'=>$c->id,'group_map_id'=>$group_map_id));
+            echo html_writer::link($url, $c->fullname, array('title'=>'Clique para selecionar este curso'));
             echo html_writer::end_tag('li');
         }
 
@@ -384,6 +432,7 @@ function saas_show_overview_polos($ocid, $poloid) {
 
     if(!$DB->record_exists('saas_polos', array('enable'=>1))) {
         print html_writer::tag('h3', get_string('no_polos', 'report_saas_export'));
+        return;
     }
     if($polo_mapping_type == 'no_polo') {
         print $OUTPUT->heading(get_string('title_no_polo', 'report_saas_export'), 4);
@@ -409,155 +458,76 @@ function saas_show_overview_polos($ocid, $poloid) {
                 break;
         }
     } else {
-        switch ($polo_mapping_type) {
-            case 'group_to_polo':
-                saas_show_overview_groups_polos($ocid);
-                break;
-            case 'category_to_polo':
-                saas_show_overview_categories_polos($ocid);
-                break;
-            case 'course_to_polo':
-                saas_show_overview_courses_polos($ocid);
-                break;
-        }
+        $polos = $saas->get_polos_by_oferta_curso($ocid);
+        saas_show_table_overview_polos($polos);
     }
 }
 
-function saas_show_overview_courses_polos($ocid) {
-    if($ocid) {
-        $cond = "AND oc.id = :ocid";
-        $params = array('ocid'=>$ocid);
-    } else {
-        $cond = '';
-        $params = array();
-    }
-    $sql = "SELECT DISTINCT oc.id AS ocid, sp.*
-              FROM {saas_ofertas_cursos} oc
-              JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1)
-              JOIN {saas_map_course} cm ON (cm.group_map_id = od.group_map_id)
-              JOIN {course} c ON (c.id = cm.courseid)
-              JOIN {saas_map_catcourses_polos} smcp ON (smcp.type = 'course' AND smcp.instanceid = c.id)
-              JOIN {saas_polos} sp ON (sp.id = smcp.polo_id AND sp.enable = 1)
-             WHERE oc.enable = 1
-               {$cond}
-          ORDER BY oc.id, sp.nome";
-    saas_show_table_overview_polos($sql, $params);
-}
-
-function saas_show_overview_categories_polos($ocid) {
-    if($ocid) {
-        $cond = "AND oc.id = :ocid";
-        $params = array('ocid'=>$ocid);
-    } else {
-        $cond = '';
-        $params = array();
-    }
-    $sql = "SELECT DISTINCT oc.id AS ocid, sp.*
-              FROM {saas_ofertas_cursos} oc
-              JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1)
-              JOIN {saas_map_course} cm ON (cm.group_map_id = od.group_map_id)
-              JOIN {course} c ON (c.id = cm.courseid)
-              JOIN {course_categories} cc ON (cc.id = c.category)
-              JOIN {course_categories} ccp ON (ccp.id = cc.id OR cc.path LIKE CONCAT('%/',ccp.id,'/%'))
-              JOIN {saas_map_catcourses_polos} smcp ON (smcp.type = 'category' AND smcp.instanceid = ccp.id)
-              JOIN {saas_polos} sp ON (sp.id = smcp.polo_id AND sp.enable = 1)
-             WHERE oc.enable = 1
-               {$cond}
-          ORDER BY oc.id, sp.nome";
-    saas_show_table_overview_polos($sql, $params);
-}
-
-function saas_show_overview_groups_polos($ocid) {
-    if($ocid) {
-        $cond = "AND oc.id = :ocid";
-        $params = array('ocid'=>$ocid);
-    } else {
-        $cond = '';
-        $params = array();
-    }
-    $sql = "SELECT DISTINCT oc.id AS ocid, sp.*
-              FROM {saas_ofertas_cursos} oc
-              JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1)
-              JOIN {saas_map_course} cm ON (cm.group_map_id = od.group_map_id)
-              JOIN {course} c ON (c.id = cm.courseid)
-              JOIN {groups} g ON (g.courseid = c.id)
-              JOIN {saas_map_groups_polos} spm ON (spm.groupname = g.name AND spm.polo_id > 0)
-              JOIN {saas_polos} sp ON (sp.id = spm.polo_id AND sp.enable = 1)
-             WHERE oc.enable = 1
-               {$cond}
-          ORDER BY oc.id, sp.nome";
-    saas_show_table_overview_polos($sql, $params);
-}
-
-function saas_show_table_overview_polos($sql, $params) {
+function saas_show_table_overview_polos($polos) {
     global $DB, $OUTPUT, $saas;
 
     $ofertas_cursos = $DB->get_records('saas_ofertas_cursos', array('enable'=>1), 'nome, ano, periodo');
-    foreach($ofertas_cursos AS $id=>$oc) {
-        $oc->polos = array();
-    }
-    foreach($DB->get_recordset_sql($sql, $params) AS $pl) {
-        $ofertas_cursos[$pl->ocid]->polos[] = $pl;
-    }
 
     $counts = $saas->get_polos_count();
     $role_types = $saas->get_role_types('polos');
 
     foreach($ofertas_cursos AS $oc) {
-        if(!empty($oc->polos)) {
-
-            $rows = array();
-            foreach($oc->polos AS $pl) {
-                $row = array();
-
-                $texts = array();
-                $show_url = false;
-                foreach($role_types AS $r) {
-                    if(isset($counts[$oc->id][$pl->id][$r]) && $counts[$oc->id][$pl->id][$r] > 0) {
-                        $texts[$r] = $counts[$oc->id][$pl->id][$r];
-                        $show_url = true;
-                    } else {
-                        $texts[$r] = 0;
-                    }
-                }
-
-                if($show_url) {
-                    $url = new moodle_url('index.php', array('action'=>'overview', 'subaction'=>'polos', 'ocid'=>$oc->id, 'poloid'=>$pl->id));
-                    $row[] = html_writer::link($url, $pl->nome);
-                } else {
-                    $row[] = $pl->nome;
-                }
-                $row[] = $pl->cidade;
-                $row[] = $pl->estado;
-
-                foreach($role_types AS $r) {
-                    $row[] = $texts[$r];
-                }
-
-                $rows[] = $row;
-            }
-
-            print html_writer::start_tag('DIV', array('class'=>'saas_area_normal'));
-            print $OUTPUT->box_start('generalbox boxwidthwide boxaligncenter');
-            print $OUTPUT->heading("{$oc->nome} ({$oc->ano}/{$oc->periodo})", 3);
-
-            $table = new html_table();
-            $table->head = array(get_string('nome_polo', 'report_saas_export'), 'Cidade', 'UF');
-            $table->colclasses = array('leftalign', 'leftalign', 'leftalign');
-            foreach($role_types AS $r) {
-                $table->head[] = get_string($r, 'report_saas_export');
-                $table->colclasses[] = 'rightalign';
-            }
-            $table->data = $rows;
-            $table->attributes = array('class'=>'saas_table');
-            $table->tablealign = 'center';
-            print html_writer::table($table);
-
-            print $OUTPUT->box_end();
-            print html_writer::end_tag('DIV');
+        if(!isset($polos[$oc->id])) {
+            continue;
         }
-    }
 
+        $rows = array();
+        $index = 0;
+        foreach($polos[$oc->id] AS $pl) {
+            $index++;
+            $row = array($index.'.');
+
+            $texts = array();
+            $show_url = false;
+            foreach($role_types AS $r) {
+                if(isset($counts[$oc->id][$pl->id][$r]) && $counts[$oc->id][$pl->id][$r] > 0) {
+                    $texts[$r] = $counts[$oc->id][$pl->id][$r];
+                    $show_url = true;
+                } else {
+                    $texts[$r] = 0;
+                }
+            }
+
+            if($show_url) {
+                $url = new moodle_url('index.php', array('action'=>'overview', 'subaction'=>'polos', 'ocid'=>$oc->id, 'poloid'=>$pl->id));
+                $row[] = html_writer::link($url, $pl->nome);
+            } else {
+                $row[] = $pl->nome;
+            }
+            $row[] = $pl->cidade;
+            $row[] = $pl->estado;
+
+            foreach($role_types AS $r) {
+                $row[] = $texts[$r];
+            }
+
+            $rows[] = $row;
+        }
+
+        print html_writer::start_tag('DIV', array('class'=>'saas_area_normal'));
+        print $OUTPUT->box_start('generalbox boxwidthwide boxaligncenter');
+        print $OUTPUT->heading("{$oc->nome} ({$oc->ano}/{$oc->periodo})", 3);
+
+        $table = new html_table();
+        $table->head = array('', get_string('nome_polo', 'report_saas_export'), 'Cidade', 'UF');
+        $table->colclasses = array('leftalign',  'leftalign', 'leftalign', 'leftalign');
+        foreach($role_types AS $r) {
+            $table->head[] = get_string($r, 'report_saas_export');
+            $table->colclasses[] = 'rightalign';
+        }
+        $table->data = $rows;
+        $table->attributes = array('class'=>'saas_table');
+        $table->tablealign = 'center';
+        print html_writer::table($table);
+
+        print $OUTPUT->box_end();
+        print html_writer::end_tag('DIV');
+    }
 }
 
 function saas_show_users_oferta_curso_polo($ocid, $poloid, $sql, $params) {
@@ -695,7 +665,7 @@ function saas_show_menu_ofertas_cursos($oferta_curso_id=0, $url) {
     global $PAGE, $DB, $saas;
 
     // obtem ofertas de curso
-    $ofertas_cursos = $saas->get_ofertas_curso();
+    $ofertas_cursos = $saas->get_ofertas_cursos();
     $ofertas_menu = array();
     $ofertas_menu[0] = get_string('all');
     foreach($ofertas_cursos AS $ocid=>$oc) {
@@ -811,92 +781,72 @@ function saas_show_export_options($url, $selected_ocs=true, $selected_ods=true, 
 
     $PAGE->requires->js_init_call('M.report_saas_export.init');
 
-    list($sql, $params) =  $saas->get_sql_users_by_oferta_disciplina(0, 0, true);
-    $rs = $DB->get_recordset_sql($sql, $params);
-    $od_counts = array();
-    foreach($rs AS $rec) {
-        $od_counts[$rec->odid] = true;
-    }
+    $ofertas_cursos = $saas->get_ofertas_cursos();
+    $ofertas_disciplinas_oc = $saas->get_ofertas_disciplinas(0, true);
 
-    $polos = $saas->get_polos();
-    $polos_count = $saas->get_polos_count();
+    $polos_oc = $saas->get_polos_by_oferta_curso();
 
-    $ofertas = $saas->get_ofertas();
-
-    if(empty($ofertas)) {
+    if(empty($ofertas_cursos)) {
         print $OUTPUT->heading(get_string('no_ofertas_cursos', 'report_saas_export'), 4);
         return;
     }
 
-    foreach($ofertas AS $ocid=>$oc) {
-        foreach(array_keys($oc->ofertas_disciplinas) AS $odid) {
-            if(!isset($od_counts[$odid])) {
-                unset($ofertas[$ocid]->ofertas_disciplinas[$odid]);
-            }
-        }
-
-        $ofertas[$ocid]->polos = array();
-        if(isset($polos_count[$ocid])) {
-            foreach($polos_count[$ocid] AS $poloid=>$counts) {
-                $ofertas[$ocid]->polos[$poloid] = $polos[$poloid];
-            }
-        }
-    }
-
     $rows = array();
-    foreach($ofertas AS $ocid=>$oc) {
-        if(!empty($oc->ofertas_disciplinas) || !empty($oc->polos)) {
-            $tag_checkbox = 'saas_oc_' . $ocid;
-            $row = new html_table_row();
-
-            $cell = new html_table_cell();
-            $checked = $selected_ocs===true || isset($selected_ocs[$ocid]);
-            $disabled = $checked ? array('disabled'=>true) : array();
-            $lable = "{$oc->nome} ({$oc->ano}/{$oc->periodo})";
-            $cell->text = html_writer::checkbox("oc[{$ocid}]", $ocid, $checked, $lable, array('id'=>$tag_checkbox, 'class'=>'oc_checkbox'));
-            $cell->style = "vertical-align: middle;";
-            $row->cells[] = $cell;
-
-            $cell = new html_table_cell();
-            if(!empty($oc->ofertas_disciplinas)) {
-                $cell->text = html_writer::start_tag('UL', array('style'=>'list-style-type: none;'));
-                $params = array_merge($disabled, array('class'=>'od_'.$tag_checkbox));
-                foreach($oc->ofertas_disciplinas AS $od) {
-                    $checked = $selected_ocs===true || isset($selected_ods[$ocid][$od->id]);
-                    $label = $od->nome . ' (' . $saas->format_date($od->inicio, $od->fim) . ')';
-                    $checkbox = html_writer::checkbox("od[{$ocid}][{$od->id}]", $ocid, $checked, $label, $params);
-                    $cell->text .= html_writer::tag('LI', $checkbox);
-                }
-
-                $cell->text .= html_writer::empty_tag('img', array('src'=>'img/arrow_ltr.png'));
-                $params = array_merge($disabled, array('class'=>'checkall_button', 'id'=>"od_{$tag_checkbox}"));
-                $cell->text .= html_writer::checkbox('', '', true, 'todos/nenhum', $params);
-
-                $cell->text .= html_writer::end_tag('UL');
-            }
-            $cell->style = "vertical-align: middle;";
-            $row->cells[] = $cell;
-
-            $cell = new html_table_cell();
-            if(!empty($oc->polos)) {
-                $cell->text = html_writer::start_tag('UL', array('style'=>'list-style-type: none;'));
-                $params = array_merge($disabled, array('class'=>'polo_'.$tag_checkbox));
-                foreach($oc->polos AS $pl) {
-                    $checked = $selected_ocs===true || isset($selected_polos[$ocid][$pl->id]);
-                    $checkbox = html_writer::checkbox("polo[{$ocid}][{$pl->id}]", $ocid, $checked, $pl->nome, $params);
-                    $cell->text .= html_writer::tag('LI', $checkbox);
-                }
-                $cell->text .= html_writer::empty_tag('img', array('src'=>'img/arrow_ltr.png'));
-                $params = array_merge($disabled, array('class'=>'checkall_button', 'id'=>"polo_{$tag_checkbox}"));
-                $cell->text .= html_writer::checkbox('', '', true, 'todos/nenhum', $params);
-
-                $cell->text .= html_writer::end_tag('UL');
-            }
-            $cell->style = "vertical-align: middle;";
-            $row->cells[] = $cell;
-
-            $rows[] = $row;
+    foreach($ofertas_cursos AS $ocid=>$oc) {
+        if(!isset($ofertas_disciplinas_oc[$ocid]) && !isset($polos_oc[$ocid])) {
+            continue;
         }
+
+        $tag_checkbox = 'saas_oc_' . $ocid;
+        $row = new html_table_row();
+
+        $cell = new html_table_cell();
+        $checked = $selected_ocs===true || isset($selected_ocs[$ocid]);
+        $disabled = $checked ? array('disabled'=>true) : array();
+        $lable = "{$oc->nome} ({$oc->ano}/{$oc->periodo})";
+        $cell->text = html_writer::checkbox("oc[{$ocid}]", $ocid, $checked, $lable, array('id'=>$tag_checkbox, 'class'=>'oc_checkbox'));
+        $cell->style = "vertical-align: middle;";
+        $row->cells[] = $cell;
+
+        $cell = new html_table_cell();
+        if(isset($ofertas_disciplinas_oc[$ocid])) {
+            $cell->text = html_writer::start_tag('UL', array('style'=>'list-style-type: none;'));
+            $params = array_merge($disabled, array('class'=>'od_'.$tag_checkbox));
+            foreach($ofertas_disciplinas_oc[$ocid] AS $odid=>$od) {
+                $checked = $selected_ocs===true || isset($selected_ods[$ocid][$odid]);
+                $label = $od->nome . ' (' . $saas->format_date($od->inicio, $od->fim) . ')';
+                $checkbox = html_writer::checkbox("od[{$ocid}][{$odid}]", $ocid, $checked, $label, $params);
+                $cell->text .= html_writer::tag('LI', $checkbox);
+            }
+
+            $cell->text .= html_writer::empty_tag('img', array('src'=>'img/arrow_ltr.png'));
+            $params = array_merge($disabled, array('class'=>'checkall_button', 'id'=>"od_{$tag_checkbox}"));
+            $cell->text .= html_writer::checkbox('', '', true, 'todos/nenhum', $params);
+
+            $cell->text .= html_writer::end_tag('UL');
+        }
+        $cell->style = "vertical-align: middle;";
+        $row->cells[] = $cell;
+
+        $cell = new html_table_cell();
+        if(isset($polos_oc[$ocid])) {
+            $cell->text = html_writer::start_tag('UL', array('style'=>'list-style-type: none;'));
+            $params = array_merge($disabled, array('class'=>'polo_'.$tag_checkbox));
+            foreach($polos_oc[$ocid] AS $plid=>$pl) {
+                $checked = $selected_ocs===true || isset($selected_polos[$ocid][$plid]);
+                $checkbox = html_writer::checkbox("polo[{$ocid}][{$plid}]", $ocid, $checked, $pl->nome, $params);
+                $cell->text .= html_writer::tag('LI', $checkbox);
+            }
+            $cell->text .= html_writer::empty_tag('img', array('src'=>'img/arrow_ltr.png'));
+            $params = array_merge($disabled, array('class'=>'checkall_button', 'id'=>"polo_{$tag_checkbox}"));
+            $cell->text .= html_writer::checkbox('', '', true, 'todos/nenhum', $params);
+
+            $cell->text .= html_writer::end_tag('UL');
+        }
+        $cell->style = "vertical-align: middle;";
+        $row->cells[] = $cell;
+
+        $rows[] = $row;
     }
 
     print html_writer::start_tag('DIV', array('class'=>'saas_area_normal'));
@@ -942,7 +892,7 @@ function saas_show_course_mappings($pocid=0) {
     $one_to_many = $saas->get_config('course_mapping') == 'one_to_many';
 
     // obtem ofertas de curso
-    $ofertas_cursos = $saas->get_ofertas_curso();
+    $ofertas_cursos = $saas->get_ofertas_cursos();
     if($pocid === -1) {
         if(!empty($ofertas_cursos)) {
             $oc = reset($ofertas_cursos);

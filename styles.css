@@ -71,8 +71,15 @@ tr.saas_alternatecolor td.saas_alternatecolor {
     top: 0;
 }
 
+.saas_tree_20 li input + ul {
+    background: url(../admin/report/saas_export/img/toggle-small-expand.png) 40px 0 no-repeat;
+}
+
+.saas_tree_22 li input + ul {
+    background: url(../report/saas_export/img/toggle-small-expand.png) 40px 0 no-repeat;
+}
+
 .saas_tree li input + ul {
-    background: url(/ead2/report/saas_export/img/toggle-small-expand.png) 40px 0 no-repeat;
     margin: -0.938em 0 0 -44px; /* 15px */
     height: 1em;
 }
@@ -83,15 +90,29 @@ tr.saas_alternatecolor td.saas_alternatecolor {
     padding-left: 1px;
 }
 
+.saas_tree_20 li label {
+    background: url(../admin/report/saas_export/img/folder-horizontal.png) 15px 1px no-repeat;
+}
+
+.saas_tree_22 li label {
+    background: url(../report/saas_export/img/folder-horizontal.png) 15px 1px no-repeat;
+}
+
 .saas_tree li label {
-    background: url(/ead2/report/saas_export/img/folder-horizontal.png) 15px 1px no-repeat;
     cursor: pointer;
     display: block;
     padding-left: 37px;
 }
 
+.saas_tree_20 li input:checked + ul {
+    background: url(../admin/report/saas_export/img/toggle-small.png) 40px 5px no-repeat;
+}
+
+.saas_tree_22 li input:checked + ul {
+    background: url(../report/saas_export/img/toggle-small.png) 40px 5px no-repeat;
+}
+
 .saas_tree li input:checked + ul {
-    background: url(/ead2/report/saas_export/img/toggle-small.png) 40px 5px no-repeat;
     margin: -1.25em 0 0 -44px; /* 20px */
     padding: 1.563em 0 0 80px;
     height: auto;

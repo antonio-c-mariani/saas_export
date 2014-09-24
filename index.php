@@ -331,7 +331,8 @@ switch ($action) {
 
                 $exception_msg = false;
                 try {
-                    list($count_errors, $errors) = $saas->send_data($ocs, $ods, $polos, $send_user_details);
+                    list($count_errors, $errors, $count_sent_users, $count_sent_ods, $count_sent_polos) =
+                                        $saas->send_data($ocs, $ods, $polos, $send_user_details);
                 } catch (dml_exception $e){
                     $debuginfo = empty($e->debuginfo) ? '' : '<BR>'.$e->debuginfo;
                     $exception_msg = get_string('bd_error', 'report_saas_export', $e->getMessage() . $debuginfo);
@@ -347,6 +348,17 @@ switch ($action) {
                     print html_writer::tag('SPAN', $exception_msg, array('class'=>'saas_export_error'));
                 } else if($count_errors == 0) {
                     print html_writer::tag('SPAN', get_string('export_ok', 'report_saas_export', $report_url), array('class'=>'saas_export_message'));
+                    $rows = array();
+                    $rows[] = array('Ofertas de disciplinas exportadas', $count_sent_ods);
+                    $rows[] = array('Polos exportados', $count_sent_polos);
+                    foreach($count_sent_users AS $r=>$count) {
+                        $rows[] = array(get_string($r.'s', 'report_saas_export') . ' exportados', $count);
+                    }
+                    $table = new html_table();
+                    $table->tablealign = 'center';
+                    $table->attributes = array('class'=>'saas_table');
+                    $table->data = $rows;
+                    print html_writer::table($table);
                 } else {
                     $a = new stdClass();
                     $a->report_url = $report_url;
