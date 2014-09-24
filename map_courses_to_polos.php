@@ -43,11 +43,8 @@ if(isset($_POST['map_polos']) && isset($_POST['save']) && $may_export) {
 }
 
 print html_writer::start_tag('DIV', array('align'=>'center'));
-print $OUTPUT->heading(get_string('course_to_polo', 'report_saas_export'), 3);
-print $OUTPUT->box_start('generalbox boxwidthwide');
-print html_writer::tag('P', get_string('course_to_polo_msg1', 'report_saas_export'), array('class'=>'saas_justifiedalign'));
-print html_writer::tag('P', get_string('course_to_polo_msg2', 'report_saas_export'), array('class'=>'saas_justifiedalign'));
-print $OUTPUT->box_end();
+print $OUTPUT->heading(get_string('course_to_polo', 'report_saas_export') .
+      $OUTPUT->help_icon('course_to_polo', 'report_saas_export'), 3);
 print html_writer::end_tag('DIV');
 
 print html_writer::start_tag('div', array('class'=>'saas_area_large'));

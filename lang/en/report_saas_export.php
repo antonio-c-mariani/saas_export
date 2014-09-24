@@ -22,6 +22,9 @@ $string['inicio'] = 'Início';
 $string['fim'] = 'Fim';
 $string['periodo'] = 'Período';
 
+$string['course_selection'] = 'Seleção de curso Moodle';
+$string['course_selection_help'] = 'abc';
+
 $string['guidelines'] = 'Orientações';
 $string['settings'] = 'Configurações';
 $string['saas_data'] = 'Dados SAAS';
@@ -29,6 +32,12 @@ $string['overview'] = 'Visão geral';
 $string['export'] = 'Exportação';
 $string['reload'] = 'Atualizar dados';
 $string['reloaded'] = 'Os dados de ofertas de curso/disciplinas e de polos foram atualizados a partir do SAAS';
+
+$string['export_help'] = '<P>Selecione abaixo as ofertas de curso, de disciplinas e polos cujos dados devam ser exportados para o SAAS.<P>
+    <P>Ao selecionar uma oferta de curso, serão exportados dados de todas as ofertas de disciplinas e polos associados a esta oferta de curso.
+    Para ter um controle mais fino na exportação é necessário desmarcar a caixa correspondente à oferta de curso.  Neste caso são liberadas
+    as caixas de seleção de ofertas de disciplina e polos correspondentes à oferta de curso, passando a ser exportados apenas os dados
+    correspondentes aos itens selecionados.</P>';
 
 $string['moodle_courses'] = 'Cursos Moodle';
 $string['moodle_categories'] = 'Categorias Moodle';
@@ -56,37 +65,52 @@ $string['one_to_one'] = 'Um curso Moodle para cada oferta de disciplina do SAAS'
 $string['one_to_many'] = 'Um curso Moodle para mais de uma oferta de disciplina do SAAS';
 $string['many_to_one'] = 'Mais de um curso Moodle para uma oferta de disciplina do SAAS';
 
+$string['one_to_one_help'] = '<P>Abaixo aparecem listadas à esquerda as ofertas de disciplinas registradas no SAAS e à direita os cursos Moodle que correspondentes a
+    essas ofertas de disciplinas. Dado que a configuração atual deste módulo indica que cada curso Moodle corresponde a uma única oferta de disciplina,
+    é possível adicionar um único curso Moodle à direita para cada oferta de disciplina.</P>
+    <P>Somente as ofertas de disciplinas que tiverem sido associadas a algum cursos Moodle poderão ser exportadas posteriormente.</P>';
+$string['one_to_many_help'] = '<P>Abaixo aparecem listadas à esquerda as ofertas de disciplinas registradas no SAAS e à direita os cursos Moodle que correspondentes a
+    essas ofertas de disciplinas. Dado que a configuração atual deste módulo indica que um curso Moodle pode estar associado a mais de oferta de disciplina,
+    é possível agrupar mais de um oferta de disciplina para um mesmo curso Moodle. Para tal, observe a existência da coluna denominada de \'Mover para\'.
+    Ao ser selecionado um grupo numa de suas caixas de seleção, a oferta de disciplina correspondente será movida para o grupo selecionado.</P>
+    <P>A operação de movimentação de uma oferta de disciplina entre grupos não é possível no caso do grupo ser composto por uma única oferta de disciplina e
+    este grupo já estar associado a um curso Moodle. Neste caso é necessário remover primeiramente o curso Moodle.</P>
+    <P>Somente as ofertas de disciplinas que tiverem sido associadas a algum cursos Moodle poderão ser exportadas posteriormente.</P>';
+$string['many_to_one_help'] = '<P>Abaixo aparecem listadas à esquerda as ofertas de disciplinas registradas no SAAS e à direita os cursos Moodle que correspondentes a
+    essas ofertas de disciplinas. Dado que a configuração atual deste módulo indica que pode haver mais de um curso Moodle para uma mesma
+    oferta de disciplina, é possível adicionar mais de um curso Moodle para cada oferta de disciplina.</P>
+    <P>Somente as ofertas de disciplinas que tiverem sido associadas a algum cursos Moodle poderão ser exportadas posteriormente.</P>';
+
+$string['title_no_polo'] = 'A configuração atual indica que não há no Moodle forma de agrupar estudantes por polo';
 $string['polo_mapping'] = 'Mapeamento de polos';
 $string['polo_mapping_help'] = 'Indica a forma como os polos são mapeados na estrutura de cursos do Moodle';
 $string['no_polo'] = 'Não há no Moodle forma de agrupar estudantes por polo';
 $string['group_to_polo'] = 'São utilizados grupos nos cursos Moodle para agrupar estudantes por polo';
 $string['category_to_polo'] = 'Os polos são identificados por categorias no Moodle';
 $string['course_to_polo'] = 'Os polos são identificados por cursos no Moodle';
-$string['title_no_polo'] = 'A configuração atual indica que não há no Moodle forma de agrupar estudantes por polo';
 
-$string['group_to_polo_msg1'] = 'Estão listados abaixo (à esquerda) os grupos existentes nos cursos Moodle que
-    foram mapeados na aba \'Mapeamento de disciplinas\'.
-    A cada grupo pode ser associado um polo do SAAS, fato que indica que neste grupo estão inscritos apenas
-    estudantes e tutores deste polo.';
-$string['group_to_polo_msg2'] = 'Este mapeamento define a relação de estudantes e tutores com seus respectivos polos a serem
-    exportados para o SAAS, conforme descrito no \'Cenário A\' da aba de orientações.
-    Há alguns grupos Moodle que podem não ter sido ainda mapeados. Estes grupos aparecem em <span style="color:red">vermelho</span> abaixo, sendo que à direita
-    (Polo SAAS) já aparece uma sugestão de mapeamento em função de haver um nome de polo exatamente com o mesmo nome do grupo.
-    Caso não haja tal polo, é sugerida a opção indicando que este grupo não corresponde a polo do SAAS.';
+$string['group_to_polo_help'] = '<P>Estão listados abaixo (à esquerda) os grupos existentes nos cursos Moodle que foram mapeados
+    na aba \'Mapeamento de disciplinas\'. A cada grupo pode, agora, ser associado um polo do SAAS, fato que indica que neste grupo
+    estão inscritos apenas estudantes e tutores desse polo.</P>
+    <P>Este mapeamento define a relação de estudantes e tutores com seus respectivos polos a serem
+    exportados para o SAAS, conforme descrito no \'Cenário A\' da aba de orientações.</P>
+    <p>Há alguns grupos Moodle que podem não ter sido ainda mapeados. Estes grupos aparecem em <span style="color:red">vermelho</span> abaixo,
+    sendo que à direita (Polo SAAS) aparece uma sugestão de mapeamento em função de haver um nome de polo exatamente com o mesmo nome do grupo.
+    Caso não haja tal polo, é apresentada a opção que indica que este grupo não corresponde a polo do SAAS.</P>';
 
-$string['category_to_polo_msg1'] = 'É apresentada abaixo (à esquerda) a hierarquia de categorias do Moodle para as quais
+$string['category_to_polo_help'] = '<P>É apresentada abaixo (à esquerda) a hierarquia de categorias do Moodle para as quais
     há algum curso que tenha sido mapeado na aba \'Mapeamento de disciplinas\'.
     A cada categoria (uma por ramo da hierarquia) pode ser associado um polo do SAAS, fato que indica que nos cursos Moodle
-    que estejam nesta categoria (ou em suas sub-categorias) estão inscritos apenas estudantes e tutores desse polo.';
-$string['category_to_polo_msg2'] = 'Este mapeamento define a relação de estudantes e tutores com seus respectivos polos a serem
-    exportados para o SAAS, conforme descrito no \'Cenário B\' da aba de orientações.';
+    que estejam nesta categoria (ou em suas sub-categorias) estão inscritos apenas estudantes e tutores desse polo.</P>
+    <P>Este mapeamento define a relação de estudantes e tutores com seus respectivos polos a serem
+    exportados para o SAAS, conforme descrito no \'Cenário B\' da aba de orientações.</P>';
 
-$string['course_to_polo_msg1'] = 'É apresentada abaixo (à esquerda) a hierarquia de categorias e cursos do Moodle para as quais
+$string['course_to_polo_help'] = '<P>É apresentada abaixo (à esquerda) a hierarquia de categorias e cursos do Moodle para as quais
     haja algum curso que tenha sido mapeado na aba \'Mapeamento de disciplinas\'.
     A cada um dos curso listados pode ser associado um polo do SAAS, fato que indica que neste curso Moodle estão inscritos apenas
-    estudantes e tutores desse polo.';
-$string['course_to_polo_msg2'] = 'Este mapeamento define a relação de estudantes e tutores com seus respectivos polos a serem
-    exportados para o SAAS, conforme descrito no \'Cenário C\' da aba de orientações.';
+    estudantes e tutores desse polo.</P>
+    <p>Este mapeamento define a relação de estudantes e tutores com seus respectivos polos a serem
+    exportados para o SAAS, conforme descrito no \'Cenário C\' da aba de orientações.</P>';
 
 //------------------------------------------------------------------
 

@@ -74,7 +74,7 @@ function saas_show_categories_tree($group_map_id) {
     $best_options = array();
     if(count($ods) == 1) {
         $od = reset($ods);
-        $title_ods = 'Disciplina: ' . $od->nome . ' (' . $saas->format_date($od->inicio, $od->fim) . ')';
+        $title_ods = 'Disciplina: ' . html_writer::tag('font', $od->nome . ' (' . $saas->format_date($od->inicio, $od->fim) . ')', array('color'=>'darkblue'));
 
         if(count($ods) == 1) {
             $distances = array();
@@ -100,23 +100,31 @@ function saas_show_categories_tree($group_map_id) {
         foreach($ods AS $od) {
             $title_ods .= html_writer::tag('LI', $od->nome . ' (' . $saas->format_date($od->inicio, $od->fim) . ')');
         }
-        $title_ods = 'Disciplinas:' . html_writer::tag('UL', $title_ods);
+        $title_ods = 'Disciplinas:' . html_writer::tag('UL', html_writer::tag('font', $title_ods, array('color'=>'darkblue')));
     }
     $oc = $DB->get_record('saas_ofertas_cursos', array('uid'=>$od->oferta_curso_uid));
 
-    echo html_writer::tag('div', $OUTPUT->heading('Seleção de curso Moodle', 3), array('align'=>'center'));
+    echo html_writer::start_tag('div', array('align'=>'center'));
+    echo $OUTPUT->heading(get_string('course_selection', 'report_saas_export') .
+                    $OUTPUT->help_icon('course_selection', 'report_saas_export'), 3);
+    echo html_writer::end_tag('div', array('align'=>'center'));
+
     if (strpos(__FILE__, '/admin/report/') !== false) {
         $versionclass = "saas_tree_20";
     } else {
         $versionclass = "saas_tree_22";
     }
-    echo html_writer::start_tag('div', array('class'=>'saas_tree saas_area_normal '.$versionclass));
-    print $OUTPUT->heading("Curso: {$oc->nome} ({$oc->ano}/{$oc->periodo})", 4);
+
+    echo html_writer::start_tag('div', array('class'=>'saas_tree saas_area_normal'));
+    print $OUTPUT->heading('Curso: '. html_writer::tag('font', "{$oc->nome} ({$oc->ano}/{$oc->periodo})", array('color'=>'darkblue')), 4);
     print $OUTPUT->heading($title_ods, 4);
+    echo html_writer::end_tag('div');
 
     if(!empty($best_options)) {
+        echo html_writer::start_tag('div', array('align'=>'center'));
+        print html_writer::empty_tag('BR');
+        print $OUTPUT->heading('Opções com nomes mais similares', 3);
         print $OUTPUT->box_start('generalbox boxwidthwide boxaligncenter');
-        print $OUTPUT->heading('Melhores opções', 4);
         $table = new html_table();
         $table->attributes = array('class'=>'saas_table');
         $table->head = array('Curso Moodle', 'Distância de Levenshtein');
@@ -133,8 +141,14 @@ function saas_show_categories_tree($group_map_id) {
         print html_writer::table($table);
 
         print $OUTPUT->box_end();
+        echo html_writer::end_tag('div');
     }
 
+    echo html_writer::start_tag('div', array('align'=>'center'));
+    print $OUTPUT->heading('Hierarquia de classe/cursos Moodle disponíveis para seleção', 3);
+    echo html_writer::end_tag('div');
+
+    echo html_writer::start_tag('div', array('class'=>'saas_tree saas_area_normal '.$versionclass));
     echo html_writer::start_tag('ul');
     saas_show_categories($group_map_id, $categories, $category_path);
     echo html_writer::end_tag('ul');
@@ -699,6 +713,14 @@ function saas_show_table_ofertas_curso_disciplinas($oferta_curso_id=0, $show_cou
         }
     }
 
+    print html_writer::start_tag('DIV', array('align'=>'center'));
+    print $OUTPUT->box_start('generalbox boxaligncenter');
+    print html_writer::tag('html','Clique no nome da oferta de discplina para visualizar detalhes sobre dados a serem exportados.');
+    print $OUTPUT->box_end();
+    print html_writer::end_tag('DIV');
+
+
+
     print html_writer::start_tag('DIV', array('class'=>'saas_area_large'));
 
     $role_types = $saas->get_role_types('disciplinas');
@@ -849,10 +871,8 @@ function saas_show_export_options($url, $selected_ocs=true, $selected_ods=true, 
         $rows[] = $row;
     }
 
-    print html_writer::start_tag('DIV', array('class'=>'saas_area_normal'));
-    print $OUTPUT->box_start('generalbox boxwidthwide boxaligncenter');
-    print html_writer::tag('p', 'Selecione abaixo as ofertas de curso, de disciplinas e polos cujos dados devam ser exportados para o SAAS');
-    print $OUTPUT->box_end();
+    print html_writer::start_tag('DIV', array('align'=>'center'));
+    print $OUTPUT->heading('Exportação de dados para o SAAS' .  $OUTPUT->help_icon('export', 'report_saas_export'), 3);
     print html_writer::end_tag('DIV');
 
     print html_writer::start_tag('DIV', array('class'=>'saas_area_large'));

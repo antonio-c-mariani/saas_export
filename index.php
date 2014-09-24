@@ -41,14 +41,14 @@ $baseurl = new moodle_url('index.php');
 
 $saas = new saas();
 
-$polo_mapping = $saas->get_config('polo_mapping');
+$polo_mapping_type = $saas->get_config('polo_mapping');
 $may_export = has_capability('report/saas_export:export', $syscontext);
 
 $tab_items = array('guidelines', 'settings');
 if($saas->is_configured()) {
     $tab_items[] = 'saas_data';
     $tab_items[] = 'course_mapping';
-    if($polo_mapping != 'no_polo') {
+    if($polo_mapping_type != 'no_polo') {
         $tab_items[] = 'polo_mapping';
     }
     $tab_items[] = 'overview';
@@ -106,7 +106,7 @@ switch ($action) {
         $saas_data_tab_items = array('ofertas'    => false,
                                      'add_oferta' => 'report/saas_export:export'
                                      );
-        if($polo_mapping != 'no_polo') {
+        if($polo_mapping_type != 'no_polo') {
             $saas_data_tab_items['polos'] = false;
             $saas_data_tab_items['add_polo'] = 'report/saas_export:export';
         }
@@ -165,6 +165,7 @@ switch ($action) {
                 if(optional_param('reload', true, PARAM_INT)) {
                     $saas->load_saas_data(true);
                 }
+                print html_writer::tag('DIV', $OUTPUT->heading('Ofertas de cursos e de disciplinas definidas no SAAS', 3), array('align'=>'center'));
                 saas_show_table_ofertas_curso_disciplinas(0, false);
                 break;
             case 'add_oferta':
@@ -181,6 +182,7 @@ switch ($action) {
                 break;
             case 'polos':
                 $saas->load_polos_saas();
+                print html_writer::tag('DIV', $OUTPUT->heading('Polos definidos no SAAS', 3), array('align'=>'center'));
                 saas_show_table_polos();
                 break;
             case 'add_polo':
@@ -248,6 +250,12 @@ switch ($action) {
             if(!isset($ocid)) {
                 $ocid = optional_param('ocid', -1, PARAM_INT);
             }
+
+            $course_mapping_type = $saas->get_config('course_mapping');
+            print html_writer::start_tag('DIV', array('align'=>'center'));
+            print $OUTPUT->heading('Mapeamento de Ofertas de disciplinas para cursos Moodle' .
+                                   $OUTPUT->help_icon($course_mapping_type, 'report_saas_export'), 3);
+            print html_writer::end_tag('DIV');
             saas_show_course_mappings($ocid);
         }
 
@@ -258,7 +266,6 @@ switch ($action) {
         print_tabs(array($tabs), $action);
 
         if($DB->record_exists('saas_polos', array('enable'=>1))) {
-            $polo_mapping_type = $saas->get_config('polo_mapping');
             switch ($polo_mapping_type) {
                 case 'no_polo':
                     print $OUTPUT->heading(get_string('title_no_polo', 'report_saas_export'), 4);
@@ -286,7 +293,7 @@ switch ($action) {
         print_tabs(array($tabs), $action);
 
         $saas_data_tab_items = array('ofertas');
-        if($polo_mapping != 'no_polo') {
+        if($polo_mapping_type != 'no_polo') {
             $saas_data_tab_items[] = 'polos';
         }
         $saas_data_tabs = array();
