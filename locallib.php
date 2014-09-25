@@ -109,12 +109,6 @@ function saas_show_categories_tree($group_map_id) {
                     $OUTPUT->help_icon('course_selection', 'report_saas_export'), 3);
     echo html_writer::end_tag('div', array('align'=>'center'));
 
-    if (strpos(__FILE__, '/admin/report/') !== false) {
-        $versionclass = "saas_tree_20";
-    } else {
-        $versionclass = "saas_tree_22";
-    }
-
     echo html_writer::start_tag('div', array('class'=>'saas_tree saas_area_normal'));
     print $OUTPUT->heading('Curso: '. html_writer::tag('font', "{$oc->nome} ({$oc->ano}/{$oc->periodo})", array('color'=>'darkblue')), 4);
     print $OUTPUT->heading($title_ods, 4);
@@ -149,7 +143,7 @@ function saas_show_categories_tree($group_map_id) {
     print $OUTPUT->heading('Hierarquia de classe/cursos Moodle disponíveis para seleção', 3);
     echo html_writer::end_tag('div');
 
-    echo html_writer::start_tag('div', array('class'=>'saas_tree saas_area_normal '.$versionclass));
+    echo html_writer::start_tag('div', array('class'=>'saas_tree saas_area_normal'));
     echo html_writer::start_tag('ul');
     saas_show_categories($group_map_id, $categories, $category_path);
     echo html_writer::end_tag('ul');

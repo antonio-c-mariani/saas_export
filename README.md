@@ -8,7 +8,7 @@ Os dados exportados incluem:
 - Identificador, nome, e-mail e CPF de professores, estudantes e tutores vinculados às ofertas de disciplinas;
 - Relacionamento de professores, estudantes e tutores a distância com ofertas de disciplinas;
 - Relacionamento de estudantes e tutores presenciais com polos.
-- Dados adicionais de estudantes (últimos acesssos e notas)
+- Dados adicionais de estudantes (últimos acessos e notas)
 
 DOWNLOAD
 ========
@@ -63,13 +63,13 @@ execute uma das opções abaixo do comando "git clone":
         SSH:
             git clone git@github.com:saasexport/saas_export.git saas_export
 
-COMPLETANDO INSTALAÇÃO
-----------------------
+COMPLETANDO A INSTALAÇÃO
+------------------------
 
 Independente da forma de instalação (via arquivo .zip ou comando git) é necessário completar o processo de instalação.
 Para tal, acesse o Moodle via navegador e como administrador visite a página:
     "Administração do site" => "Avisos"
-da caixa de "Administração". O Moodle deve automaticamente reconhecer a existência o plugin e completar a instalação.
+da caixa de "Administração". O Moodle deve automaticamente reconhecer a existência do plugin e completar a instalação.
 Caso isto não ocorra, verifique se a estrutura de pastas e arquivos está conforme indicado acima e se a pasta
 "saas_export" (e suas sub-pastas e arquivos) estão com permissões tais que o servidor de www (apache, nginx, etc)
 tenham acesso de leitura a elas.
