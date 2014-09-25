@@ -243,6 +243,18 @@ class saas {
         }
     }
 
+    function get_concatenated_categories_names($categoryid) {
+        global $DB;
+
+        $sql = "SELECT ccp.id, ccp.name
+                  FROM {course_categories} cc
+                  JOIN {course_categories} ccp ON (ccp.id = cc.id OR cc.path LIKE CONCAT('%/',ccp.id,'/%'))
+                 WHERE cc.id = {$categoryid}
+              ORDER BY ccp.depth";
+        $cats = $DB->get_records_sql_menu($sql);
+        return implode('/', $cats);
+    }
+
     // Gets para os dados já salvos no plugin
     //---------------------------------------------------------------------------------------------------
 
@@ -803,7 +815,7 @@ class saas {
         $role_types = $this->get_role_types('polos');
 
         if($id_polo) {
-            $polos = array($id_polo=>$DB->get_record('saas_polo', array('id'=>$id_polo)));
+            $polos = array($id_polo=>$DB->get_record('saas_polos', array('id'=>$id_polo)));
         } else {
             $polos = $this->get_polos_by_oferta_curso($pocid);
             $polos = $polos[$pocid];
@@ -870,7 +882,7 @@ class saas {
         if($pocid) {
             $ofertas = $this->get_ofertas_disciplinas($pocid, true);
             $ofertas = $ofertas[$pocid];
-        } else if($odid) {
+        } else if($podid) {
             $ofertas = array($podid=>$this->get_oferta_disciplina($podid));
         } else {
             return;

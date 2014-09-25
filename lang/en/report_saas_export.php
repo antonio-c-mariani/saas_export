@@ -23,7 +23,12 @@ $string['fim'] = 'Fim';
 $string['periodo'] = 'Período';
 
 $string['course_selection'] = 'Seleção de curso Moodle';
-$string['course_selection_help'] = 'abc';
+$string['course_selection_help'] = '<P>Clique num dos cursos Moodle abaixo para associá-lo à oferta de disciplina indicada
+    nesta página.</P>
+    <P>Para facilitar o processo, de início são apresentadas algumas opções de cursos cujos nomes mais se
+    assemelham à da oferta de disciplina, baseado na Distância Levenshtein. Caso o curso Moodle não esteja nesta lista,
+    outra opção é navegar pela hierarquia de classes até localizar o curso de interesse. Nesta hierarquia
+    são apresentados apenas os cursos que ainda não foram associados a outra oferta de disciplina.</P>';
 
 $string['guidelines'] = 'Orientações';
 $string['settings'] = 'Configurações';

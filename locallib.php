@@ -127,15 +127,16 @@ function saas_show_categories_tree($group_map_id) {
         print $OUTPUT->box_start('generalbox boxwidthwide boxaligncenter');
         $table = new html_table();
         $table->attributes = array('class'=>'saas_table');
-        $table->head = array('Curso Moodle', 'Distância de Levenshtein');
+        $table->head = array('Curso Moodle', 'Distância Levenshtein');
         $table->colclasses = array('leftalign', 'centeralign');
         $table->tablealign = 'center';
 
         $table->data = array();
         foreach($best_options AS $c) {
+            $cat_names = $saas->get_concatenated_categories_names($c->category);
             $url = new moodle_url('index.php', array('action'=>'course_mapping', 'subaction'=>'add', 'courseid'=>$c->id,'group_map_id'=>$group_map_id));
-            $link = html_writer::link($url, $c->fullname);
-            $table->data[] = array($link, $c->distance);
+            $link = html_writer::link($url, $c->fullname, array('title'=>'Clique para selecionar este curso'));
+            $table->data[] = array(html_writer::tag('small', $cat_names) . '<BR>' . $link, $c->distance);
         }
 
         print html_writer::table($table);
