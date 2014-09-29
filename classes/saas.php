@@ -189,8 +189,8 @@ class saas {
             $record = new stdClass();
             $record->uid = $oferta_disciplina->uid;
             $record->disciplina_uid = $oferta_disciplina->disciplina->uid;
-            $record->inicio = empty($oferta_disciplina->inicio) ? 0 : $oferta_disciplina->inicio;
-            $record->fim = empty($oferta_disciplina->fim) ? 0 : $oferta_disciplina->fim;
+            $record->inicio = !isset($oferta_disciplina->inicio) || empty($oferta_disciplina->inicio) ? '' : $oferta_disciplina->inicio;
+            $record->fim = !isset($oferta_disciplina->fim ) || empty($oferta_disciplina->fim) ? '' : $oferta_disciplina->fim;
             $record->oferta_curso_uid = $oferta_disciplina->ofertaCurso->uid;
             $record->enable = 1;
 
