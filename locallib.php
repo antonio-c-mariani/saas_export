@@ -814,6 +814,7 @@ function saas_show_export_options($url, $selected_ocs=true, $selected_ods=true, 
     }
 
     $rows = array();
+    $show_form = false;
     foreach($ofertas_cursos AS $ocid=>$oc) {
         if(!isset($ofertas_disciplinas_oc[$ocid]) && empty($polos_oc[$ocid])) {
             continue;
@@ -832,6 +833,7 @@ function saas_show_export_options($url, $selected_ocs=true, $selected_ods=true, 
 
         $cell = new html_table_cell();
         if(isset($ofertas_disciplinas_oc[$ocid])) {
+            $show_form = true;
             $cell->text = html_writer::start_tag('UL', array('style'=>'list-style-type: none;'));
             $params = array_merge($disabled, array('class'=>'od_'.$tag_checkbox));
             foreach($ofertas_disciplinas_oc[$ocid] AS $odid=>$od) {
@@ -852,6 +854,7 @@ function saas_show_export_options($url, $selected_ocs=true, $selected_ods=true, 
 
         $cell = new html_table_cell();
         if(!empty($polos_oc[$ocid])) {
+            $show_form = true;
             $cell->text = html_writer::start_tag('UL', array('style'=>'list-style-type: none;'));
             $params = array_merge($disabled, array('class'=>'polo_'.$tag_checkbox));
             foreach($polos_oc[$ocid] AS $plid=>$pl) {
@@ -875,29 +878,32 @@ function saas_show_export_options($url, $selected_ocs=true, $selected_ods=true, 
     print $OUTPUT->heading('Exportação de dados para o SAAS' .  $OUTPUT->help_icon('export', 'report_saas_export'), 3);
     print html_writer::end_tag('DIV');
 
-    print html_writer::start_tag('DIV', array('class'=>'saas_area_large'));
-    print $OUTPUT->box_start('generalbox boxaligncenter');
-    print html_writer::start_tag('form', array('method'=>'post', 'action'=>$url));
+    if($show_form) {
+        print html_writer::start_tag('DIV', array('class'=>'saas_area_large'));
+        print $OUTPUT->box_start('generalbox boxaligncenter');
+        print html_writer::start_tag('form', array('method'=>'post', 'action'=>$url));
 
-    $table = new html_table();
-    $table->head = array('Oferta de Curso', 'Ofertas de disciplina', 'Polos');
-    $table->colclasses = array('leftalign', 'leftalign', 'leftalign', 'leftalign');
-    $table->data = $rows;
-    $table->attributes = array('class'=>'saas_table');
-    $table->tablealign = 'center';
-    $table->cellpadding = 5;
-    print html_writer::table($table);
+        $table = new html_table();
+        $table->head = array('Oferta de Curso', 'Ofertas de disciplina', 'Polos');
+        $table->colclasses = array('leftalign', 'leftalign', 'leftalign', 'leftalign');
+        $table->data = $rows;
+        $table->attributes = array('class'=>'saas_table');
+        $table->tablealign = 'center';
+        $table->cellpadding = 5;
+        print html_writer::table($table);
 
 
-    print html_writer::start_tag('DIV', array('class'=>'centeralign'));
-    print html_writer::checkbox('send_user_details', 'ok', true, 'Enviar detalhes de estudantes (últimos acessos e notas)');
-    print html_writer::empty_tag('br');
-    print html_writer::empty_tag('input', array('type'=>'submit', 'name'=>'export', 'value'=>s(get_string('saas_export:export', 'report_saas_export')), 'class'=>'boxaligncenter'));
-    print html_writer::end_tag('DIV');
-    print html_writer::end_tag('form');
+        print html_writer::start_tag('DIV', array('class'=>'centeralign'));
+        print html_writer::checkbox('send_user_details', 'ok', true, 'Enviar detalhes de estudantes (últimos acessos e notas)');
+        print html_writer::empty_tag('br');
+        print html_writer::empty_tag('input', array('type'=>'submit', 'name'=>'export', 'value'=>s(get_string('saas_export:export', 'report_saas_export')), 'class'=>'boxaligncenter'));
+        print html_writer::end_tag('DIV');
+        print html_writer::end_tag('form');
 
-    print $OUTPUT->box_end();
-    print html_writer::end_tag('DIV');
+        print $OUTPUT->box_end();
+    } else {
+        print $OUTPUT->heading('Não há dados a serem exportados', 4);
+    }
 }
 
 function saas_show_course_mappings($pocid=0) {

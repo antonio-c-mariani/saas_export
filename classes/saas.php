@@ -344,8 +344,8 @@ class saas {
 
         $sql = "SELECT DISTINCT od.*, d.nome, oc.id as ocid, cm.id IS NOT NULL AS mapped
                   FROM {saas_ofertas_cursos} oc
-             LEFT JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1)
-             LEFT JOIN {saas_disciplinas} d ON (d.uid = od.disciplina_uid AND d.enable = 1)
+                  JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1)
+                  JOIN {saas_disciplinas} d ON (d.uid = od.disciplina_uid AND d.enable = 1)
              LEFT JOIN {saas_map_course} cm ON (cm.group_map_id = od.group_map_id)
                  WHERE oc.enable = 1
                    {$cond}
