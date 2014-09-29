@@ -66,9 +66,8 @@ function saas_show_categories_tree($group_map_id) {
 
     $sql = "SELECT od.*, d.nome
               FROM {saas_ofertas_disciplinas} od
-              JOIN {saas_disciplinas} d ON (d.uid = od.disciplina_uid)
+              JOIN {saas_disciplinas} d ON (d.uid = od.disciplina_uid AND d.enable = 1)
              WHERE od.enable = 1
-               AND d.enable = 1
                AND od.group_map_id = :group_map_id";
     $ods = $DB->get_records_sql($sql, array('group_map_id'=>$group_map_id));
     $best_options = array();
@@ -397,9 +396,9 @@ function saas_mount_category_tree_map_categories_polos($categories, &$polos, &$r
 //---------------------------------------------------------------------------------------------------
 
 function saas_show_table_polos() {
-    global $DB, $OUTPUT;
+    global $DB, $OUTPUT, $saas;
 
-    $polos = $DB->get_records('saas_polos', array('enable'=>1), 'nome');
+    $polos = $saas->get_polos();
 
     print html_writer::start_tag('DIV', array('class'=>'saas_area_normal'));
 
@@ -477,7 +476,7 @@ function saas_show_overview_polos($ocid, $poloid) {
 function saas_show_table_overview_polos($polos) {
     global $DB, $OUTPUT, $saas;
 
-    $ofertas_cursos = $DB->get_records('saas_ofertas_cursos', array('enable'=>1), 'nome, ano, periodo');
+    $ofertas_cursos = $saas->get_ofertas_cursos();
 
     $counts = $saas->get_polos_count();
     $role_types = $saas->get_role_types('polos');
@@ -816,7 +815,7 @@ function saas_show_export_options($url, $selected_ocs=true, $selected_ods=true, 
 
     $rows = array();
     foreach($ofertas_cursos AS $ocid=>$oc) {
-        if(!isset($ofertas_disciplinas_oc[$ocid]) && !isset($polos_oc[$ocid])) {
+        if(!isset($ofertas_disciplinas_oc[$ocid]) && empty($polos_oc[$ocid])) {
             continue;
         }
 
@@ -852,7 +851,7 @@ function saas_show_export_options($url, $selected_ocs=true, $selected_ods=true, 
         $row->cells[] = $cell;
 
         $cell = new html_table_cell();
-        if(isset($polos_oc[$ocid])) {
+        if(!empty($polos_oc[$ocid])) {
             $cell->text = html_writer::start_tag('UL', array('style'=>'list-style-type: none;'));
             $params = array_merge($disabled, array('class'=>'polo_'.$tag_checkbox));
             foreach($polos_oc[$ocid] AS $plid=>$pl) {
@@ -933,7 +932,7 @@ function saas_show_course_mappings($pocid=0) {
     $sql = "SELECT oc.id as ocid, od.id as odid, od.group_map_id, od.inicio, od.fim, d.nome
               FROM {saas_ofertas_cursos} oc
               JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1)
-              JOIN {saas_disciplinas} d ON (d.uid = od.disciplina_uid)
+              JOIN {saas_disciplinas} d ON (d.uid = od.disciplina_uid AND d.enable = 1)
              WHERE oc.enable = 1
                {$cond}
           ORDER BY oc.nome, od.group_map_id ,d.nome";

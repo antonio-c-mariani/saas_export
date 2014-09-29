@@ -304,8 +304,15 @@ class saas {
 
         $sql .= " ORDER BY sp.nome, sp.cidade, sp.estado";
 
-        $recs = $DB->get_recordset_sql($sql, $params);
         $polos = array();
+        $ocs = $this->get_ofertas_cursos();
+        if(!empty($ocs)) {
+            foreach($ocs AS $ocid=>$oc) {
+                $polos[$ocid] = array();
+            }
+        }
+
+        $recs = $DB->get_recordset_sql($sql, $params);
         foreach($recs as $rec) {
             $polos[$rec->ocid][$rec->id] = $rec;
         }
@@ -330,7 +337,7 @@ class saas {
             $params['id'] = $oferta_curso_id;
         }
 
-        $ofertas = $DB->get_records('saas_ofertas_cursos', $params, 'nome, ano, periodo');
+        $ofertas = $this->get_ofertas_cursos();
         foreach($ofertas AS $ocid=>$oc) {
             $ofertas[$ocid]->ofertas_disciplinas = array();
         }
@@ -356,8 +363,9 @@ class saas {
 
         $sql = "SELECT od.*, d.nome
                   FROM {saas_ofertas_disciplinas} od
-                  JOIN {saas_disciplinas} d ON (d.uid = od.disciplina_uid)
-                 WHERE od.id = :odid";
+                  JOIN {saas_disciplinas} d ON (d.uid = od.disciplina_uid AND d.enable = 1)
+                 WHERE od.id = :odid
+                   AND od.enable = 1";
         return $DB->get_record_sql($sql, array('odid' => $oferta_disciplina_id));
     }
 
@@ -381,11 +389,10 @@ class saas {
 
         $sql = "SELECT DISTINCT od.*, d.nome, oc.id as ocid
                   FROM {saas_ofertas_disciplinas} od
-                  JOIN {saas_ofertas_cursos} oc ON (oc.uid = od.oferta_curso_uid)
-                  JOIN {saas_disciplinas} d ON (d.uid = od.disciplina_uid)
+                  JOIN {saas_ofertas_cursos} oc ON (oc.uid = od.oferta_curso_uid AND oc.enable = 1)
+                  JOIN {saas_disciplinas} d ON (d.uid = od.disciplina_uid AND d.enable = 1)
                   {$join}
                  WHERE od.enable = 1
-                   AND oc.enable = 1
                    {$where}";
         $recs = $DB->get_recordset_sql($sql, $params);
         $ofertas = array();
@@ -593,8 +600,8 @@ class saas {
 
     function get_polos_menu() {
         global $DB;
-        
-        return $DB->get_records_menu('saas_polos', null, 'nome', "id, CONCAT(nome, ' (', cidade, '/', estado, ')') as nome");
+
+        return $DB->get_records_menu('saas_polos', array('enable'=>1), 'nome', "id, CONCAT(nome, ' (', cidade, '/', estado, ')') as nome");
     }
 
     function get_polos_count() {

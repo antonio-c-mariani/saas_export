@@ -209,7 +209,7 @@ switch ($action) {
                     $group_map_id = required_param('group_map_id', PARAM_INT);
                     $od = $DB->get_record('saas_ofertas_disciplinas', array('id'=>$odid), 'id, group_map_id, oferta_curso_uid', MUST_EXIST);
                     if($group_map_id == -1) {
-                        $max = $DB->get_field_sql("SELECT MAX(group_map_id) FROM {saas_ofertas_disciplinas}");
+                        $max = $DB->get_field_sql("SELECT MAX(group_map_id) FROM {saas_ofertas_disciplinas} od");
                         $od->group_map_id = empty($max) ? 1 : $max+1;
                     } else {
                         $od->group_map_id = $group_map_id;
@@ -232,7 +232,7 @@ switch ($action) {
                     $map->courseid = $courseid;
                     $map->group_map_id = $group_map_id;
                     $DB->insert_record('saas_map_course', $map);
-                    $ods = $DB->get_records('saas_ofertas_disciplinas', array('group_map_id'=>$group_map_id), null, 'id, oferta_curso_uid');
+                    $ods = $DB->get_records('saas_ofertas_disciplinas', array('group_map_id'=>$group_map_id, 'enable'=>1), null, 'id, oferta_curso_uid');
                     $od = reset($ods);
                     $ocid = $DB->get_field('saas_ofertas_cursos', 'id', array('uid'=>$od->oferta_curso_uid));
 
