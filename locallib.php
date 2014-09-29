@@ -124,6 +124,7 @@ function saas_show_categories_tree($group_map_id) {
         $table->head = array('Curso Moodle', 'Distância Levenshtein');
         $table->colclasses = array('leftalign', 'centeralign');
         $table->tablealign = 'center';
+        $table->cellpadding = 5;
 
         $table->data = array();
         foreach($best_options AS $c) {
@@ -427,6 +428,7 @@ function saas_show_table_polos() {
         print $OUTPUT->box_start('generalbox boxwidthwide boxaligncenter');
         $table->attributes = array('class'=>'saas_table');
         $table->tablealign = 'center';
+        $table->cellpadding = 5;
         print html_writer::table($table);
         print $OUTPUT->box_end();
     }
@@ -532,6 +534,7 @@ function saas_show_table_overview_polos($polos) {
         $table->data = $rows;
         $table->attributes = array('class'=>'saas_table');
         $table->tablealign = 'center';
+        $table->cellpadding = 5;
         print html_writer::table($table);
 
         print $OUTPUT->box_end();
@@ -574,6 +577,7 @@ function saas_show_users_oferta_curso_polo($ocid, $poloid, $sql, $params) {
             $table->data = $rows[$role];
             $table->attributes = array('class'=>'saas_table');
             $table->tablealign = 'center';
+            $table->cellpadding = 5;
             print html_writer::table($table);
             print $OUTPUT->box_end();
             print html_writer::end_tag('DIV');
@@ -663,6 +667,7 @@ function saas_show_users_oferta_disciplina($ofer_disciplina_id) {
             print $OUTPUT->heading(get_string($r . 's', 'report_saas_export'), 3);
             $table->attributes = array('class'=>'saas_table');
             $table->tablealign = 'center';
+            $table->cellpadding = 5;
             print html_writer::table($table);
             print $OUTPUT->box_end();
             print html_writer::end_tag('DIV');
@@ -786,6 +791,7 @@ function saas_show_table_ofertas_curso_disciplinas($oferta_curso_id=0, $show_cou
             print $OUTPUT->heading("{$oc->nome} ({$oc->ano}/{$oc->periodo})", 3);
             $table->attributes = array('class'=>'saas_table');
             $table->tablealign = 'center';
+            $table->cellpadding = 5;
             print html_writer::table($table);
             print $OUTPUT->box_end();
         }
@@ -880,6 +886,7 @@ function saas_show_export_options($url, $selected_ocs=true, $selected_ods=true, 
     $table->data = $rows;
     $table->attributes = array('class'=>'saas_table');
     $table->tablealign = 'center';
+    $table->cellpadding = 5;
     print html_writer::table($table);
 
 

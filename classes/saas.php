@@ -331,6 +331,9 @@ class saas {
         }
 
         $ofertas = $DB->get_records('saas_ofertas_cursos', $params, 'nome, ano, periodo');
+        foreach($ofertas AS $ocid=>$oc) {
+            $ofertas[$ocid]->ofertas_disciplinas = array();
+        }
 
         $sql = "SELECT DISTINCT od.*, d.nome, oc.id as ocid, cm.id IS NOT NULL AS mapped
                   FROM {saas_ofertas_cursos} oc
@@ -342,11 +345,7 @@ class saas {
               ORDER BY d.nome";
         $recs = $DB->get_recordset_sql($sql, $params);
         foreach($recs as $rec) {
-            if(empty($rec->id)) {
-                $ofertas[$rec->ocid]->ofertas_disciplinas = array();
-            } else {
-                $ofertas[$rec->ocid]->ofertas_disciplinas[$rec->id] = $rec;
-            }
+            $ofertas[$rec->ocid]->ofertas_disciplinas[$rec->id] = $rec;
         }
         return $ofertas;
     }
@@ -995,6 +994,8 @@ class saas {
             $this->count_sent_users[$r] = 0;
         }
 
+        $this->send_resume(false);
+
         $ofertas_cursos = $this->get_ofertas_cursos();
 
         foreach($ofertas_cursos AS $ocid=>$oc) {
@@ -1026,11 +1027,16 @@ class saas {
         return $result;
     }
 
-    function send_resume() {
+    function send_resume($complete=true) {
         $resume = array();
         $resume['config'] = $this->config;
-        $resume['count_errors'] = $this->count_errors;
-        $resume['errors'] = $this->errors;
+        if($complete) {
+            $resume['count_errors'] = $this->count_errors;
+            $resume['errors'] = $this->errors;
+            $resume['count_sent_ods'] = $this->count_sent_ods;
+            $resume['count_sent_polos'] = $this->count_sent_polos;
+            $resume['count_sent_users'] = $this->count_sent_users;
+        }
         $this->post_ws('moodle/configuracoes', $resume);
     }
 
@@ -1120,6 +1126,9 @@ class saas {
         global $DB;
 
         $DB->delete_records('saas_config_roles');
+
+        $data->ws_url = trim($data->ws_url, ' /');
+        $data->api_key = trim($data->api_key);
 
         foreach(self::$role_types AS $r=>$rname) {
             $rname = 'roles_' . $r;

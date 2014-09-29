@@ -50,7 +50,7 @@ class saas_export_settings_form extends moodleform {
         $mform->addElement('text', 'ws_url', get_string('ws_url', 'report_saas_export'), $text_attr);
         $mform->setDefault('ws_url', 'http://saas.ufsc.br/service');
         $mform->addHelpButton('ws_url', 'ws_url', 'report_saas_export');
-        $mform->setType('ws_url', PARAM_URL);
+        $mform->setType('ws_url', PARAM_RAW);
 
         $mform->addElement('text', 'api_key', get_string('api_key', 'report_saas_export'), $text_attr);
         $mform->addHelpButton('api_key', 'api_key', 'report_saas_export');
@@ -193,6 +193,16 @@ class saas_export_settings_form extends moodleform {
         global $saas;
 
         $errors = parent::validation($data, $files);
+
+        $ws_url = trim($data['ws_url'], ' /');
+        if(empty($ws_url) || filter_var($ws_url , FILTER_VALIDATE_URL) === false) {
+            $errors['ws_url'] = 'Inválida ou não informada.';
+        }
+
+        $api_key = trim($data['api_key']);
+        if(empty($api_key) || !preg_match('|^[0-9]{15,30}$|', $api_key) ) {
+            $errors['api_key'] = 'Inválida ou não informada.';
+        }
 
         $roles = array();
         foreach(saas::$role_types AS $r=>$rname) {
