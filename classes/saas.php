@@ -295,22 +295,24 @@ class saas {
                 break;
         }
 
-        $sql .= " WHERE oc.enable = 1";
         $params = array();
+
+        $polos = array();
         if($oferta_curso_id) {
             $sql .= " AND oc.id = :ocid";
             $params['ocid'] = $oferta_curso_id;
-        }
-
-        $sql .= " ORDER BY sp.nome, sp.cidade, sp.estado";
-
-        $polos = array();
-        $ocs = $this->get_ofertas_cursos();
-        if(!empty($ocs)) {
-            foreach($ocs AS $ocid=>$oc) {
-                $polos[$ocid] = array();
+            $polos[$oferta_curso_id] = array();
+        } else {
+            $ocs = $this->get_ofertas_cursos();
+            if(!empty($ocs)) {
+                foreach($ocs AS $ocid=>$oc) {
+                    $polos[$ocid] = array();
+                }
             }
         }
+
+        $sql .= " WHERE oc.enable = 1";
+        $sql .= " ORDER BY sp.nome, sp.cidade, sp.estado";
 
         $recs = $DB->get_recordset_sql($sql, $params);
         foreach($recs as $rec) {
@@ -330,16 +332,21 @@ class saas {
     function get_ofertas($oferta_curso_id=0) {
         global $DB;
 
+        $ofertas = $this->get_ofertas_cursos();
+
         $cond = '';
         $params = array();
-        if(!empty($oferta_curso_id)) {
+        if(empty($oferta_curso_id)) {
+            foreach($ofertas AS $ocid=>$oc) {
+                $ofertas[$ocid]->ofertas_disciplinas = array();
+            }
+        } else {
             $cond = 'AND oc.id = :id';
             $params['id'] = $oferta_curso_id;
-        }
 
-        $ofertas = $this->get_ofertas_cursos();
-        foreach($ofertas AS $ocid=>$oc) {
-            $ofertas[$ocid]->ofertas_disciplinas = array();
+            $oferta = $ofertas[$oferta_curso_id];
+            $oferta->ofertas_disciplinas = array();
+            $ofertas = array($oferta_curso_id => $oferta);
         }
 
         $sql = "SELECT DISTINCT od.*, d.nome, oc.id as ocid, cm.id IS NOT NULL AS mapped

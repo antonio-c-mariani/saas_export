@@ -718,8 +718,6 @@ function saas_show_table_ofertas_curso_disciplinas($oferta_curso_id=0, $show_cou
     print $OUTPUT->box_end();
     print html_writer::end_tag('DIV');
 
-
-
     print html_writer::start_tag('DIV', array('class'=>'saas_area_large'));
 
     $role_types = $saas->get_role_types('disciplinas');
