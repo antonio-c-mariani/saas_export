@@ -48,3 +48,59 @@ tr.saas_alternatecolor td.saas_alternatecolor {
 .saas_table tr.r1 {background-color: #F8F8F8;}
 
 .saas_pix {padding-right: 0.3em;}
+
+/* --------------------------------------------- */
+/* CSS Tree menu styles */
+
+.saas_img_folder {
+   padding-right: 5px;
+}
+
+.saas_tree li {
+    position: relative;
+    margin-left: -15px;
+    list-style: none;
+}
+
+.saas_tree li input {
+    position: absolute;
+    left: 0;
+    margin-left: 0;
+    opacity: 0;
+    z-index: 2;
+    cursor: pointer;
+    height: 1em;
+    width: 1em;
+    top: 0;
+}
+
+.saas_tree li input + ul {
+    margin: -0.938em 0 0 -44px; /* 15px */
+    height: 1em;
+}
+
+.saas_tree li label {
+    cursor: pointer;
+    display: block;
+}
+
+.saas_tree li input:checked + ul {
+    margin: -1.25em 0 0 -44px; /* 20px */
+    padding: 1.563em 0 0 80px;
+    height: auto;
+}
+
+.saas_tree li input + ul > li {
+    display: none;
+    margin-left: -14px !important;
+    padding-left: 1px;
+}
+
+.saas_tree li input:checked + ul > li {
+    display: block;
+    margin: 0 0 0.125em;  /* 2px */
+}
+
+.saas_tree li input:checked + ul > li:last-child {
+    margin: 0 0 0.063em; /* 1px */
+}

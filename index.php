@@ -238,11 +238,6 @@ switch ($action) {
 
                     $SESSION->last_categoryid = $course->category;
                     break;
-                case 'show_tree':
-                    // Precisa ser feito antes de enviar o cabeçalho
-                    $report_path = strpos(__FILE__, '/admin/report/') !== false ? '/admin/report' : '/report';
-                    $PAGE->requires->css($report_path. '/saas_export/category_tree_css.php');
-                    break;
             }
         }
         echo $OUTPUT->header();

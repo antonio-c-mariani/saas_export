@@ -216,7 +216,10 @@ function saas_show_categories($group_map_id, &$categories, $open_catids = array(
     foreach ($categories as $cat){
         echo html_writer::start_tag('li');
         $label = 'cat_'.$cat->id;
-        echo html_writer::tag('label', $cat->name, array('for'=>$label));
+        $report_path = strpos(__FILE__, '/admin/report/') !== false ? '/admin/report' : '/report';
+        $img_folder = html_writer::empty_tag('img', array('class'=>'saas_img_folder',
+                                      'src' => new moodle_url($report_path . '/saas_export/img/folder.png')));
+        echo html_writer::tag('label', $img_folder . $cat->name, array('for'=>$label));
         $checked = in_array($cat->id, $open_catids);
         echo html_writer::checkbox(null, null, $checked, '', array('id'=>$label));
 
@@ -879,6 +882,7 @@ function saas_show_export_options($url, $selected_ocs=true, $selected_ods=true, 
     if($show_form) {
         print html_writer::start_tag('DIV', array('class'=>'saas_area_large'));
         print $OUTPUT->box_start('generalbox boxaligncenter');
+
         print html_writer::start_tag('form', array('method'=>'post', 'action'=>$url));
 
         $table = new html_table();
@@ -890,15 +894,16 @@ function saas_show_export_options($url, $selected_ocs=true, $selected_ods=true, 
         $table->cellpadding = 5;
         print html_writer::table($table);
 
-
         print html_writer::start_tag('DIV', array('class'=>'centeralign'));
         print html_writer::checkbox('send_user_details', 'ok', true, 'Enviar detalhes de estudantes (últimos acessos e notas)');
         print html_writer::empty_tag('br');
         print html_writer::empty_tag('input', array('type'=>'submit', 'name'=>'export', 'value'=>s(get_string('saas_export:export', 'report_saas_export')), 'class'=>'boxaligncenter'));
         print html_writer::end_tag('DIV');
+
         print html_writer::end_tag('form');
 
         print $OUTPUT->box_end();
+        print html_writer::end_tag('DIV');
     } else {
         print $OUTPUT->heading('Não há dados a serem exportados', 4);
     }
