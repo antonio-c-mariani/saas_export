@@ -197,5 +197,51 @@ function xmldb_report_saas_export_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2014092100, 'report', 'saas_export');
     }
 
+    if ($oldversion < 2014100105) {
+        $api_key = get_config('report_saas_export', 'api_key');
+        $tables = array('saas_disciplinas', 'saas_polos', 'saas_ofertas_cursos', 'saas_ofertas_disciplinas');
+        foreach($tables AS $tab) {
+            $table = new xmldb_table($tab);
+            if ($dbman->table_exists($table)) {
+                $field = new xmldb_field('api_key', XMLDB_TYPE_CHAR, '30', null, XMLDB_NOTNULL, null, null, 'id');
+                if (!$dbman->field_exists($table, $field)) {
+                    $dbman->add_field($table, $field);
+                }
+                $key = new xmldb_key('uid', XMLDB_KEY_UNIQUE, array('uid'));
+                if ($dbman->find_key_name($table, $key) !== false) {
+                    $dbman->drop_key($table, $key);
+                }
+                $key = new xmldb_key('uid', XMLDB_KEY_UNIQUE, array('api_key, uid'));
+                if ($dbman->find_key_name($table, $key) === false) {
+                    $dbman->add_key($table, $index);
+                }
+
+                $sql = 'UPDATE {' . $tab . '} SET api_key = :api_key WHERE api_key = \'\'';
+                $DB->execute($sql, array('api_key'=>$api_key));
+            }
+        }
+
+        $table = new xmldb_table('saas_map_groups_polos');
+        if ($dbman->table_exists($table)) {
+            $field = new xmldb_field('api_key', XMLDB_TYPE_CHAR, '30', null, XMLDB_NOTNULL, null, null, 'id');
+            if (!$dbman->field_exists($table, $field)) {
+                $dbman->add_field($table, $field);
+            }
+            $index = new xmldb_index('groupname', XMLDB_INDEX_UNIQUE, array('groupname'));
+            if (!$dbman->index_exists($table, $index)) {
+                $dbman->drop_index($table, $index);
+            }
+            $index = new xmldb_index('groupname', XMLDB_INDEX_UNIQUE, array('api_key,groupname'));
+            if (!$dbman->index_exists($table, $index)) {
+                $dbman->add_index($table, $index);
+            }
+
+            $sql = 'UPDATE {saas_map_groups_polos} SET api_key = :api_key WHERE api_key = \'\'';
+            $DB->execute($sql, array('api_key'=>$api_key));
+        }
+
+        upgrade_plugin_savepoint(true, 2014100105, 'report', 'saas_export');
+    }
+
     return true;
 }

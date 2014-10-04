@@ -44,7 +44,7 @@ class polo_form extends moodleform {
     }
 
     public function validation($data, $files) {
-        global $DB;
+        global $DB, $saas;
 
         $errors = parent::validation($data, $files);
 
@@ -52,7 +52,7 @@ class polo_form extends moodleform {
         if(empty($nome)) {
             $errors['nome'] = get_string('invalid_nome_polo', 'report_saas_export');
         } else {
-            if($DB->record_exists('saas_polos', array('nome'=>$nome))) {
+            if($DB->record_exists('saas_polos', array('nome'=>$nome, 'api_key'=>$saas->get_config('api_key')))) {
                 $errors['nome'] = get_string('exists_nome_polo', 'report_saas_export');
             }
         }

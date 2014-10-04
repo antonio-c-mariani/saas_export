@@ -8,7 +8,11 @@ $may_export = has_capability('report/saas_export:export', $syscontext);
 $message = '';
 
 if(isset($_POST['map_polos']) && isset($_POST['save']) && $may_export) {
-    $mapped_groups = $DB->get_records('saas_map_groups_polos', null, 'groupname', 'groupname, id, polo_id');
+    $sql = "SELECT smgp.groupname, smgp.id, smgp.polo_id
+              FROM {saas_map_groups_polos} smgp
+              JOIN {config_plugins} cp ON (cp.plugin = 'report_saas_export' AND cp.name = 'api_key' AND cp.value = smgp.api_key)
+          ORDER BY groupname";
+    $mapped_groups = $DB->get_records_sql($sql);
     $saved = false;
 
     foreach($_POST['map_polos'] AS $groupname=>$poloid) {
@@ -28,6 +32,7 @@ if(isset($_POST['map_polos']) && isset($_POST['save']) && $may_export) {
         } else {
             if(!empty($poloid)) {
                 $obj = new stdClass();
+                $obj->api_key = $saas->api_key;
                 $obj->groupname = $groupname;
                 $obj->polo_id = $poloid;
                 $DB->insert_record('saas_map_groups_polos', $obj);
@@ -38,27 +43,34 @@ if(isset($_POST['map_polos']) && isset($_POST['save']) && $may_export) {
     $message = $saved  ? get_string('saved', 'report_saas_export') : get_string('no_changes', 'report_saas_export');
 }
 
+// Grupos com mesmo nome de polo e que ainda não estejam mapeados
 $sql = "SELECT DISTINCT g.name, pl.id
-          FROM {saas_map_course} scm
-          JOIN {course} c ON (c.id = scm.courseid)
+          FROM {saas_ofertas_disciplinas} od
+          JOIN {config_plugins} cp ON (cp.plugin = 'report_saas_export' AND cp.name = 'api_key' AND cp.value = od.api_key)
+          JOIN {saas_map_course} smc ON (smc.group_map_id = od.group_map_id)
+          JOIN {course} c ON (c.id = smc.courseid)
           JOIN {groups} g ON (g.courseid = c.id)
-          JOIN {saas_polos} pl ON (pl.nome = g.name AND pl.enable = 1)
-     LEFT JOIN {saas_polos} pl2 ON (pl2.enable = 1 AND pl2.nome = pl.nome AND pl2.id != pl.id)
-         WHERE pl2.id IS NULL";
-$group_names = $DB->get_records_sql_menu($sql);
+          JOIN {saas_polos} pl ON (pl.nome = g.name AND pl.enable = 1 and pl.api_key = od.api_key)
+     LEFT JOIN {saas_polos} pl2 ON (pl2.enable = 1 AND pl2.nome = pl.nome AND pl2.id != pl.id AND pl2.api_key = od.api_key)
+         WHERE od.enable = 1
+           AND pl2.id IS NULL";
+$candidate_group_names = $DB->get_records_sql_menu($sql);
 
 $polos = $saas->get_polos_menu();
 $polos = array(-1=>'-- este grupo não corresponde a um polo --') + $polos;
 
 $sql = "SELECT DISTINCT g.name as groupname, spm.polo_id
-          FROM {saas_map_course} scm
-          JOIN {course} c ON (c.id = scm.courseid)
-          JOIN {saas_ofertas_disciplinas} sod ON (sod.group_map_id = scm.group_map_id AND sod.enable = 1)
+          FROM {saas_ofertas_disciplinas} od
+          JOIN {config_plugins} cp ON (cp.plugin = 'report_saas_export' AND cp.name = 'api_key' AND cp.value = od.api_key)
+          JOIN {saas_map_course} smc ON (smc.group_map_id = od.group_map_id)
+          JOIN {course} c ON (c.id = smc.courseid)
           JOIN {groups} g ON (g.courseid = c.id)
-     LEFT JOIN {saas_map_groups_polos} spm ON (spm.groupname = g.name)
+     LEFT JOIN {saas_map_groups_polos} spm ON (spm.groupname = g.name AND spm.api_key = od.api_key)
+         WHERE od.enable = 1
       ORDER BY g.name";
 $map = $DB->get_records_sql($sql);
 
+saas_show_nome_instituicao();
 print html_writer::start_tag('DIV', array('align'=>'center'));
 print $OUTPUT->heading(get_string('group_to_polo', 'report_saas_export') .
       $OUTPUT->help_icon('group_to_polo', 'report_saas_export'), 3);
@@ -96,7 +108,7 @@ foreach(array(1, -1) AS $tipo) {
             $row->cells[] = $cell;
 
             if($poloid == 0) {
-               $poloid = isset($group_names[$m->groupname]) ? $group_names[$m->groupname] : -1;
+               $poloid = isset($candidate_group_names[$m->groupname]) ? $candidate_group_names[$m->groupname] : -1;
             }
 
             $cell = new html_table_cell();

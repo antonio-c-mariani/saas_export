@@ -43,6 +43,7 @@ class saas_export_settings_form extends moodleform {
         }
 
         $mform = $this->_form;
+        $saas = new saas();
 
         // ----------------------------------------------------------------------------------------------
         $mform->addElement('header', 'saas_settings', get_string('saas_settings', 'report_saas_export'));
@@ -55,6 +56,11 @@ class saas_export_settings_form extends moodleform {
         $mform->addElement('text', 'api_key', get_string('api_key', 'report_saas_export'), $text_attr);
         $mform->addHelpButton('api_key', 'api_key', 'report_saas_export');
         $mform->setType('api_key', PARAM_RAW);
+
+
+        if(isset($saas->config->nome_instituicao)) {
+            $mform->addElement('static', 'nome_instituicao', get_string('nome_instituicao', 'report_saas_export'));
+        }
 
         // ----------------------------------------------------------------------------------------------
         $mform->addElement('header', 'course_settings', get_string('course_settings', 'report_saas_export'));
@@ -181,7 +187,6 @@ class saas_export_settings_form extends moodleform {
         $mform->addElement('checkbox', 'suspended_as_evaded', get_string('suspended_as_evaded','report_saas_export'), null, $attributes);
         $mform->addHelpButton('suspended_as_evaded', 'suspended_as_evaded', 'report_saas_export');
 
-        $saas = new saas();
         $this->set_data($saas->config);
 
         if($may_config) {

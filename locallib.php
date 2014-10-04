@@ -3,6 +3,12 @@
 // ----------------------------------------------------------------------------------------------
 // Rotinas auxiliares para mapeamento de ofertas de disciplina para cursos Moodle
 
+function saas_show_nome_instituicao() {
+    global $saas, $OUTPUT;
+
+    print html_writer::tag('DIV', $OUTPUT->heading('Instituição: ' . $saas->get_config('nome_instituicao'), 3), array('align'=>'center'));
+}
+
 function saas_show_categories_tree($group_map_id) {
     global $DB, $SESSION, $PAGE, $OUTPUT, $saas;
 
@@ -14,9 +20,14 @@ function saas_show_categories_tree($group_map_id) {
               JOIN (SELECT DISTINCT cc.id, cc.path
                       FROM {course_categories} cc
                       JOIN {course} c ON (c.category = cc.id)
-                 LEFT JOIN {saas_map_course} mc ON (mc.courseid = c.id)
+                 LEFT JOIN (SELECT DISTINCT smc.courseid
+                              FROM {saas_ofertas_disciplinas} od
+                              JOIN {config_plugins} cp ON (cp.plugin = 'report_saas_export' AND cp.name = 'api_key' AND cp.value = od.api_key)
+                              JOIN {saas_map_course} smc ON (smc.group_map_id = od.group_map_id)
+                             WHERE od.enable = 1) cr
+                        ON (cr.courseid = c.id)
                      WHERE c.id > 1
-                       AND mc.id IS NULL) cat
+                       AND cr.courseid IS NULL) cat
                 ON (ccp.id = cat.id OR cat.path LIKE CONCAT('%/',ccp.id,'/%'))
           ORDER BY ccp.depth, ccp.name";
     $categories = $DB->get_records_sql($sql);
@@ -49,9 +60,14 @@ function saas_show_categories_tree($group_map_id) {
     // Cursos ainda não selecionados
     $sql = "SELECT c.id, c.category, c.fullname
               FROM {course} c
-         LEFT JOIN {saas_map_course} mc ON (mc.courseid = c.id)
+         LEFT JOIN (SELECT DISTINCT smc.courseid
+                      FROM {saas_ofertas_disciplinas} od
+                      JOIN {config_plugins} cp ON (cp.plugin = 'report_saas_export' AND cp.name = 'api_key' AND cp.value = od.api_key)
+                      JOIN {saas_map_course} smc ON (smc.group_map_id = od.group_map_id)
+                     WHERE od.enable = 1) cr
+                ON (cr.courseid = c.id)
              WHERE c.id > 1
-               AND mc.id IS NULL
+               AND cr.courseid IS NULL
           ORDER BY c.fullname";
     $courses = $DB->get_records_sql($sql);
     foreach($courses AS $course) {
@@ -66,7 +82,8 @@ function saas_show_categories_tree($group_map_id) {
 
     $sql = "SELECT od.*, d.nome
               FROM {saas_ofertas_disciplinas} od
-              JOIN {saas_disciplinas} d ON (d.uid = od.disciplina_uid AND d.enable = 1)
+              JOIN {config_plugins} cp ON (cp.plugin = 'report_saas_export' AND cp.name = 'api_key' AND cp.value = od.api_key)
+              JOIN {saas_disciplinas} d ON (d.uid = od.disciplina_uid AND d.enable = 1 AND d.api_key = od.api_key)
              WHERE od.enable = 1
                AND od.group_map_id = :group_map_id";
     $ods = $DB->get_records_sql($sql, array('group_map_id'=>$group_map_id));
@@ -151,65 +168,6 @@ function saas_show_categories_tree($group_map_id) {
 
 }
 
-function saas_get_moodle_categories(){
-    global $DB, $USER;
-
-    $sql = "SELECT DISTINCT cc.id, cc.name, cc.parent, cc.sortorder
-              FROM {course_categories} cc
-          ORDER BY cc.sortorder";
-
-    $categories = $DB->get_records_sql($sql);
-
-    $ids = array_keys($categories);
-
-    while(!empty($ids)) {
-        $str_ids = implode(', ', $ids);
-
-        $sql = "SELECT cc.id, cc.name, cc.parent, cc.sortorder
-                  FROM {course_categories} cc
-                 WHERE cc.parent IN ({$str_ids})
-              ORDER BY cc.sortorder";
-        $cats = $DB->get_records_sql($sql);
-
-        foreach ($cats as $c){
-            $categories[$c->id] = $c;
-        }
-
-        $ids = array_keys($cats);
-    }
-
-    return $categories;
-}
-
-function saas_get_courses_from_categories(&$categories, $repeat_allowed = true) {
-    global $DB;
-
-    if ($repeat_allowed) {
-        $sql_repeat = "";
-        $sql_and = "";
-    } else {
-        $sql_repeat = " LEFT JOIN {saas_map_course} scm ON (scm.courseid = c.id) ";
-        $sql_and = " AND scm.courseid IS NULL";
-
-    }
-
-    foreach($categories AS $idcat=>$cat) {
-        $categories[$idcat]->courses = array();
-    }
-
-    $str_ids = implode(', ', array_keys($categories));
-
-    $sql = "SELECT c.id, c.shortname, c.fullname, c.category, c.visible
-              FROM {course} c
-              {$sql_repeat}
-             WHERE c.category IN({$str_ids}) {$sql_and}";
-
-    foreach($DB->get_records_sql($sql) AS $id=>$c) {
-        $categories[$c->category]->courses[] = $c;
-    }
-
-}
-
 function saas_show_categories($group_map_id, &$categories, $open_catids = array()){
     global $OUTPUT;
 
@@ -246,13 +204,16 @@ function saas_show_categories($group_map_id, &$categories, $open_catids = array(
 // Rotinas auxiliara para mapeamento de cursos para categorias
 
 function saas_get_category_tree_map_courses_polos() {
-    global $DB;
+    global $DB, $saas;
 
     $sql = "SELECT DISTINCT ccp.id, ccp.depth, ccp.path, ccp.name
-              FROM {course} c
-              JOIN {saas_map_course} smc ON (smc.courseid = c.id)
+              FROM {saas_ofertas_disciplinas} od
+              JOIN {config_plugins} cp ON (cp.plugin = 'report_saas_export' AND cp.name = 'api_key' AND cp.value = od.api_key)
+              JOIN {saas_map_course} smc ON (smc.group_map_id = od.group_map_id)
+              JOIN {course} c ON (c.id = smc.courseid)
               JOIN {course_categories} cc ON (cc.id = c.category)
               JOIN {course_categories} ccp ON (ccp.id = cc.id OR cc.path LIKE CONCAT('%/',ccp.id,'/%'))
+             WHERE od.enable = 1
           ORDER BY ccp.depth, ccp.name";
     $categories = $DB->get_records_sql($sql);
 
@@ -267,9 +228,13 @@ function saas_get_category_tree_map_courses_polos() {
     }
 
     $sql = "SELECT DISTINCT c.id, c.category, c.fullname AS name, smcp.polo_id
-              FROM {course} c
-              JOIN {saas_map_course} smc ON (smc.courseid = c.id)
-         LEFT JOIN {saas_map_catcourses_polos} smcp ON (smcp.instanceid = c.id AND smcp.type = 'course')
+              FROM {saas_ofertas_disciplinas} od
+              JOIN {config_plugins} cp ON (cp.plugin = 'report_saas_export' AND cp.name = 'api_key' AND cp.value = od.api_key)
+              JOIN {saas_map_course} smc ON (smc.group_map_id = od.group_map_id)
+              JOIN {course} c ON (c.id = smc.courseid)
+              JOIN {saas_polos} sp ON (sp.api_key = od.api_key)
+         LEFT JOIN {saas_map_catcourses_polos} smcp ON (smcp.instanceid = c.id AND smcp.type = 'course' AND smcp.polo_id = sp.id)
+             WHERE od.enable = 1
           ORDER BY c.fullname";
 
     foreach($DB->get_records_sql($sql) AS $course) {
@@ -338,14 +303,18 @@ function saas_mount_category_tree_map_courses_polos(&$categories, &$polos, &$row
 }
 
 function saas_get_category_tree_map_categories_polos() {
-    global $DB;
+    global $DB, $saas;
 
     $sql = "SELECT DISTINCT ccp.id, ccp.depth, ccp.path, ccp.name, smcp.polo_id
-              FROM {course} c
-              JOIN {saas_map_course} smc ON (smc.courseid = c.id)
+              FROM {saas_ofertas_disciplinas} od
+              JOIN {config_plugins} cp ON (cp.plugin = 'report_saas_export' AND cp.name = 'api_key' AND cp.value = od.api_key)
+              JOIN {saas_map_course} smc ON (smc.group_map_id = od.group_map_id)
+              JOIN {course} c ON (c.id = smc.courseid)
               JOIN {course_categories} cc ON (cc.id = c.category)
               JOIN {course_categories} ccp ON (ccp.id = cc.id OR cc.path LIKE CONCAT('%/',ccp.id,'/%'))
-         LEFT JOIN {saas_map_catcourses_polos} smcp ON (smcp.instanceid = ccp.id AND smcp.type = 'category')
+              JOIN {saas_polos} sp ON (sp.api_key = od.api_key)
+         LEFT JOIN {saas_map_catcourses_polos} smcp ON (smcp.instanceid = ccp.id AND smcp.type = 'category' AND smcp.polo_id = sp.id)
+             WHERE od.enable = 1
           ORDER BY ccp.depth, ccp.name";
     $categories = $DB->get_records_sql($sql);
 
@@ -443,7 +412,7 @@ function saas_show_overview_polos($ocid, $poloid) {
 
     $polo_mapping_type = $saas->get_config('polo_mapping');
 
-    if(!$DB->record_exists('saas_polos', array('enable'=>1))) {
+    if(!$saas->has_polo()) {
         print html_writer::tag('h3', get_string('no_polos', 'report_saas_export'));
         return;
     }
@@ -713,13 +682,13 @@ function saas_show_table_ofertas_curso_disciplinas($oferta_curso_id=0, $show_cou
         foreach($rs AS $rec) {
             $ofertas_disciplinas_counts[$rec->odid][$rec->role] = $rec->count;
         }
-    }
 
-    print html_writer::start_tag('DIV', array('align'=>'center'));
-    print $OUTPUT->box_start('generalbox boxaligncenter');
-    print html_writer::tag('html','Clique no nome da oferta de discplina para visualizar detalhes sobre dados a serem exportados.');
-    print $OUTPUT->box_end();
-    print html_writer::end_tag('DIV');
+        print html_writer::start_tag('DIV', array('align'=>'center'));
+        print $OUTPUT->box_start('generalbox boxaligncenter');
+        print html_writer::tag('html','Clique no nome da oferta de discplina para visualizar detalhes sobre dados a serem exportados.');
+        print $OUTPUT->box_end();
+        print html_writer::end_tag('DIV');
+    }
 
     print html_writer::start_tag('DIV', array('class'=>'saas_area_large'));
 
@@ -875,6 +844,7 @@ function saas_show_export_options($url, $selected_ocs=true, $selected_ods=true, 
         $rows[] = $row;
     }
 
+    saas_show_nome_instituicao();
     print html_writer::start_tag('DIV', array('align'=>'center'));
     print $OUTPUT->heading('Exportação de dados para o SAAS' .  $OUTPUT->help_icon('export', 'report_saas_export'), 3);
     print html_writer::end_tag('DIV');
@@ -930,18 +900,18 @@ function saas_show_course_mappings($pocid=0) {
         }
     }
 
-    if(empty($pocid)) {
-        $cond = '';
-        $params = array();
-    } else {
+    $params = array();
+    $cond = '';
+    if(!empty($pocid)) {
         $cond = 'AND oc.id = :ocid';
-        $params = array('ocid'=>$pocid);
+        $params['ocid'] = $pocid;
     }
 
     $sql = "SELECT oc.id as ocid, od.id as odid, od.group_map_id, od.inicio, od.fim, d.nome
               FROM {saas_ofertas_cursos} oc
-              JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1)
-              JOIN {saas_disciplinas} d ON (d.uid = od.disciplina_uid AND d.enable = 1)
+              JOIN {config_plugins} cp ON (cp.plugin = 'report_saas_export' AND cp.name = 'api_key' AND cp.value = oc.api_key)
+              JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1 AND od.api_key = oc.api_key)
+              JOIN {saas_disciplinas} d ON (d.uid = od.disciplina_uid AND d.enable = 1 AND d.api_key = oc.api_key)
              WHERE oc.enable = 1
                {$cond}
           ORDER BY oc.nome, od.group_map_id ,d.nome";
@@ -951,9 +921,12 @@ function saas_show_course_mappings($pocid=0) {
     }
 
     // obtem mapeamentos
-    $sql = "SELECT mc.courseid, mc.group_map_id, c.fullname
-              FROM {saas_map_course} mc
-              JOIN {course} c ON (c.id = mc.courseid)";
+    $sql = "SELECT DISTINCT smc.courseid, smc.group_map_id, c.fullname
+              FROM {saas_ofertas_disciplinas} od
+              JOIN {config_plugins} cp ON (cp.plugin = 'report_saas_export' AND cp.name = 'api_key' AND cp.value = od.api_key)
+              JOIN {saas_map_course} smc ON (smc.group_map_id = od.group_map_id)
+              JOIN {course} c ON (c.id = smc.courseid)
+             WHERE od.enable = 1";
     $mapping = array();
     foreach($DB->get_recordset_sql($sql) AS $rec) {
         $mapping[$rec->group_map_id][] = $rec;

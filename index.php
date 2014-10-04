@@ -130,7 +130,7 @@ switch ($action) {
         if(has_capability('report/saas_export:export', $syscontext)) {
             switch($saas_data_action) {
                 case 'add_oferta':
-                    $oferta_form = new oferta_form($url, array('saas'=>$saas));
+                    $oferta_form = new oferta_form($url);
                     if ($oferta_form->is_cancelled()) {
                         redirect($url);
                     } else if ($oferta = $oferta_form->get_data()) {
@@ -165,31 +165,37 @@ switch ($action) {
                 if(optional_param('reload', true, PARAM_INT)) {
                     $saas->load_saas_data(true);
                 }
+                saas_show_nome_instituicao();
                 print html_writer::tag('DIV', $OUTPUT->heading('Ofertas de cursos e de disciplinas definidas no SAAS', 3), array('align'=>'center'));
                 saas_show_table_ofertas_curso_disciplinas(0, false);
                 break;
             case 'add_oferta':
-                print html_writer::start_tag('DIV', array('align'=>'center'));
-                print $OUTPUT->box_start('generalbox boxwidthnormal');
-                if($DB->record_exists('saas_ofertas_cursos', array('enable'=>1))) {
-                    print $OUTPUT->heading(get_string('add_oferta', 'report_saas_export'), 3);
-                    $oferta_form->display();
-                } else {
-                    print html_writer::tag('h3', get_string('no_ofertas_cursos', 'report_saas_export'));
+                if(has_capability('report/saas_export:export', $syscontext)) {
+                    saas_show_nome_instituicao();
+                    if($saas->has_oferta_curso()) {
+                        print html_writer::tag('DIV', $OUTPUT->heading(get_string('add_oferta', 'report_saas_export'), 3), array('align'=>'center'));
+                        print html_writer::start_tag('DIV', array('align'=>'center'));
+                        print $OUTPUT->box_start('generalbox boxwidthnormal');
+                        $oferta_form->display();
+                        print $OUTPUT->box_end();
+                        print html_writer::end_tag('DIV');
+                    } else {
+                        print html_writer::tag('DIV', $OUTPUT->heading(get_string('no_ofertas_cursos', 'report_saas_export'), 3), array('align'=>'center'));
+                    }
                 }
-                print $OUTPUT->box_end();
-                print html_writer::end_tag('DIV');
                 break;
             case 'polos':
                 $saas->load_polos_saas();
+                saas_show_nome_instituicao();
                 print html_writer::tag('DIV', $OUTPUT->heading('Polos definidos no SAAS', 3), array('align'=>'center'));
                 saas_show_table_polos();
                 break;
             case 'add_polo':
                 if(has_capability('report/saas_export:export', $syscontext)) {
+                    saas_show_nome_instituicao();
+                    print html_writer::tag('DIV', $OUTPUT->heading(get_string('add_polo', 'report_saas_export'), 3), array('align'=>'center'));
                     print html_writer::start_tag('DIV', array('align'=>'center'));
                     print $OUTPUT->box_start('generalbox boxwidthnormal');
-                    print $OUTPUT->heading(get_string('add_polo', 'report_saas_export'), 3);
                     $polo_form->display();
                     print $OUTPUT->box_end();
                     print html_writer::end_tag('DIV');
@@ -252,6 +258,7 @@ switch ($action) {
             }
 
             $course_mapping_type = $saas->get_config('course_mapping');
+            saas_show_nome_instituicao();
             print html_writer::start_tag('DIV', array('align'=>'center'));
             print $OUTPUT->heading('Mapeamento de Ofertas de disciplinas para cursos Moodle' .
                                    $OUTPUT->help_icon($course_mapping_type, 'report_saas_export'), 3);
@@ -265,7 +272,7 @@ switch ($action) {
         echo $OUTPUT->header();
         print_tabs(array($tabs), $action);
 
-        if($DB->record_exists('saas_polos', array('enable'=>1))) {
+        if($saas->has_polo()) {
             switch ($polo_mapping_type) {
                 case 'no_polo':
                     print $OUTPUT->heading(get_string('title_no_polo', 'report_saas_export'), 4);
@@ -310,6 +317,7 @@ switch ($action) {
         if($saas_data_action == 'ofertas') {
             $ocid = optional_param('ocid', 0 , PARAM_INT);
             $url = new moodle_url('index.php', array('action'=>'overview', 'subaction'=>'ofertas'));
+            saas_show_nome_instituicao();
             saas_show_menu_ofertas_cursos($ocid, $url);
             if($odid = optional_param('odid', 0 , PARAM_INT)) {
                 saas_show_users_oferta_disciplina($odid);
@@ -319,6 +327,7 @@ switch ($action) {
         } else {
             $ocid = optional_param('ocid', 0 , PARAM_INT);
             $poloid = optional_param('poloid', 0 , PARAM_INT);
+            saas_show_nome_instituicao();
             saas_show_overview_polos($ocid, $poloid);
         }
 

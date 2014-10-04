@@ -13,6 +13,8 @@ $errors = array();
 if(isset($_POST['map_polos']) && isset($_POST['save']) && $may_export) {
     $sql = "SELECT smcp.instanceid, smcp.id, smcp.polo_id, cc.path
               FROM {saas_map_catcourses_polos} smcp
+              JOIN {saas_polos} pl ON (pl.id = smcp.polo_id)
+              JOIN {config_plugins} cp ON (cp.plugin = 'report_saas_export' AND cp.name = 'api_key' AND cp.value = pl.api_key)
               JOIN {course_categories} cc ON (cc.id = smcp.instanceid)
              WHERE smcp.type = 'category'";
     $mapped = $DB->get_records_sql($sql);
@@ -41,12 +43,16 @@ if(isset($_POST['map_polos']) && isset($_POST['save']) && $may_export) {
             $sql = "SELECT cc.*
                       FROM {course_categories} cc
                       JOIN {saas_map_catcourses_polos} smcp ON (smcp.instanceid = cc.id AND smcp.type = 'category')
+                      JOIN {saas_polos} pl ON (pl.id = smcp.polo_id)
+                      JOIN {config_plugins} cp ON (cp.plugin = 'report_saas_export' AND cp.name = 'api_key' AND cp.value = pl.api_key)
                      WHERE cc.path LIKE '%/{$categoryid}/%'
                      UNION
                     SELECT ccp.*
                       FROM {course_categories} cc
                       JOIN {course_categories} ccp ON (ccp.id = cc.id OR cc.path LIKE CONCAT('%/', ccp.id, '/%'))
                       JOIN {saas_map_catcourses_polos} smcp ON (smcp.instanceid = ccp.id AND smcp.type = 'category')
+                      JOIN {saas_polos} pl ON (pl.id = smcp.polo_id)
+                      JOIN {config_plugins} cp ON (cp.plugin = 'report_saas_export' AND cp.name = 'api_key' AND cp.value = pl.api_key)
                      WHERE cc.id = {$categoryid}";
             $cats = $DB->get_records_sql($sql);
             if(empty($cats)) {
@@ -67,9 +73,9 @@ if(isset($_POST['map_polos']) && isset($_POST['save']) && $may_export) {
     $message = $saved  ? get_string('saved', 'report_saas_export') : get_string('no_changes', 'report_saas_export');
 }
 
+saas_show_nome_instituicao();
 print html_writer::start_tag('DIV', array('align'=>'center'));
-print $OUTPUT->heading(get_string('category_to_polo', 'report_saas_export') .
-      $OUTPUT->help_icon('category_to_polo', 'report_saas_export'), 3);
+print $OUTPUT->heading(get_string('category_to_polo', 'report_saas_export') . $OUTPUT->help_icon('category_to_polo', 'report_saas_export'), 3);
 print html_writer::end_tag('DIV');
 
 print html_writer::start_tag('div', array('class'=>'saas_area_large'));

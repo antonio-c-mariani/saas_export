@@ -10,6 +10,7 @@ class saas {
     public static $role_types_polos       = array('tutor_polo', 'student');
 
     public $config;
+    public $api_key;
 
     private $count_errors = 0;
     private $errors = array();
@@ -35,8 +36,10 @@ class saas {
             $this->config->$role = isset($roles[$r]) ? implode(',', $roles[$r]) : '';
         }
 
-        $this->config->filter_userid_field = isset($this->config->filter_userid_field) ? $this->config->filter_userid_field : false;
-        $this->config->suspended_as_evaded = isset($this->config->suspended_as_evaded) ? $this->config->suspended_as_evaded : false;
+        $this->config->filter_userid_field = $this->get_config('filter_userid_field');
+        $this->config->suspended_as_evaded = $this->get_config('suspended_as_evaded');
+
+        $this->api_key = $this->get_config('api_key');
     }
 
     function get_config($name) {
@@ -48,14 +51,15 @@ class saas {
     }
 
     function is_configured() {
-        $api_key = $this->get_config('api_key');
         $url = $this->get_config('ws_url');
-        return !empty($api_key) && !empty($url);
+        return !empty($this->api_key) && !empty($url);
     }
 
     function verify_config($url) {
         try {
-            $this->get_ws('', true);
+            $institution = $this->get_ws('', true);
+            set_config('nome_instituicao', $institution->nome, 'report_saas_export');
+            set_config('sigla_instituicao', $institution->sigla, 'report_saas_export');
         } catch(Exception $e) {
             print_error('api_key_unknown', 'report_saas_export', $url);
         }
@@ -115,13 +119,14 @@ class saas {
     function load_disciplinas_saas(){
         global $DB;
 
-        $local = $DB->get_records('saas_disciplinas', null, null ,'uid, id, enable');
+        $local = $DB->get_records('saas_disciplinas', array('api_key'=>$this->api_key), null ,'uid, id, enable');
 
         $disciplinas = $this->get_ws('disciplinas');
         $disciplinas = empty($disciplinas) ? array() : $disciplinas;
 
         foreach($disciplinas as $dis) {
             $dis->enable = 1;
+            $dis->api_key = $this->api_key;
             if (isset($local[$dis->uid])){
                 $dis->id = $local[$dis->uid]->id;
                 $DB->update_record('saas_disciplinas', $dis);
@@ -141,7 +146,7 @@ class saas {
     function load_ofertas_cursos_saas(){
         global $DB;
 
-        $local = $DB->get_records('saas_ofertas_cursos', null, null ,'uid, id, enable');
+        $local = $DB->get_records('saas_ofertas_cursos', array('api_key'=>$this->api_key), null ,'uid, id, enable');
 
         $cursos_saas = $this->get_ws('cursos');
         $cursos_saas = empty($cursos_saas) ? array() : $cursos_saas;
@@ -153,6 +158,7 @@ class saas {
             foreach ($ofertas_cursos_saas as $oferta_curso) {
                 if ($curso->uid == $oferta_curso->curso->uid) {
                     $record = new stdClass();
+                    $record->api_key = $this->api_key;
                     $record->nome = $curso->nome; //Nome do curso
                     $record->ano = $oferta_curso->ano;
                     $record->periodo = $oferta_curso->periodo;
@@ -180,13 +186,14 @@ class saas {
     function load_ofertas_disciplinas_saas(){
         global $DB;
 
-        $local = $DB->get_records('saas_ofertas_disciplinas', null, null ,'uid, id, enable');
+        $local = $DB->get_records('saas_ofertas_disciplinas', array('api_key'=>$this->api_key), null ,'uid, id, enable');
 
         $ofertas_disciplinas = $this->get_ws('ofertas/disciplinas');
         $ofertas_disciplinas = empty($ofertas_disciplinas) ? array() : $ofertas_disciplinas;
 
         foreach ($ofertas_disciplinas as $oferta_disciplina){
             $record = new stdClass();
+            $record->api_key = $this->api_key;
             $record->uid = $oferta_disciplina->uid;
             $record->disciplina_uid = $oferta_disciplina->disciplina->uid;
             $record->inicio = !isset($oferta_disciplina->inicio) || empty($oferta_disciplina->inicio) ? '' : $oferta_disciplina->inicio;
@@ -215,13 +222,14 @@ class saas {
     function load_polos_saas() {
         global $DB;
 
-        $local = $DB->get_records('saas_polos', null, '' ,'uid, id, enable');
+        $local = $DB->get_records('saas_polos', array('api_key'=>$this->api_key), '' ,'uid, id, enable');
 
         $polos_saas = $this->get_ws('polos');
         $polos_saas = empty($polos_saas) ? array() : $polos_saas;
 
         foreach ($polos_saas as $pl){
             $record = new stdClass();
+            $record->api_key = $this->api_key;
             $record->nome = $pl->nome;
             $record->cidade = $pl->cidade;
             $record->estado = $pl->estado;
@@ -259,10 +267,23 @@ class saas {
     //---------------------------------------------------------------------------------------------------
 
     // retorna todos os polos da Institutição
+    function get_disciplinas() {
+        global $DB;
+
+        return $DB->get_records('saas_disciplinas', array('enable'=>1, 'api_key'=>$this->api_key), 'nome');
+    }
+
+    function get_disciplinas_menu() {
+        global $DB;
+
+        return $DB->get_records_menu('saas_disciplinas', array('enable'=>1, 'api_key'=>$this->api_key), 'nome', "id, nome");
+    }
+
+    // retorna todos os polos da Institutição
     function get_polos() {
         global $DB;
 
-        return $DB->get_records('saas_polos', array('enable'=>1), 'nome, cidade, estado');
+        return $DB->get_records('saas_polos', array('enable'=>1, 'api_key'=>$this->api_key), 'nome, cidade, estado');
     }
 
     // retorna os polos por oferta de curso
@@ -273,25 +294,26 @@ class saas {
 
         $sql = "SELECT DISTINCT sp.*, oc.id as ocid
                   FROM {saas_ofertas_cursos} oc
-                  JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1)
+                  JOIN {config_plugins} cp ON (cp.plugin = 'report_saas_export' AND cp.name = 'api_key' AND cp.value = oc.api_key)
+                  JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1 AND od.api_key = oc.api_key)
                   JOIN {saas_map_course} cm ON (cm.group_map_id = od.group_map_id)
                   JOIN {course} c ON (c.id = cm.courseid)";
 
         switch ($polo_mapping_type) {
             case 'group_to_polo':
                 $sql .= " JOIN {groups} g ON (g.courseid = c.id)
-                          JOIN {saas_map_groups_polos} spm ON (spm.groupname = g.name)
-                          JOIN {saas_polos} sp ON (sp.id = spm.polo_id AND sp.enable = 1)";
+                          JOIN {saas_map_groups_polos} spm ON (spm.groupname = g.name AND spm.api_key = oc.api_key)
+                          JOIN {saas_polos} sp ON (sp.id = spm.polo_id AND sp.enable = 1 AND sp.api_key = oc.api_key)";
                 break;
             case 'category_to_polo':
                 $sql .= " JOIN {course_categories} cc ON (cc.id = c.category)
                           JOIN {course_categories} ccp ON (ccp.id = cc.id OR cc.path LIKE CONCAT('%/',ccp.id,'/%'))
                           JOIN {saas_map_catcourses_polos} smcp ON (smcp.type = 'category' AND smcp.instanceid = ccp.id)
-                          JOIN {saas_polos} sp ON (sp.id = smcp.polo_id AND sp.enable = 1)";
+                          JOIN {saas_polos} sp ON (sp.id = smcp.polo_id AND sp.enable = 1 AND sp.api_key = oc.api_key)";
                 break;
             case 'course_to_polo':
                 $sql .= " JOIN {saas_map_catcourses_polos} smcp ON (smcp.type = 'course' AND smcp.instanceid = c.id)
-                          JOIN {saas_polos} sp ON (sp.id = smcp.polo_id AND sp.enable = 1)";
+                          JOIN {saas_polos} sp ON (sp.id = smcp.polo_id AND sp.enable = 1 AND sp.api_key = oc.api_key)";
                 break;
         }
 
@@ -322,10 +344,17 @@ class saas {
     }
 
     // retorna todas as ofertas de curso
+    function has_oferta_curso() {
+        global $DB;
+
+        return $DB->record_exists('saas_ofertas_cursos', array('enable'=>1, 'api_key'=>$this->api_key));
+    }
+
+    // retorna todas as ofertas de curso
     function get_ofertas_cursos() {
         global $DB;
 
-        return $DB->get_records('saas_ofertas_cursos', array('enable'=>1), 'nome, ano, periodo');
+        return $DB->get_records('saas_ofertas_cursos', array('enable'=>1, 'api_key'=>$this->api_key), 'nome, ano, periodo');
     }
 
     // retorna array com ofertas de curso e respectivas ofertas de disciplinas, mapeadas ou não
@@ -351,8 +380,9 @@ class saas {
 
         $sql = "SELECT DISTINCT od.*, d.nome, oc.id as ocid, cm.id IS NOT NULL AS mapped
                   FROM {saas_ofertas_cursos} oc
-                  JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1)
-                  JOIN {saas_disciplinas} d ON (d.uid = od.disciplina_uid AND d.enable = 1)
+                  JOIN {config_plugins} cp ON (cp.plugin = 'report_saas_export' AND cp.name = 'api_key' AND cp.value = oc.api_key)
+                  JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1 AND od.api_key = oc.api_key)
+                  JOIN {saas_disciplinas} d ON (d.uid = od.disciplina_uid AND d.enable = 1 AND d.api_key = oc.api_key)
              LEFT JOIN {saas_map_course} cm ON (cm.group_map_id = od.group_map_id)
                  WHERE oc.enable = 1
                    {$cond}
@@ -370,7 +400,8 @@ class saas {
 
         $sql = "SELECT od.*, d.nome
                   FROM {saas_ofertas_disciplinas} od
-                  JOIN {saas_disciplinas} d ON (d.uid = od.disciplina_uid AND d.enable = 1)
+                  JOIN {config_plugins} cp ON (cp.plugin = 'report_saas_export' AND cp.name = 'api_key' AND cp.value = od.api_key)
+                  JOIN {saas_disciplinas} d ON (d.uid = od.disciplina_uid AND d.enable = 1 AND d.api_key = od.api_key)
                  WHERE od.id = :odid
                    AND od.enable = 1";
         return $DB->get_record_sql($sql, array('odid' => $oferta_disciplina_id));
@@ -396,8 +427,9 @@ class saas {
 
         $sql = "SELECT DISTINCT od.*, d.nome, oc.id as ocid
                   FROM {saas_ofertas_disciplinas} od
-                  JOIN {saas_ofertas_cursos} oc ON (oc.uid = od.oferta_curso_uid AND oc.enable = 1)
-                  JOIN {saas_disciplinas} d ON (d.uid = od.disciplina_uid AND d.enable = 1)
+                  JOIN {config_plugins} cp ON (cp.plugin = 'report_saas_export' AND cp.name = 'api_key' AND cp.value = od.api_key)
+                  JOIN {saas_ofertas_cursos} oc ON (oc.uid = od.oferta_curso_uid AND oc.enable = 1 AND oc.api_key = od.api_key)
+                  JOIN {saas_disciplinas} d ON (d.uid = od.disciplina_uid AND d.enable = 1 AND d.api_key = od.api_key)
                   {$join}
                  WHERE od.enable = 1
                    {$where}";
@@ -451,7 +483,8 @@ class saas {
 
         $sql = "SELECT {$distinct} oc.id AS ocid, sp.id AS p_id, scr.role $field
                   FROM {saas_ofertas_cursos} oc
-                  JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1)
+                  JOIN {config_plugins} cp ON (cp.plugin = 'report_saas_export' AND cp.name = 'api_key' AND cp.value = oc.api_key)
+                  JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1 AND od.api_key = oc.api_key)
                   JOIN {saas_map_course} cm ON (cm.group_map_id = od.group_map_id)
                   JOIN {course} c ON (c.id = cm.courseid)
                   JOIN {enrol} e ON (e.courseid = c.id AND e.status = :enable)
@@ -467,7 +500,7 @@ class saas {
                   JOIN {course_categories} cc ON (cc.id = c.category)
                   JOIN {course_categories} ccp ON (ccp.id = cc.id OR cc.path LIKE CONCAT('%/',ccp.id,'/%'))
                   JOIN {saas_map_catcourses_polos} smcp ON (smcp.type = 'category' AND smcp.instanceid = ccp.id)
-                  JOIN {saas_polos} sp ON (sp.id = smcp.polo_id AND sp.enable = 1)
+                  JOIN {saas_polos} sp ON (sp.id = smcp.polo_id AND sp.enable = 1 AND sp.api_key = oc.api_key)
                  WHERE oc.enable = 1
                    {$condition}
               {$group_by}
@@ -517,7 +550,8 @@ class saas {
 
         $sql = "SELECT {$distinct} oc.id AS ocid, sp.id AS p_id, scr.role $field
                   FROM {saas_ofertas_cursos} oc
-                  JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1)
+                  JOIN {config_plugins} cp ON (cp.plugin = 'report_saas_export' AND cp.name = 'api_key' AND cp.value = oc.api_key)
+                  JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1 AND od.api_key = oc.api_key)
                   JOIN {saas_map_course} cm ON (cm.group_map_id = od.group_map_id)
                   JOIN {course} c ON (c.id = cm.courseid)
                   JOIN {enrol} e ON (e.courseid = c.id AND e.status = :enable)
@@ -531,7 +565,7 @@ class saas {
                   JOIN {user} u ON (u.id = ue.userid AND u.deleted = 0 AND u.suspended = 0)
                   {$join_user_info_data}
                   JOIN {saas_map_catcourses_polos} smcp ON (smcp.type = 'course' AND smcp.instanceid = c.id)
-                  JOIN {saas_polos} sp ON (sp.id = smcp.polo_id AND sp.enable = 1)
+                  JOIN {saas_polos} sp ON (sp.id = smcp.polo_id AND sp.enable = 1 AND sp.api_key = oc.api_key)
                  WHERE oc.enable = 1
                    {$condition}
               {$group_by}
@@ -581,7 +615,8 @@ class saas {
 
         $sql = "SELECT {$distinct} oc.id AS ocid, sp.id AS p_id, scr.role $field
                   FROM {saas_ofertas_cursos} oc
-                  JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1)
+                  JOIN {config_plugins} cp ON (cp.plugin = 'report_saas_export' AND cp.name = 'api_key' AND cp.value = oc.api_key)
+                  JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1 AND od.api_key = oc.api_key)
                   JOIN {saas_map_course} cm ON (cm.group_map_id = od.group_map_id)
                   JOIN {course} c ON (c.id = cm.courseid)
                   JOIN {enrol} e ON (e.courseid = c.id AND e.status = :enable)
@@ -596,8 +631,8 @@ class saas {
                   {$join_user_info_data}
                   JOIN {groups} g ON (g.courseid = c.id)
                   JOIN {groups_members} gm ON (gm.groupid = g.id AND gm.userid = u.id)
-                  JOIN {saas_map_groups_polos} spm ON (spm.groupname = g.name)
-                  JOIN {saas_polos} sp ON (sp.id = spm.polo_id AND sp.enable = 1)
+                  JOIN {saas_map_groups_polos} spm ON (spm.groupname = g.name AND spm.api_key = oc.api_key)
+                  JOIN {saas_polos} sp ON (sp.id = spm.polo_id AND sp.enable = 1 AND sp.api_key = oc.api_key)
                  WHERE oc.enable = 1
                    {$condition}
               {$group_by}
@@ -605,10 +640,17 @@ class saas {
         return array($sql, $params);
     }
 
+    function has_polo() {
+        global $DB;
+
+        return $DB->record_exists('saas_polos', array('enable'=>1, 'api_key'=>$this->api_key));
+    }
+
     function get_polos_menu() {
         global $DB;
 
-        return $DB->get_records_menu('saas_polos', array('enable'=>1), 'nome', "id, CONCAT(nome, ' (', cidade, '/', estado, ')') as nome");
+        return $DB->get_records_menu('saas_polos', array('enable'=>1, 'api_key'=>$this->api_key), 
+                                'nome', "id, CONCAT(nome, ' (', cidade, '/', estado, ')') as nome");
     }
 
     function get_polos_count() {
@@ -689,7 +731,8 @@ class saas {
 
         $sql = "SELECT od.id AS odid, scr.role, {$fields}
                   FROM {saas_ofertas_cursos} oc
-                  JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1)
+                  JOIN {config_plugins} cp ON (cp.plugin = 'report_saas_export' AND cp.name = 'api_key' AND cp.value = oc.api_key)
+                  JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1 AND od.api_key = oc.api_key)
                   JOIN {saas_map_course} cm ON (cm.group_map_id = od.group_map_id)
                   JOIN {course} c ON (c.id = cm.courseid)
                   JOIN {enrol} e ON (e.courseid = c.id AND e.status = :enable)
@@ -708,7 +751,6 @@ class saas {
                    {$user_enrol_condition}
               {$group_by}
               ORDER BY odid, scr.role {$orderby}";
-
         return array($sql, $params);
     }
 
@@ -786,36 +828,6 @@ class saas {
         }
         return $grades;
     }
-
-    // Funções para salvar os mapeamentos
-    // -----------------------------------------------------------------
-
-    function save_polos_mapping($formdata){
-        global $DB;
-
-        $ofertas_cursos_polos = $formdata->map;
-        foreach ($ofertas_cursos_polos as $course_id => $polos) {
-            $existing = $DB->get_records_menu('saas_polos', array('course_offer_id'=>$course_id), null, 'id, 1');
-            foreach ($polos as $polo => $checked) {
-                $record = new stdClass();
-                $record->enable = 1;
-                $record->is_polo = $checked;
-                if ($id = $DB->get_field('saas_polos', 'id', array('groupname'=>$polo, 'course_offer_id'=>$course_id))){
-                    $record->id = $id;
-                    $DB->update_record('saas_polos', $record);
-                    unset($existing[$id]);
-                } else {
-                    $record->groupname = $polo;
-                    $record->course_offer_id = $course_id;
-                    $id = $DB->insert_record('saas_polos', $record);
-                }
-            }
-            foreach($existing AS $id=>$v) {
-                $DB->set_field('saas_polos', 'enable', 0, array('id'=>$id));
-            }
-        }
-    }
-
 
     // Funções para que enviam ou auxíliam no envio de dados para o SAAS
     //----------------------------------------------------------------------------------------------------------
@@ -1121,7 +1133,7 @@ class saas {
             return true;
         } else if($info['http_code'] <= 499) {
             $this->count_errors++;
-            if(count($this->errors) < 5) {
+            if(count($this->errors) < 50) {
                 $this->errors[] = "Falha {$info['http_code']} no acesso ao SAAS para: ". $info['url'];
             }
             if($throw_exception) {

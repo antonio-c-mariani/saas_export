@@ -31,22 +31,24 @@
     </TABLE>
     <TABLE NAME="saas_map_groups_polos" COMMENT="Mapeamento de grupos do Moodle para polos do SAAS" PREVIOUS="saas_map_course" NEXT="saas_ofertas_cursos">
       <FIELDS>
-        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" NEXT="groupname"/>
-        <FIELD NAME="groupname" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="id" NEXT="polo_id"/>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" NEXT="api_key"/>
+        <FIELD NAME="api_key" TYPE="char" LENGTH="30" NOTNULL="true" SEQUENCE="false" PREVIOUS="id" NEXT="groupname"/>
+        <FIELD NAME="groupname" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="api_key" NEXT="polo_id"/>
         <FIELD NAME="polo_id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" PREVIOUS="groupname"/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id" NEXT="groupname"/>
-        <KEY NAME="groupname" TYPE="unique" FIELDS="groupname" PREVIOUS="primary"/>
       </KEYS>
       <INDEXES>
+        <INDEX NAME="api_key" UNIQUE="false" FIELDS="api_key,groupname"/>
         <INDEX NAME="polo_id" UNIQUE="false" FIELDS="polo_id"/>
       </INDEXES>
     </TABLE>
     <TABLE NAME="saas_ofertas_cursos" COMMENT="Ofertas de cursos do SAAS" PREVIOUS="saas_map_groups_polos" NEXT="saas_ofertas_disciplinas">
       <FIELDS>
-        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" NEXT="uid"/>
-        <FIELD NAME="uid" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="id" NEXT="nome"/>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" NEXT="api_key"/>
+        <FIELD NAME="api_key" TYPE="char" LENGTH="30" NOTNULL="true" SEQUENCE="false" PREVIOUS="id" NEXT="uid"/>
+        <FIELD NAME="uid" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="api_key" NEXT="nome"/>
         <FIELD NAME="nome" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="uid" NEXT="ano"/>
         <FIELD NAME="ano" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="nome" NEXT="periodo"/>
         <FIELD NAME="periodo" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="ano" NEXT="enable"/>
@@ -54,7 +56,7 @@
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id" NEXT="uid"/>
-        <KEY NAME="uid" TYPE="unique" FIELDS="uid" COMMENT="must be unique" PREVIOUS="primary"/>
+        <KEY NAME="uid" TYPE="unique" FIELDS="api_key,uid" COMMENT="must be unique" PREVIOUS="primary"/>
       </KEYS>
       <INDEXES>
         <INDEX NAME="enable" UNIQUE="false" FIELDS="enable"/>
@@ -62,8 +64,9 @@
     </TABLE>
     <TABLE NAME="saas_ofertas_disciplinas" COMMENT="Ofertas de disciplinas do SAAS" PREVIOUS="saas_ofertas_cursos" NEXT="saas_polos">
       <FIELDS>
-        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" NEXT="uid"/>
-        <FIELD NAME="uid" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="id" NEXT="disciplina_uid"/>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" NEXT="api_key"/>
+        <FIELD NAME="api_key" TYPE="char" LENGTH="30" NOTNULL="true" SEQUENCE="false" PREVIOUS="id" NEXT="uid"/>
+        <FIELD NAME="uid" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="api_key" NEXT="disciplina_uid"/>
         <FIELD NAME="disciplina_uid" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="uid" NEXT="inicio"/>
         <FIELD NAME="inicio" TYPE="char" LENGTH="15" NOTNULL="true" SEQUENCE="false" PREVIOUS="disciplina_uid" NEXT="fim"/>
         <FIELD NAME="fim" TYPE="char" LENGTH="15" NOTNULL="true" SEQUENCE="false" PREVIOUS="inicio" NEXT="oferta_curso_uid"/>
@@ -73,7 +76,7 @@
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id" NEXT="offer_dis_uid_unique"/>
-        <KEY NAME="offer_dis_uid_unique" TYPE="unique" FIELDS="uid" COMMENT="must be unique" PREVIOUS="primary"/>
+        <KEY NAME="offer_dis_uid_unique" TYPE="unique" FIELDS="api_key,uid" COMMENT="must be unique" PREVIOUS="primary"/>
       </KEYS>
       <INDEXES>
         <INDEX NAME="disciplina_uid" UNIQUE="false" FIELDS="disciplina_uid" NEXT="oferta_curso_uid"/>
@@ -84,8 +87,9 @@
     </TABLE>
     <TABLE NAME="saas_polos" COMMENT="Polos do SAAS" PREVIOUS="saas_ofertas_disciplinas" NEXT="saas_map_catcourses_polos">
       <FIELDS>
-        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" NEXT="uid"/>
-        <FIELD NAME="uid" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="id" NEXT="nome"/>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" NEXT="api_key"/>
+        <FIELD NAME="api_key" TYPE="char" LENGTH="30" NOTNULL="true" SEQUENCE="false" PREVIOUS="id" NEXT="uid"/>
+        <FIELD NAME="uid" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="api_key" NEXT="nome"/>
         <FIELD NAME="nome" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="uid" NEXT="cidade"/>
         <FIELD NAME="cidade" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="nome" NEXT="estado"/>
         <FIELD NAME="estado" TYPE="char" LENGTH="2" NOTNULL="true" SEQUENCE="false" PREVIOUS="cidade" NEXT="enable"/>
@@ -93,7 +97,7 @@
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id" NEXT="uid"/>
-        <KEY NAME="uid" TYPE="unique" FIELDS="uid" COMMENT="must be unique" PREVIOUS="primary"/>
+        <KEY NAME="uid" TYPE="unique" FIELDS="api_key,uid" COMMENT="must be unique" PREVIOUS="primary"/>
       </KEYS>
       <INDEXES>
         <INDEX NAME="enable" UNIQUE="false" FIELDS="enable"/>
@@ -117,14 +121,15 @@
     </TABLE>
     <TABLE NAME="saas_disciplinas" COMMENT="Disciplinas do SAAS" PREVIOUS="saas_map_catcourses_polos">
       <FIELDS>
-        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" NEXT="uid"/>
-        <FIELD NAME="uid" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="id" NEXT="nome"/>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" NEXT="api_key"/>
+        <FIELD NAME="api_key" TYPE="char" LENGTH="30" NOTNULL="true" SEQUENCE="false" PREVIOUS="id" NEXT="uid"/>
+        <FIELD NAME="uid" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="api_key" NEXT="nome"/>
         <FIELD NAME="nome" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="uid" NEXT="enable"/>
         <FIELD NAME="enable" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" SEQUENCE="false" PREVIOUS="nome"/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id" NEXT="uid"/>
-        <KEY NAME="uid" TYPE="unique" FIELDS="uid" COMMENT="must be unique" PREVIOUS="primary"/>
+        <KEY NAME="uid" TYPE="unique" FIELDS="api_key,uid" COMMENT="must be unique" PREVIOUS="primary"/>
       </KEYS>
       <INDEXES>
         <INDEX NAME="enable" UNIQUE="false" FIELDS="enable"/>

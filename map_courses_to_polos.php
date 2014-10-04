@@ -10,7 +10,12 @@ $may_export = has_capability('report/saas_export:export', $syscontext);
 $message = '';
 
 if(isset($_POST['map_polos']) && isset($_POST['save']) && $may_export) {
-    $mapped = $DB->get_records('saas_map_catcourses_polos', array('type'=>'course'), null, 'instanceid, id, polo_id');
+    $sql = "SELECT smcp.instanceid, smcp.id, smcp.polo_id
+              FROM {saas_map_catcourses_polos} smcp
+              JOIN {saas_polos} pl ON (pl.id = smcp.polo_id)
+              JOIN {config_plugins} cp ON (cp.plugin = 'report_saas_export' AND cp.name = 'api_key' AND cp.value = pl.api_key)
+             WHERE smcp.type = 'course'";
+    $mapped = $DB->get_records_sql($sql);
     $saved = false;
     foreach($_POST['map_polos'] AS $courseid=>$polo_id) {
         if(isset($mapped[$courseid]) && empty($polo_id)) {
@@ -42,6 +47,7 @@ if(isset($_POST['map_polos']) && isset($_POST['save']) && $may_export) {
     $message = $saved  ? get_string('saved', 'report_saas_export') : get_string('no_changes', 'report_saas_export');
 }
 
+saas_show_nome_instituicao();
 print html_writer::start_tag('DIV', array('align'=>'center'));
 print $OUTPUT->heading(get_string('course_to_polo', 'report_saas_export') .
       $OUTPUT->help_icon('course_to_polo', 'report_saas_export'), 3);

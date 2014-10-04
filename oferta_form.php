@@ -28,17 +28,16 @@ require_once("{$CFG->libdir}/formslib.php");
 class oferta_form extends moodleform {
 
     function definition() {
-        global $DB;
+        global $DB, $saas;
 
         $mform = $this->_form;
 
-        $saas = $this->_customdata['saas'];
         $ofertas_cursos = array();
         foreach($saas->get_ofertas_cursos() AS $oc) {
             $ofertas_cursos[$oc->id] = "{$oc->nome} {$oc->ano}/{$oc->periodo}";
         }
 
-        $disciplinas = $DB->get_records_menu('saas_disciplinas', array('enable'=>1), 'nome', 'id, nome');
+        $disciplinas = $saas->get_disciplinas_menu();
 
         $mform->addElement('select', 'oferta_curso_id', get_string('oferta_curso', 'report_saas_export'), $ofertas_cursos);
         $mform->addElement('select', 'disciplina_id', get_string('disciplina', 'report_saas_export'), $disciplinas);
@@ -58,14 +57,15 @@ class oferta_form extends moodleform {
     }
 
     public function validation($data, $files) {
-        global $DB;
+        global $DB, $saas;
 
         $errors = parent::validation($data, $files);
 
         $sql = "SELECT 1
                   FROM {saas_ofertas_cursos} oc
-                  JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid)
-                  JOIN {saas_disciplinas} d ON (d.uid = od.disciplina_uid)
+                  JOIN {config_plugins} cp ON (cp.plugin = 'report_saas_export' AND cp.name = 'api_key' AND cp.value = oc.api_key)
+                  JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.api_key = oc.api_key)
+                  JOIN {saas_disciplinas} d ON (d.uid = od.disciplina_uid AND d.api_key = oc.api_key)
                  WHERE oc.id = :ocid
                    AND d.id = :disciplinaid";
         if($DB->record_exists_sql($sql, array('ocid'=>$data['oferta_curso_id'], 'disciplinaid'=>$data['disciplina_id']))) {
