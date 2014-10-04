@@ -960,6 +960,10 @@ class saas {
     }
 
     function send_users_by_oferta_disciplina($oferta_disciplina, $users_by_roles, $users_lastaccess, $users_suspended, $send_user_details=true) {
+        $this->progressbar_count++;
+        $this->progressbar->update($this->progressbar_count, $this->progressbar_total, "Exportando ofertas de disciplina ($this->progressbar_count/$this->progressbar_total)");
+        ob_flush();
+
         $oferta_uid_encoded = rawurlencode($oferta_disciplina->uid);
         foreach($users_by_roles AS $r=>$users) {
             $this->put_ws("ofertas/disciplinas/{$oferta_uid_encoded}/". self::$role_types[$r], array_values($users));
@@ -1010,6 +1014,8 @@ class saas {
     }
 
     function send_data($selected_ocs=array(), $selected_ods=array(), $selected_polos=array(), $send_user_details=true) {
+        global $DB;
+
         $this->count_errors = 0;
         $this->errors = array();
         $this->count_sent_ods = 0;
@@ -1024,6 +1030,22 @@ class saas {
 
         $ofertas_cursos = $this->get_ofertas_cursos();
 
+        $this->progressbar = new progress_bar('export_saas', 500, true);
+        $this->progressbar_total = 0;
+        $this->progressbar_count = 0;
+
+        foreach($ofertas_cursos AS $ocid=>$oc) {
+            if(isset($selected_ocs[$ocid])) {
+                $ods = $this->get_ofertas_disciplinas($ocid, true);
+                $this->progressbar_total += count($ods[$ocid]);
+            } else if(isset($selected_ods[$ocid])) {
+                $this->progressbar_total += count($selected_ods);
+            }
+        }
+
+        $this->progressbar->update($this->progressbar_count, $this->progressbar_total, "Exportando dados para SAAS");
+        ob_flush();
+
         foreach($ofertas_cursos AS $ocid=>$oc) {
             if(isset($selected_ocs[$ocid])) {
                 $this->send_users_by_ofertas_disciplinas($ocid, 0, $send_user_details);
@@ -1036,6 +1058,10 @@ class saas {
 
         $polo_mapping_type = $this->get_config('polo_mapping');
         if($polo_mapping_type != 'no_polo') {
+            $this->progressbar_count++;
+            $this->progressbar->update($this->progressbar_count, $this->progressbar_total, "Exportando dados para SAAS");
+            ob_flush();
+
             foreach($ofertas_cursos AS $ocid=>$oc) {
                 if(isset($selected_ocs[$ocid])) {
                     $this->send_users_by_polos($ocid, 0, $send_user_details);

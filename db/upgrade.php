@@ -197,7 +197,7 @@ function xmldb_report_saas_export_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2014092100, 'report', 'saas_export');
     }
 
-    if ($oldversion < 2014100105) {
+    if ($oldversion < 2014100400) {
         $api_key = get_config('report_saas_export', 'api_key');
         $tables = array('saas_disciplinas', 'saas_polos', 'saas_ofertas_cursos', 'saas_ofertas_disciplinas');
         foreach($tables AS $tab) {
@@ -228,7 +228,7 @@ function xmldb_report_saas_export_upgrade($oldversion) {
                 $dbman->add_field($table, $field);
             }
             $index = new xmldb_index('groupname', XMLDB_INDEX_UNIQUE, array('groupname'));
-            if (!$dbman->index_exists($table, $index)) {
+            if ($dbman->index_exists($table, $index)) {
                 $dbman->drop_index($table, $index);
             }
             $index = new xmldb_index('groupname', XMLDB_INDEX_UNIQUE, array('api_key,groupname'));
@@ -240,7 +240,7 @@ function xmldb_report_saas_export_upgrade($oldversion) {
             $DB->execute($sql, array('api_key'=>$api_key));
         }
 
-        upgrade_plugin_savepoint(true, 2014100105, 'report', 'saas_export');
+        upgrade_plugin_savepoint(true, 2014100400, 'report', 'saas_export');
     }
 
     return true;
