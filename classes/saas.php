@@ -649,7 +649,7 @@ class saas {
     function get_polos_menu() {
         global $DB;
 
-        return $DB->get_records_menu('saas_polos', array('enable'=>1, 'api_key'=>$this->api_key), 
+        return $DB->get_records_menu('saas_polos', array('enable'=>1, 'api_key'=>$this->api_key),
                                 'nome', "id, CONCAT(nome, ' (', cidade, '/', estado, ')') as nome");
     }
 

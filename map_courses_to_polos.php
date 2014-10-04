@@ -12,7 +12,7 @@ $message = '';
 if(isset($_POST['map_polos']) && isset($_POST['save']) && $may_export) {
     $sql = "SELECT smcp.instanceid, smcp.id, smcp.polo_id
               FROM {saas_map_catcourses_polos} smcp
-              JOIN {saas_polos} pl ON (pl.id = smcp.polo_id)
+              JOIN {saas_polos} pl ON (pl.id = smcp.polo_id AND pl.enable = 1)
               JOIN {config_plugins} cp ON (cp.plugin = 'report_saas_export' AND cp.name = 'api_key' AND cp.value = pl.api_key)
              WHERE smcp.type = 'course'";
     $mapped = $DB->get_records_sql($sql);

@@ -227,13 +227,17 @@ function saas_get_category_tree_map_courses_polos() {
         }
     }
 
-    $sql = "SELECT DISTINCT c.id, c.category, c.fullname AS name, smcp.polo_id
+    $sql = "SELECT DISTINCT c.id, c.category, c.fullname AS name, jp.polo_id
               FROM {saas_ofertas_disciplinas} od
               JOIN {config_plugins} cp ON (cp.plugin = 'report_saas_export' AND cp.name = 'api_key' AND cp.value = od.api_key)
               JOIN {saas_map_course} smc ON (smc.group_map_id = od.group_map_id)
               JOIN {course} c ON (c.id = smc.courseid)
-              JOIN {saas_polos} sp ON (sp.api_key = od.api_key)
-         LEFT JOIN {saas_map_catcourses_polos} smcp ON (smcp.instanceid = c.id AND smcp.type = 'course' AND smcp.polo_id = sp.id)
+         LEFT JOIN (SELECT DISTINCT smcp.instanceid as courseid, smcp.polo_id
+                      FROM {saas_polos} pl
+                      JOIN {config_plugins} cp ON (cp.plugin = 'report_saas_export' AND cp.name = 'api_key' AND cp.value = pl.api_key)
+                      JOIN {saas_map_catcourses_polos} smcp ON (smcp.type = 'course' AND smcp.polo_id = pl.id)
+                     WHERE pl.enable = 1) jp
+                ON (jp.courseid = c.id)
              WHERE od.enable = 1
           ORDER BY c.fullname";
 
@@ -260,8 +264,12 @@ function saas_mount_category_tree_map_courses_polos(&$categories, &$polos, &$row
         $cell = new html_table_cell();
         $cell->attributes['class'] = 'saas_level' . $cat->depth;
         $depth = $cat->depth*2;
-        $cell->text = html_writer::empty_tag('img', array('src'=> $OUTPUT->pix_url('f/folder'), 'class'=>'saas_pix', 'style'=>"padding-left: {$depth}%;"));
-        $cell->text .= $cat->name;
+
+        $report_path = strpos(__FILE__, '/admin/report/') !== false ? '/admin/report' : '/report';
+        $img_folder = html_writer::empty_tag('img', array('class'=>'saas_pix', 'style'=>"padding-left: {$depth}%;",
+                                      'src' => new moodle_url($report_path . '/saas_export/img/folder.png')));
+
+        $cell->text = $img_folder . $cat->name;
         $row->cells[] = $cell;
 
         $cell = new html_table_cell();
@@ -305,15 +313,19 @@ function saas_mount_category_tree_map_courses_polos(&$categories, &$polos, &$row
 function saas_get_category_tree_map_categories_polos() {
     global $DB, $saas;
 
-    $sql = "SELECT DISTINCT ccp.id, ccp.depth, ccp.path, ccp.name, smcp.polo_id
+    $sql = "SELECT DISTINCT ccp.id, ccp.depth, ccp.path, ccp.name, jp.polo_id
               FROM {saas_ofertas_disciplinas} od
               JOIN {config_plugins} cp ON (cp.plugin = 'report_saas_export' AND cp.name = 'api_key' AND cp.value = od.api_key)
               JOIN {saas_map_course} smc ON (smc.group_map_id = od.group_map_id)
               JOIN {course} c ON (c.id = smc.courseid)
               JOIN {course_categories} cc ON (cc.id = c.category)
               JOIN {course_categories} ccp ON (ccp.id = cc.id OR cc.path LIKE CONCAT('%/',ccp.id,'/%'))
-              JOIN {saas_polos} sp ON (sp.api_key = od.api_key)
-         LEFT JOIN {saas_map_catcourses_polos} smcp ON (smcp.instanceid = ccp.id AND smcp.type = 'category' AND smcp.polo_id = sp.id)
+         LEFT JOIN (SELECT DISTINCT smcp.instanceid as catid, smcp.polo_id
+                      FROM {saas_polos} pl
+                      JOIN {config_plugins} cp ON (cp.plugin = 'report_saas_export' AND cp.name = 'api_key' AND cp.value = pl.api_key)
+                      JOIN {saas_map_catcourses_polos} smcp ON (smcp.type = 'category' AND smcp.polo_id = pl.id)
+                     WHERE pl.enable = 1) jp
+                ON (jp.catid = ccp.id)
              WHERE od.enable = 1
           ORDER BY ccp.depth, ccp.name";
     $categories = $DB->get_records_sql($sql);
@@ -346,8 +358,11 @@ function saas_mount_category_tree_map_categories_polos($categories, &$polos, &$r
         $cell = new html_table_cell();
         $cell->attributes['class'] = 'saas_level' . $cat->depth;
         $depth = $cat->depth*2;
-        $cell->text = html_writer::empty_tag('img', array('src'=> $OUTPUT->pix_url('f/folder'), 'class'=>'saas_pix', 'style'=>"padding-left: {$depth}%;"));
-        $cell->text .= $cat->name;
+
+        $report_path = strpos(__FILE__, '/admin/report/') !== false ? '/admin/report' : '/report';
+        $img_folder = html_writer::empty_tag('img', array('class'=>'saas_pix', 'style'=>"padding-left: {$depth}%;",
+                                      'src' => new moodle_url($report_path . '/saas_export/img/folder.png')));
+        $cell->text = $img_folder . $cat->name;
         $row->cells[] = $cell;
 
         $cell = new html_table_cell();
