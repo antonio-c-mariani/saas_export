@@ -118,7 +118,9 @@ function saas_show_categories_tree($group_map_id) {
         }
         $title_ods = 'Disciplinas:' . html_writer::tag('UL', html_writer::tag('font', $title_ods, array('color'=>'darkblue')));
     }
+
     $oc = $DB->get_record('saas_ofertas_cursos', array('uid'=>$od->oferta_curso_uid));
+    $cancel_url = new moodle_url('index.php', array('action'=>'course_mapping', 'subaction'=>'ofertas', 'ocid'=>$oc->id));
 
     echo html_writer::start_tag('div', array('align'=>'center'));
     echo $OUTPUT->heading(get_string('course_selection', 'report_saas_export') .
@@ -152,6 +154,8 @@ function saas_show_categories_tree($group_map_id) {
 
         print html_writer::table($table);
 
+        print $OUTPUT->single_button($cancel_url, get_string('cancel'));
+
         print $OUTPUT->box_end();
         echo html_writer::end_tag('div');
     }
@@ -166,6 +170,9 @@ function saas_show_categories_tree($group_map_id) {
     echo html_writer::end_tag('ul');
     echo html_writer::end_tag('div');
 
+    echo html_writer::start_tag('div', array('align'=>'center'));
+    echo $OUTPUT->single_button($cancel_url, get_string('cancel'));
+    echo html_writer::end_tag('div');
 }
 
 function saas_show_categories($group_map_id, &$categories, $open_catids = array()){
@@ -263,10 +270,10 @@ function saas_mount_category_tree_map_courses_polos(&$categories, &$polos, &$row
 
         $cell = new html_table_cell();
         $cell->attributes['class'] = 'saas_level' . $cat->depth;
-        $depth = $cat->depth*2;
+        $padding = ($cat->depth-1)*18;
 
         $report_path = strpos(__FILE__, '/admin/report/') !== false ? '/admin/report' : '/report';
-        $img_folder = html_writer::empty_tag('img', array('class'=>'saas_pix', 'style'=>"padding-left: {$depth}%;",
+        $img_folder = html_writer::empty_tag('img', array('class'=>'saas_pix', 'style'=>"padding-left: {$padding}px;",
                                       'src' => new moodle_url($report_path . '/saas_export/img/folder.png')));
 
         $cell->text = $img_folder . $cat->name;
@@ -279,7 +286,6 @@ function saas_mount_category_tree_map_courses_polos(&$categories, &$polos, &$row
         $rows[] = $row;
 
         if(count($cat->courses) > 0) {
-            $depth += 2;
             $color_class = 'saas_normalcolor';
             foreach($cat->courses AS $c) {
                 $color_class = $color_class == 'saas_normalcolor' ? 'saas_alternatecolor' : 'saas_normalcolor';
@@ -288,8 +294,8 @@ function saas_mount_category_tree_map_courses_polos(&$categories, &$polos, &$row
 
                 $cell = new html_table_cell();
                 $cell->attributes['class'] = $color_class;
-                $depth = ($cat->depth+2)*2;
-                $cell->text = html_writer::empty_tag('img', array('src'=> $OUTPUT->pix_url('i/course'), 'class'=>'saas_pix', 'style'=>"padding-left: {$depth}%;"));
+                $padding = $cat->depth*18;
+                $cell->text = html_writer::empty_tag('img', array('src'=> $OUTPUT->pix_url('i/course'), 'class'=>'saas_pix', 'style'=>"padding-left: {$padding}px;"));
                 $cell->text .= $c->name;
                 $row->cells[] = $cell;
 
@@ -357,10 +363,10 @@ function saas_mount_category_tree_map_categories_polos($categories, &$polos, &$r
 
         $cell = new html_table_cell();
         $cell->attributes['class'] = 'saas_level' . $cat->depth;
-        $depth = $cat->depth*2;
+        $padding = ($cat->depth-1)*18;
 
         $report_path = strpos(__FILE__, '/admin/report/') !== false ? '/admin/report' : '/report';
-        $img_folder = html_writer::empty_tag('img', array('class'=>'saas_pix', 'style'=>"padding-left: {$depth}%;",
+        $img_folder = html_writer::empty_tag('img', array('class'=>'saas_pix', 'style'=>"padding-left: {$padding}px;",
                                       'src' => new moodle_url($report_path . '/saas_export/img/folder.png')));
         $cell->text = $img_folder . $cat->name;
         $row->cells[] = $cell;
@@ -791,7 +797,8 @@ function saas_show_export_options($url, $selected_ocs=true, $selected_ods=true, 
     $ofertas_cursos = $saas->get_ofertas_cursos();
     $ofertas_disciplinas_oc = $saas->get_ofertas_disciplinas(0, true);
 
-    $polos_oc = $saas->get_polos_by_oferta_curso();
+    $show_polos = $saas->get_config('polo_mapping') != 'no_polo';
+    $polos_oc = $show_polos ? $saas->get_polos_by_oferta_curso() : array();
 
     if(empty($ofertas_cursos)) {
         print $OUTPUT->heading(get_string('no_ofertas_cursos', 'report_saas_export'), 4);
@@ -801,62 +808,62 @@ function saas_show_export_options($url, $selected_ocs=true, $selected_ods=true, 
     $rows = array();
     $show_form = false;
     foreach($ofertas_cursos AS $ocid=>$oc) {
-        if(!isset($ofertas_disciplinas_oc[$ocid]) && empty($polos_oc[$ocid])) {
-            continue;
-        }
+        if(isset($ofertas_disciplinas_oc[$ocid]) || ($show_polos && !empty($polos_oc[$ocid]))) {
+            $tag_checkbox = 'saas_oc_' . $ocid;
+            $row = new html_table_row();
 
-        $tag_checkbox = 'saas_oc_' . $ocid;
-        $row = new html_table_row();
+            $cell = new html_table_cell();
+            $checked = $selected_ocs===true || isset($selected_ocs[$ocid]);
+            $disabled = $checked ? array('disabled'=>true) : array();
+            $lable = "{$oc->nome} ({$oc->ano}/{$oc->periodo})";
+            $cell->text = html_writer::checkbox("oc[{$ocid}]", $ocid, $checked, $lable, array('id'=>$tag_checkbox, 'class'=>'oc_checkbox'));
+            $cell->style = "vertical-align: middle;";
+            $row->cells[] = $cell;
 
-        $cell = new html_table_cell();
-        $checked = $selected_ocs===true || isset($selected_ocs[$ocid]);
-        $disabled = $checked ? array('disabled'=>true) : array();
-        $lable = "{$oc->nome} ({$oc->ano}/{$oc->periodo})";
-        $cell->text = html_writer::checkbox("oc[{$ocid}]", $ocid, $checked, $lable, array('id'=>$tag_checkbox, 'class'=>'oc_checkbox'));
-        $cell->style = "vertical-align: middle;";
-        $row->cells[] = $cell;
+            $cell = new html_table_cell();
+            if(isset($ofertas_disciplinas_oc[$ocid])) {
+                $show_form = true;
+                $cell->text = html_writer::start_tag('UL', array('style'=>'list-style-type: none;'));
+                $params = array_merge($disabled, array('class'=>'od_'.$tag_checkbox));
+                foreach($ofertas_disciplinas_oc[$ocid] AS $odid=>$od) {
+                    $checked = $selected_ocs===true || isset($selected_ods[$ocid][$odid]);
+                    $label = $od->nome . ' (' . $saas->format_date($od->inicio, $od->fim) . ')';
+                    $checkbox = html_writer::checkbox("od[{$ocid}][{$odid}]", $ocid, $checked, $label, $params);
+                    $cell->text .= html_writer::tag('LI', $checkbox);
+                }
 
-        $cell = new html_table_cell();
-        if(isset($ofertas_disciplinas_oc[$ocid])) {
-            $show_form = true;
-            $cell->text = html_writer::start_tag('UL', array('style'=>'list-style-type: none;'));
-            $params = array_merge($disabled, array('class'=>'od_'.$tag_checkbox));
-            foreach($ofertas_disciplinas_oc[$ocid] AS $odid=>$od) {
-                $checked = $selected_ocs===true || isset($selected_ods[$ocid][$odid]);
-                $label = $od->nome . ' (' . $saas->format_date($od->inicio, $od->fim) . ')';
-                $checkbox = html_writer::checkbox("od[{$ocid}][{$odid}]", $ocid, $checked, $label, $params);
-                $cell->text .= html_writer::tag('LI', $checkbox);
+                $cell->text .= html_writer::empty_tag('img', array('src'=>'img/arrow_ltr.png'));
+                $params = array_merge($disabled, array('class'=>'checkall_button', 'id'=>"od_{$tag_checkbox}"));
+                $cell->text .= html_writer::checkbox('', '', true, 'todos/nenhum', $params);
+
+                $cell->text .= html_writer::end_tag('UL');
+            }
+            $cell->style = "vertical-align: middle;";
+            $row->cells[] = $cell;
+
+            if($show_polos) {
+                $cell = new html_table_cell();
+                if(!empty($polos_oc[$ocid])) {
+                    $show_form = true;
+                    $cell->text = html_writer::start_tag('UL', array('style'=>'list-style-type: none;'));
+                    $params = array_merge($disabled, array('class'=>'polo_'.$tag_checkbox));
+                    foreach($polos_oc[$ocid] AS $plid=>$pl) {
+                        $checked = $selected_ocs===true || isset($selected_polos[$ocid][$plid]);
+                        $checkbox = html_writer::checkbox("polo[{$ocid}][{$plid}]", $ocid, $checked, $pl->nome, $params);
+                        $cell->text .= html_writer::tag('LI', $checkbox);
+                    }
+                    $cell->text .= html_writer::empty_tag('img', array('src'=>'img/arrow_ltr.png'));
+                    $params = array_merge($disabled, array('class'=>'checkall_button', 'id'=>"polo_{$tag_checkbox}"));
+                    $cell->text .= html_writer::checkbox('', '', true, 'todos/nenhum', $params);
+
+                    $cell->text .= html_writer::end_tag('UL');
+                }
+                $cell->style = "vertical-align: middle;";
+                $row->cells[] = $cell;
             }
 
-            $cell->text .= html_writer::empty_tag('img', array('src'=>'img/arrow_ltr.png'));
-            $params = array_merge($disabled, array('class'=>'checkall_button', 'id'=>"od_{$tag_checkbox}"));
-            $cell->text .= html_writer::checkbox('', '', true, 'todos/nenhum', $params);
-
-            $cell->text .= html_writer::end_tag('UL');
+            $rows[] = $row;
         }
-        $cell->style = "vertical-align: middle;";
-        $row->cells[] = $cell;
-
-        $cell = new html_table_cell();
-        if(!empty($polos_oc[$ocid])) {
-            $show_form = true;
-            $cell->text = html_writer::start_tag('UL', array('style'=>'list-style-type: none;'));
-            $params = array_merge($disabled, array('class'=>'polo_'.$tag_checkbox));
-            foreach($polos_oc[$ocid] AS $plid=>$pl) {
-                $checked = $selected_ocs===true || isset($selected_polos[$ocid][$plid]);
-                $checkbox = html_writer::checkbox("polo[{$ocid}][{$plid}]", $ocid, $checked, $pl->nome, $params);
-                $cell->text .= html_writer::tag('LI', $checkbox);
-            }
-            $cell->text .= html_writer::empty_tag('img', array('src'=>'img/arrow_ltr.png'));
-            $params = array_merge($disabled, array('class'=>'checkall_button', 'id'=>"polo_{$tag_checkbox}"));
-            $cell->text .= html_writer::checkbox('', '', true, 'todos/nenhum', $params);
-
-            $cell->text .= html_writer::end_tag('UL');
-        }
-        $cell->style = "vertical-align: middle;";
-        $row->cells[] = $cell;
-
-        $rows[] = $row;
     }
 
     saas_show_nome_instituicao();
@@ -871,8 +878,12 @@ function saas_show_export_options($url, $selected_ocs=true, $selected_ods=true, 
         print html_writer::start_tag('form', array('method'=>'post', 'action'=>$url));
 
         $table = new html_table();
-        $table->head = array('Oferta de Curso', 'Ofertas de disciplina', 'Polos');
-        $table->colclasses = array('leftalign', 'leftalign', 'leftalign', 'leftalign');
+        $table->head = array('Oferta de Curso', 'Ofertas de disciplina');
+        $table->colclasses = array('leftalign', 'leftalign');
+        if($show_polos) {
+            $table->head[] = 'Polos';
+            $table->colclasses[] = 'leftalign';
+        }
         $table->data = $rows;
         $table->attributes = array('class'=>'saas_table');
         $table->tablealign = 'center';

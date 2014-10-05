@@ -130,25 +130,26 @@ switch ($action) {
         if(has_capability('report/saas_export:export', $syscontext)) {
             switch($saas_data_action) {
                 case 'add_oferta':
+                    $url->param('subaction', 'ofertas');
+                    $url->param('reload', 0);
                     $oferta_form = new oferta_form($url);
                     if ($oferta_form->is_cancelled()) {
                         redirect($url);
                     } else if ($oferta = $oferta_form->get_data()) {
                         $saas->send_oferta_disciplina($oferta);
                         $saas->load_ofertas_disciplinas_saas();
-                        $url->param('subaction', 'ofertas');
-                        $url->param('reload', 0);
                         redirect($url);
                     }
                     break;
                 case 'add_polo':
+                    $url->param('subaction', 'polos');
+                    $url->param('reload', 0);
                     $polo_form = new polo_form($url);
                     if ($polo_form->is_cancelled()) {
                         redirect($url);
                     } else if ($polo = $polo_form->get_data()) {
                         $saas->send_polo($polo);
                         $saas->load_polos_saas();
-                        $url->param('subaction', 'polos');
                         redirect($url);
                     }
                     break;
@@ -185,7 +186,9 @@ switch ($action) {
                 }
                 break;
             case 'polos':
-                $saas->load_polos_saas();
+                if(optional_param('reload', true, PARAM_INT)) {
+                    $saas->load_polos_saas();
+                }
                 saas_show_nome_instituicao();
                 print html_writer::tag('DIV', $OUTPUT->heading('Polos definidos no SAAS', 3), array('align'=>'center'));
                 saas_show_table_polos();

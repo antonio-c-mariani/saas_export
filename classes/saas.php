@@ -315,6 +315,8 @@ class saas {
                 $sql .= " JOIN {saas_map_catcourses_polos} smcp ON (smcp.type = 'course' AND smcp.instanceid = c.id)
                           JOIN {saas_polos} sp ON (sp.id = smcp.polo_id AND sp.enable = 1 AND sp.api_key = oc.api_key)";
                 break;
+            default:
+                return array();
         }
 
         $params = array();
@@ -1039,7 +1041,7 @@ class saas {
                 $ods = $this->get_ofertas_disciplinas($ocid, true);
                 $this->progressbar_total += count($ods[$ocid]);
             } else if(isset($selected_ods[$ocid])) {
-                $this->progressbar_total += count($selected_ods);
+                $this->progressbar_total += count($selected_ods[$ocid]);
             }
         }
 
@@ -1058,11 +1060,13 @@ class saas {
 
         $polo_mapping_type = $this->get_config('polo_mapping');
         if($polo_mapping_type != 'no_polo') {
-            $this->progressbar_count++;
-            $this->progressbar->update($this->progressbar_count, $this->progressbar_total, "Exportando dados para SAAS");
-            ob_flush();
+            $this->progressbar_total = count($ofertas_cursos);
+            $this->progressbar_count = 0;
 
             foreach($ofertas_cursos AS $ocid=>$oc) {
+                $this->progressbar_count++;
+                $this->progressbar->update($this->progressbar_count, $this->progressbar_total, "Exportando polos para SAAS");
+                ob_flush();
                 if(isset($selected_ocs[$ocid])) {
                     $this->send_users_by_polos($ocid, 0, $send_user_details);
                 } else if(isset($selected_polos[$ocid])) {
@@ -1074,6 +1078,9 @@ class saas {
         }
 
         $this->send_resume();
+
+        $this->progressbar->update($this->progressbar_total, $this->progressbar_total, "Exportados dados para SAAS");
+        ob_flush();
 
         $result = array($this->count_errors, $this->errors, $this->count_sent_users, $this->count_sent_ods, $this->count_sent_polos);
         return $result;
