@@ -119,7 +119,7 @@ function saas_show_categories_tree($group_map_id) {
         $title_ods = 'Disciplinas:' . html_writer::tag('UL', html_writer::tag('font', $title_ods, array('color'=>'darkblue')));
     }
 
-    $oc = $DB->get_record('saas_ofertas_cursos', array('uid'=>$od->oferta_curso_uid));
+    $oc = $saas->get_oferta_curso($od->oferta_curso_uid);
     $cancel_url = new moodle_url('index.php', array('action'=>'course_mapping', 'subaction'=>'ofertas', 'ocid'=>$oc->id));
 
     echo html_writer::start_tag('div', array('align'=>'center'));
@@ -139,17 +139,17 @@ function saas_show_categories_tree($group_map_id) {
         print $OUTPUT->box_start('generalbox boxwidthwide boxaligncenter');
         $table = new html_table();
         $table->attributes = array('class'=>'saas_table');
-        $table->head = array('Curso Moodle', 'Distância Levenshtein');
-        $table->colclasses = array('leftalign', 'centeralign');
+        $table->head = array('Curso Moodle', 'Categoria', 'Distância Levenshtein');
+        $table->colclasses = array('leftalign', 'leftalign', 'centeralign');
         $table->tablealign = 'center';
         $table->cellpadding = 5;
 
         $table->data = array();
         foreach($best_options AS $c) {
-            $cat_names = $saas->get_concatenated_categories_names($c->category);
+            $cat_names = $saas->get_concatenated_categories_names($c->category, '/ ');
             $url = new moodle_url('index.php', array('action'=>'course_mapping', 'subaction'=>'add', 'courseid'=>$c->id,'group_map_id'=>$group_map_id));
             $link = html_writer::link($url, $c->fullname, array('title'=>'Clique para selecionar este curso'));
-            $table->data[] = array(html_writer::tag('small', $cat_names) . '<BR>' . $link, $c->distance);
+            $table->data[] = array($link, html_writer::tag('small', $cat_names), $c->distance);
         }
 
         print html_writer::table($table);

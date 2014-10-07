@@ -251,7 +251,7 @@ class saas {
         }
     }
 
-    function get_concatenated_categories_names($categoryid) {
+    function get_concatenated_categories_names($categoryid, $separator = '/') {
         global $DB;
 
         $sql = "SELECT ccp.id, ccp.name
@@ -260,7 +260,7 @@ class saas {
                  WHERE cc.id = {$categoryid}
               ORDER BY ccp.depth";
         $cats = $DB->get_records_sql_menu($sql);
-        return implode('/', $cats);
+        return implode($separator, $cats);
     }
 
     // Gets para os dados já salvos no plugin
@@ -357,6 +357,13 @@ class saas {
         global $DB;
 
         return $DB->get_records('saas_ofertas_cursos', array('enable'=>1, 'api_key'=>$this->api_key), 'nome, ano, periodo');
+    }
+
+    // retorna uma oferta de curso com base em seu uid do SAAS
+    function get_oferta_curso($uid) {
+        global $DB;
+
+        return $DB->get_record('saas_ofertas_cursos', array('uid'=>$uid, 'enable'=>1, 'api_key'=>$this->api_key));
     }
 
     // retorna array com ofertas de curso e respectivas ofertas de disciplinas, mapeadas ou não
