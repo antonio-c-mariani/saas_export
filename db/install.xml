@@ -40,8 +40,8 @@
         <KEY NAME="primary" TYPE="primary" FIELDS="id" NEXT="groupname"/>
       </KEYS>
       <INDEXES>
-        <INDEX NAME="api_key" UNIQUE="false" FIELDS="api_key,groupname"/>
-        <INDEX NAME="polo_id" UNIQUE="false" FIELDS="polo_id"/>
+        <INDEX NAME="api_key" UNIQUE="false" FIELDS="api_key,groupname" NEXT="polo_id"/>
+        <INDEX NAME="polo_id" UNIQUE="false" FIELDS="polo_id" PREVIOUS="api_key"/>
       </INDEXES>
     </TABLE>
     <TABLE NAME="saas_ofertas_cursos" COMMENT="Ofertas de cursos do SAAS" PREVIOUS="saas_map_groups_polos" NEXT="saas_ofertas_disciplinas">
