@@ -37,7 +37,7 @@
         <FIELD NAME="polo_id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" PREVIOUS="groupname"/>
       </FIELDS>
       <KEYS>
-        <KEY NAME="primary" TYPE="primary" FIELDS="id" NEXT="groupname"/>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
       </KEYS>
       <INDEXES>
         <INDEX NAME="api_key" UNIQUE="false" FIELDS="api_key,groupname" NEXT="polo_id"/>
