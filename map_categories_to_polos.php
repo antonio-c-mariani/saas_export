@@ -38,6 +38,8 @@ if(isset($_POST['map_polos']) && isset($_POST['save']) && $may_export) {
             }
         }
     }
+
+    $concat_category = saas::get_concat_category();
     foreach($_POST['map_polos'] AS $categoryid=>$polo_id) {
         if(!isset($mapped[$categoryid]) && !empty($polo_id)) {
             $sql = "SELECT cc.*
@@ -49,7 +51,7 @@ if(isset($_POST['map_polos']) && isset($_POST['save']) && $may_export) {
                      UNION
                     SELECT ccp.*
                       FROM {course_categories} cc
-                      JOIN {course_categories} ccp ON (ccp.id = cc.id OR cc.path LIKE CONCAT('%/', ccp.id, '/%'))
+                      JOIN {course_categories} ccp ON (ccp.id = cc.id OR cc.path LIKE {$concat_category})
                       JOIN {saas_map_catcourses_polos} smcp ON (smcp.instanceid = ccp.id AND smcp.type = 'category')
                       JOIN {saas_polos} pl ON (pl.id = smcp.polo_id AND pl.enable = 1)
                       JOIN {config_plugins} cp ON (cp.plugin = 'report_saas_export' AND cp.name = 'api_key' AND cp.value = pl.api_key)

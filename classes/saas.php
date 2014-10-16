@@ -254,9 +254,10 @@ class saas {
     function get_concatenated_categories_names($categoryid, $separator = '/') {
         global $DB;
 
+        $concat_category = self::get_concat_category();
         $sql = "SELECT ccp.id, ccp.name
                   FROM {course_categories} cc
-                  JOIN {course_categories} ccp ON (ccp.id = cc.id OR cc.path LIKE CONCAT('%/',ccp.id,'/%'))
+                  JOIN {course_categories} ccp ON (ccp.id = cc.id OR cc.path LIKE {$concat_category})
                  WHERE cc.id = {$categoryid}
               ORDER BY ccp.depth";
         $cats = $DB->get_records_sql_menu($sql);
@@ -335,8 +336,9 @@ class saas {
                           JOIN {saas_polos} sp ON (sp.id = spm.polo_id AND sp.enable = 1 AND sp.api_key = oc.api_key)";
                 break;
             case 'category_to_polo':
+                $concat_category = self::get_concat_category();
                 $sql .= " JOIN {course_categories} cc ON (cc.id = c.category)
-                          JOIN {course_categories} ccp ON (ccp.id = cc.id OR cc.path LIKE CONCAT('%/',ccp.id,'/%'))
+                          JOIN {course_categories} ccp ON (ccp.id = cc.id OR cc.path LIKE {$concat_category})
                           JOIN {saas_map_catcourses_polos} smcp ON (smcp.type = 'category' AND smcp.instanceid = ccp.id)
                           JOIN {saas_polos} sp ON (sp.id = smcp.polo_id AND sp.enable = 1 AND sp.api_key = oc.api_key)";
                 break;
@@ -515,10 +517,13 @@ class saas {
                 }
             }
             $distinct = 'DISTINCT';
-            $orderby = ', CONCAT(u.firstname, u.lastname)';
-	        $field .= ', CONCAT(u.firstname, u.lastname) as nome';
+            $concat_nome = self::get_concat_nome();
+            $orderby = ", {$concat_nome}";
+	        $field .= ", {$concat_nome} as nome";
         }
 
+        $concat_enrol = self::get_concat_enrol();
+        $concat_category = self::get_concat_category();
         $sql = "SELECT {$distinct} oc.id AS ocid, sp.id AS p_id, scr.role $field
                   FROM {saas_ofertas_cursos} oc
                   JOIN {config_plugins} cp ON (cp.plugin = 'report_saas_export' AND cp.name = 'api_key' AND cp.value = oc.api_key)
@@ -531,12 +536,12 @@ class saas {
                   JOIN {role_assignments} ra
                     ON (ra.contextid = ctx.id AND
                         ra.userid = ue.userid AND
-                        ((ra.component = '' AND e.enrol = 'manual') OR (ra.component = CONCAT('enrol_',e.enrol) AND ra.itemid = e.id)))
+                        ((ra.component = '' AND e.enrol = 'manual') OR (ra.component = {$concat_enrol} AND ra.itemid = e.id)))
                   JOIN {saas_config_roles} scr ON (scr.roleid = ra.roleid AND scr.role IN ('student', 'tutor_polo'))
                   JOIN {user} u ON (u.id = ue.userid AND u.deleted = 0 AND u.suspended = 0)
                   {$join_user_info_data}
                   JOIN {course_categories} cc ON (cc.id = c.category)
-                  JOIN {course_categories} ccp ON (ccp.id = cc.id OR cc.path LIKE CONCAT('%/',ccp.id,'/%'))
+                  JOIN {course_categories} ccp ON (ccp.id = cc.id OR cc.path LIKE {$concat_category})
                   JOIN {saas_map_catcourses_polos} smcp ON (smcp.type = 'category' AND smcp.instanceid = ccp.id)
                   JOIN {saas_polos} sp ON (sp.id = smcp.polo_id AND sp.enable = 1 AND sp.api_key = oc.api_key)
                  WHERE oc.enable = 1
@@ -582,10 +587,12 @@ class saas {
                 }
             }
             $distinct = 'DISTINCT';
-            $orderby = ', CONCAT(u.firstname, u.lastname)';
-            $field .= ', CONCAT(u.firstname, u.lastname) as nome';
+            $concat_nome = self::get_concat_nome();
+            $orderby = ", {$concat_nome}";
+            $field .= ", {$concat_nome} as nome";
         }
 
+        $concat_enrol = self::get_concat_enrol();
         $sql = "SELECT {$distinct} oc.id AS ocid, sp.id AS p_id, scr.role $field
                   FROM {saas_ofertas_cursos} oc
                   JOIN {config_plugins} cp ON (cp.plugin = 'report_saas_export' AND cp.name = 'api_key' AND cp.value = oc.api_key)
@@ -598,7 +605,7 @@ class saas {
                   JOIN {role_assignments} ra
                     ON (ra.contextid = ctx.id AND
                         ra.userid = ue.userid AND
-                        ((ra.component = '' AND e.enrol = 'manual') OR (ra.component = CONCAT('enrol_',e.enrol) AND ra.itemid = e.id)))
+                        ((ra.component = '' AND e.enrol = 'manual') OR (ra.component = {$concat_enrol} AND ra.itemid = e.id)))
                   JOIN {saas_config_roles} scr ON (scr.roleid = ra.roleid AND scr.role IN ('student', 'tutor_polo'))
                   JOIN {user} u ON (u.id = ue.userid AND u.deleted = 0 AND u.suspended = 0)
                   {$join_user_info_data}
@@ -647,10 +654,12 @@ class saas {
                 }
             }
             $distinct = 'DISTINCT';
-            $orderby = ', CONCAT(u.firstname, u.lastname)';
-	        $field .= ', CONCAT(u.firstname, u.lastname) as nome';
+            $concat_nome = self::get_concat_nome();
+            $orderby = ", {$concat_nome}";
+	        $field .= ", {$concat_nome} as nome";
         }
 
+        $concat_enrol = self::get_concat_enrol();
         $sql = "SELECT {$distinct} oc.id AS ocid, sp.id AS p_id, scr.role $field
                   FROM {saas_ofertas_cursos} oc
                   JOIN {config_plugins} cp ON (cp.plugin = 'report_saas_export' AND cp.name = 'api_key' AND cp.value = oc.api_key)
@@ -663,7 +672,7 @@ class saas {
                   JOIN {role_assignments} ra
                     ON (ra.contextid = ctx.id AND
                         ra.userid = ue.userid AND
-                        ((ra.component = '' AND e.enrol = 'manual') OR (ra.component = CONCAT('enrol_',e.enrol) AND ra.itemid = e.id)))
+                        ((ra.component = '' AND e.enrol = 'manual') OR (ra.component = {$concat_enrol} AND ra.itemid = e.id)))
                   JOIN {saas_config_roles} scr ON (scr.roleid = ra.roleid AND scr.role IN ('student', 'tutor_polo'))
                   JOIN {user} u ON (u.id = ue.userid AND u.deleted = 0 AND u.suspended = 0)
                   {$join_user_info_data}
@@ -687,8 +696,8 @@ class saas {
     function get_polos_menu() {
         global $DB;
 
-        return $DB->get_records_menu('saas_polos', array('enable'=>1, 'api_key'=>$this->api_key),
-                                'nome', "id, CONCAT(nome, ' (', cidade, '/', estado, ')') as nome");
+        $concat_polo = saas::get_concat_polo();
+        return $DB->get_records_menu('saas_polos', array('enable'=>1, 'api_key'=>$this->api_key), 'nome', "id, {$concat_polo} as nome");
     }
 
     function get_polos_count() {
@@ -755,7 +764,7 @@ class saas {
             }
             $join_user_lastaccess = 'LEFT JOIN {user_lastaccess} ul ON (ul.userid = u.id AND ul.courseid = c.id)';
             $fields .= ', MAX(ue.status) as suspended, MAX(u.currentlogin) AS currentlogin, MAX(ul.timeaccess) AS lastaccess';
-            $orderby = ', CONCAT(u.firstname, u.lastname)';
+            $orderby = ', ' . self::get_concat_nome();
             $group_by .= ', u.firstname, u.lastname';
         }
 
@@ -767,6 +776,7 @@ class saas {
             $condition .= " AND oc.id = {$id_oferta_curso}";
         }
 
+        $concat_enrol = self::get_concat_enrol();
         $sql = "SELECT od.id AS odid, scr.role, {$fields}
                   FROM {saas_ofertas_cursos} oc
                   JOIN {config_plugins} cp ON (cp.plugin = 'report_saas_export' AND cp.name = 'api_key' AND cp.value = oc.api_key)
@@ -779,7 +789,7 @@ class saas {
                   JOIN {role_assignments} ra
                     ON (ra.contextid = ctx.id AND
                         ra.userid = ue.userid AND
-                        ((ra.component = '' AND e.enrol = 'manual') OR (ra.component = CONCAT('enrol_',e.enrol) AND ra.itemid = e.id)))
+                        ((ra.component = '' AND e.enrol = 'manual') OR (ra.component = {$concat_enrol} AND ra.itemid = e.id)))
                   JOIN {saas_config_roles} scr ON (scr.roleid = ra.roleid AND scr.role IN ('student', 'teacher', 'tutor_inst'))
                   JOIN {user} u ON (u.id = ue.userid AND u.deleted = 0 AND u.suspended = 0)
                   {$join_user_info_data}
@@ -1384,4 +1394,43 @@ class saas {
         }
     }
 
+    static function get_concat_enrol() {
+        global $DB;
+
+        if ($DB instanceof pgsql_native_moodle_database) {
+            return "('enrol_' || e.enrol)";
+        } else {
+            return "CONCAT('enrol_', e.enrol)";
+        }
+    }
+
+    static function get_concat_nome() {
+        global $DB;
+
+        if ($DB instanceof pgsql_native_moodle_database) {
+            return "(u.firstname || ' ' || u.lastname)";
+        } else {
+            return "CONCAT(u.firstname, ' ', u.lastname)";
+        }
+    }
+
+    static function get_concat_category() {
+        global $DB;
+
+        if ($DB instanceof pgsql_native_moodle_database) {
+            return "('%/' || ccp.id || '/%')";
+        } else {
+            return "CONCAT('%/', ccp.id, '/%')";
+        }
+    }
+
+    static function get_concat_polo() {
+        global $DB;
+
+        if ($DB instanceof pgsql_native_moodle_database) {
+            return "(nome || ' (' || cidade || '/' || estado || ')')";
+        } else {
+            return "CONCAT(nome, ' (', cidade, '/', estado, ')')";
+        }
+    }
 }

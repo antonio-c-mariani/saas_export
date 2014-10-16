@@ -13,6 +13,7 @@ function saas_show_categories_tree($group_map_id) {
     global $DB, $SESSION, $PAGE, $OUTPUT, $saas;
 
     $PAGE->requires->js_init_call('M.report_saas_export.init');
+    $concat_category = saas::get_concat_category();
 
     // Hierarquia de categorias com cursos a selecionar (não vazias)
     $sql = "SELECT DISTINCT ccp.id, ccp.depth, ccp.path, ccp.name
@@ -28,7 +29,7 @@ function saas_show_categories_tree($group_map_id) {
                         ON (cr.courseid = c.id)
                      WHERE c.id > 1
                        AND cr.courseid IS NULL) cat
-                ON (ccp.id = cat.id OR cat.path LIKE CONCAT('%/',ccp.id,'/%'))
+                ON (ccp.id = cat.id OR cat.path LIKE {$concat_category})
           ORDER BY ccp.depth, ccp.name";
     $categories = $DB->get_records_sql($sql);
     foreach($categories AS $cat) {
@@ -146,7 +147,7 @@ function saas_show_categories_tree($group_map_id) {
 
         $table->data = array();
         foreach($best_options AS $c) {
-            $cat_names = $saas->get_concatenated_categories_names($c->category, '/ ');
+            $cat_names = saas::get_concatenated_categories_names($c->category, '/ ');
             $url = new moodle_url('index.php', array('action'=>'course_mapping', 'subaction'=>'add', 'courseid'=>$c->id,'group_map_id'=>$group_map_id));
             $link = html_writer::link($url, $c->fullname, array('title'=>'Clique para selecionar este curso'));
             $table->data[] = array($link, html_writer::tag('small', $cat_names), $c->distance);
@@ -213,13 +214,14 @@ function saas_show_categories($group_map_id, &$categories, $open_catids = array(
 function saas_get_category_tree_map_courses_polos() {
     global $DB, $saas;
 
+    $concat_category = saas::get_concat_category();
     $sql = "SELECT DISTINCT ccp.id, ccp.depth, ccp.path, ccp.name
               FROM {saas_ofertas_disciplinas} od
               JOIN {config_plugins} cp ON (cp.plugin = 'report_saas_export' AND cp.name = 'api_key' AND cp.value = od.api_key)
               JOIN {saas_map_course} smc ON (smc.group_map_id = od.group_map_id)
               JOIN {course} c ON (c.id = smc.courseid)
               JOIN {course_categories} cc ON (cc.id = c.category)
-              JOIN {course_categories} ccp ON (ccp.id = cc.id OR cc.path LIKE CONCAT('%/',ccp.id,'/%'))
+              JOIN {course_categories} ccp ON (ccp.id = cc.id OR cc.path LIKE {$concat_category})
              WHERE od.enable = 1
           ORDER BY ccp.depth, ccp.name";
     $categories = $DB->get_records_sql($sql);
@@ -319,13 +321,14 @@ function saas_mount_category_tree_map_courses_polos(&$categories, &$polos, &$row
 function saas_get_category_tree_map_categories_polos() {
     global $DB, $saas;
 
+    $concat_category = saas::get_concat_category();
     $sql = "SELECT DISTINCT ccp.id, ccp.depth, ccp.path, ccp.name, jp.polo_id
               FROM {saas_ofertas_disciplinas} od
               JOIN {config_plugins} cp ON (cp.plugin = 'report_saas_export' AND cp.name = 'api_key' AND cp.value = od.api_key)
               JOIN {saas_map_course} smc ON (smc.group_map_id = od.group_map_id)
               JOIN {course} c ON (c.id = smc.courseid)
               JOIN {course_categories} cc ON (cc.id = c.category)
-              JOIN {course_categories} ccp ON (ccp.id = cc.id OR cc.path LIKE CONCAT('%/',ccp.id,'/%'))
+              JOIN {course_categories} ccp ON (ccp.id = cc.id OR cc.path LIKE {$concat_category})
          LEFT JOIN (SELECT DISTINCT smcp.instanceid as catid, smcp.polo_id
                       FROM {saas_polos} pl
                       JOIN {config_plugins} cp ON (cp.plugin = 'report_saas_export' AND cp.name = 'api_key' AND cp.value = pl.api_key)
