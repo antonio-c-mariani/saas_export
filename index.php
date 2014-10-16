@@ -234,7 +234,8 @@ switch ($action) {
                         $od->group_map_id = $group_map_id;
                     }
                     $DB->update_record('saas_ofertas_disciplinas', $od);
-                    $ocid = $DB->get_field('saas_ofertas_cursos', 'id', array('uid'=>$od->oferta_curso_uid), MUST_EXIST);
+                    $oc = $saas->get_oferta_curso($od->oferta_curso_uid);
+                    $ocid = $oc->id;
                     break;
                 case 'delete':
                     $courseid = required_param('courseid', PARAM_INT);
@@ -251,9 +252,10 @@ switch ($action) {
                     $map->courseid = $courseid;
                     $map->group_map_id = $group_map_id;
                     $DB->insert_record('saas_map_course', $map);
-                    $ods = $DB->get_records('saas_ofertas_disciplinas', array('group_map_id'=>$group_map_id, 'enable'=>1), null, 'id, oferta_curso_uid');
+                    $ods = $saas->get_ofertas_disciplinas_by_group_map($group_map_id);
                     $od = reset($ods);
-                    $ocid = $DB->get_field('saas_ofertas_cursos', 'id', array('uid'=>$od->oferta_curso_uid));
+                    $oc = $saas->get_oferta_curso($od->oferta_curso_uid);
+                    $ocid = $oc->id;
 
                     $SESSION->last_categoryid = $course->category;
                     break;

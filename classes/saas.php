@@ -447,6 +447,15 @@ class saas {
         return $DB->get_record_sql($sql, array('odid' => $oferta_disciplina_id));
     }
 
+    function get_ofertas_disciplinas_by_group_map($group_map_id) {
+        global $DB;
+
+        return $DB->get_records('saas_ofertas_disciplinas',
+                                 array('group_map_id'=>$group_map_id, 'api_key'=>$this->api_key, 'enable'=>1),
+                                 null, 'id, oferta_curso_uid');
+    }
+
+
     // retorna ofertas de disciplina de uma oferta de curso dado seu id, num array onde a chave é a id da oferta de curso.
     // retorna todas as oferta de disciplina caso não seja informado o id da oferta de curso.
     function get_ofertas_disciplinas($ocid=0, $only_mapped=true) {

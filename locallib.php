@@ -147,7 +147,7 @@ function saas_show_categories_tree($group_map_id) {
 
         $table->data = array();
         foreach($best_options AS $c) {
-            $cat_names = saas::get_concatenated_categories_names($c->category, '/ ');
+            $cat_names = $saas->get_concatenated_categories_names($c->category, '/ ');
             $url = new moodle_url('index.php', array('action'=>'course_mapping', 'subaction'=>'add', 'courseid'=>$c->id,'group_map_id'=>$group_map_id));
             $link = html_writer::link($url, $c->fullname, array('title'=>'Clique para selecionar este curso'));
             $table->data[] = array($link, html_writer::tag('small', $cat_names), $c->distance);
@@ -587,7 +587,7 @@ function saas_show_users_oferta_disciplina($ofer_disciplina_id) {
     $grades = $saas->get_grades($ofer_disciplina_id);
 
     $od = $saas->get_oferta_disciplina($ofer_disciplina_id);
-    $oc = $DB->get_record('saas_ofertas_cursos', array('uid'=>$od->oferta_curso_uid));
+    $oc = $saas->get_oferta_curso($od->oferta_curso_uid);
 
     print $OUTPUT->box_start('generalbox boxwidthwide boxaligncenter');
     print $OUTPUT->heading("Curso: {$oc->nome} ({$oc->ano}/{$oc->periodo})", 3);
