@@ -56,11 +56,11 @@ M.report_saas_export.init = function(Y) {
 
     Y.on('change', function(e) {
         ocid = this.get('value');
+        var params = { ocid : ocid };
 
-        //Y.io(M.cfg.wwwroot + '/report/saas_export/disciplinas_by_oferta_curso.php', {
         Y.io('disciplinas_by_oferta_curso.php', {
             //The needed paramaters
-            data: {ocid: ocid},
+            data: build_querystring(params),
 
             timeout: 5000, //5 seconds for timeout I think it is enough.
 

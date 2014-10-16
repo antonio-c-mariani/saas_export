@@ -1,7 +1,11 @@
 <?php
 define('AJAX_SCRIPT', true);
 
-require_once(dirname(dirname(dirname(__FILE__))).'/config.php');
+if (strpos(__FILE__, '/admin/report/') !== false) {
+    require('../../../config.php');
+} else {
+    require('../../config.php');
+}
 require_once('./classes/saas.php');
 
 $ocid = required_param('ocid', PARAM_INT);
