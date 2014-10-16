@@ -273,10 +273,39 @@ class saas {
         return $DB->get_records('saas_disciplinas', array('enable'=>1, 'api_key'=>$this->api_key), 'nome');
     }
 
-    function get_disciplinas_menu() {
+    function get_disciplinas_for_oc($ocid=0, $menu_format=false) {
         global $DB;
 
-        return $DB->get_records_menu('saas_disciplinas', array('enable'=>1, 'api_key'=>$this->api_key), 'nome', "id, nome");
+        $where = '';
+        $params = array();
+        if(!empty($ocid)) {
+            $where = "AND oc.id = :ocid";
+            $params['ocid'] = $ocid;
+        }
+
+        $sql = "SELECT d.id, d.nome
+                  FROM {saas_disciplinas} d
+                  JOIN {config_plugins} cp ON (cp.plugin = 'report_saas_export' AND cp.name = 'api_key' AND cp.value = d.api_key)
+             LEFT JOIN (SELECT dd.id as dis_id
+                          FROM {saas_ofertas_cursos} oc
+                          JOIN {config_plugins} cp ON (cp.plugin = 'report_saas_export' AND cp.name = 'api_key' AND cp.value = oc.api_key)
+                          JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1 AND od.api_key = oc.api_key)
+                          JOIN {saas_disciplinas} dd ON (dd.uid = od.disciplina_uid AND dd.enable = 1 AND dd.api_key = oc.api_key)
+                         WHERE oc.enable = 1
+                           {$where}) dis
+                    ON (dis.dis_id = d.id)
+                 WHERE d.enable = 1
+                   AND dis.dis_id IS NULL
+              ORDER BY d.nome";
+        if($menu_format) {
+            return $DB->get_records_sql_menu($sql, $params);
+        } else {
+            $disciplinas = array();
+            foreach($DB->get_recordset_sql($sql, $params) AS $rec) {
+                $disciplinas[] = array($rec->id, $rec->nome);
+            }
+            return $disciplinas;
+        }
     }
 
     // retorna todos os polos da Institutição

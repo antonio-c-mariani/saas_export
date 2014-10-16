@@ -127,20 +127,24 @@ switch ($action) {
         $url->param('action', $action);
         $url->param('subaction', $saas_data_action);
 
+        $oferta_disciplina = false;
         if(has_capability('report/saas_export:export', $syscontext)) {
             switch($saas_data_action) {
                 case 'add_oferta':
-                    $oferta_form = new oferta_form($url);
+                    $ocid = optional_param('oferta_curso_id', 0, PARAM_INT);
+                    $oferta_form = new oferta_form($url, array('data'=>$ocid));
                     if ($oferta_form->is_cancelled()) {
                         $url->param('subaction', 'ofertas');
                         $url->param('reload', 0);
                         redirect($url);
-                    } else if ($oferta = $oferta_form->get_data()) {
-                        $saas->send_oferta_disciplina($oferta);
-                        $saas->load_ofertas_disciplinas_saas();
-                        $url->param('subaction', 'ofertas');
-                        $url->param('reload', 0);
-                        redirect($url);
+                    } else if ($oferta_disciplina = $oferta_form->get_data()) {
+                        if(!empty($oferta_disciplina->disciplina_id)) {
+                            $saas->send_oferta_disciplina($oferta_disciplina);
+                            $saas->load_ofertas_disciplinas_saas();
+                            $url->param('subaction', 'ofertas');
+                            $url->param('reload', 0);
+                            redirect($url);
+                        }
                     }
                     break;
                 case 'add_polo':
@@ -180,7 +184,9 @@ switch ($action) {
                     if($saas->has_oferta_curso()) {
                         print html_writer::tag('DIV', $OUTPUT->heading(get_string('add_oferta', 'report_saas_export'), 3), array('align'=>'center'));
                         print html_writer::start_tag('DIV', array('align'=>'center'));
-                        print $OUTPUT->box_start('generalbox boxwidthnormal');
+                        print $OUTPUT->box_start('generalbox boxwidthwide');
+                        $PAGE->requires->js_init_call('M.report_saas_export.init');
+                        $oferta_form->set_data($oferta_disciplina);
                         $oferta_form->display();
                         print $OUTPUT->box_end();
                         print html_writer::end_tag('DIV');

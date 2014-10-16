@@ -31,16 +31,21 @@ class oferta_form extends moodleform {
         global $DB, $saas;
 
         $mform = $this->_form;
+        $ocid = $this->_customdata['data'];
 
-        $ofertas_cursos = array();
+        $ofertas_cursos = empty($ocid) ? array(0=>'-- selecione uma oferta de curso') : array();
         foreach($saas->get_ofertas_cursos() AS $oc) {
             $ofertas_cursos[$oc->id] = "{$oc->nome} {$oc->ano}/{$oc->periodo}";
         }
 
-        $disciplinas = $saas->get_disciplinas_menu();
+        $disciplinas = array(0=>'-- selecione uma disciplina');
+        $disciplinas = empty($ocid) ? $disciplinas : $disciplinas + $saas->get_disciplinas_for_oc($ocid, true);
 
         $mform->addElement('select', 'oferta_curso_id', get_string('oferta_curso', 'report_saas_export'), $ofertas_cursos);
+        $mform->setDefault('oferta_curso_id', $ocid);
+
         $mform->addElement('select', 'disciplina_id', get_string('disciplina', 'report_saas_export'), $disciplinas);
+        $mform->disabledIf('disciplina_id', 'oferta_curso_id', 'eq', 0);
 
         $year = date('Y');
         $attributes = array(
@@ -51,7 +56,9 @@ class oferta_form extends moodleform {
                 'optional'  => false,
                 );
         $mform->addElement('date_selector', 'inicio', get_string('inicio', 'report_saas_export'), $attributes);
+        $mform->disabledIf('inicio', 'disciplina_id', 'eq', 0);
         $mform->addElement('date_selector', 'fim', get_string('fim', 'report_saas_export'), $attributes);
+        $mform->disabledIf('fim', 'disciplina_id', 'eq', 0);
 
         $this->add_action_buttons();
     }
@@ -61,14 +68,23 @@ class oferta_form extends moodleform {
 
         $errors = parent::validation($data, $files);
 
-        $sql = "SELECT 1
-                  FROM {saas_ofertas_cursos} oc
-                  JOIN {config_plugins} cp ON (cp.plugin = 'report_saas_export' AND cp.name = 'api_key' AND cp.value = oc.api_key)
-                  JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.api_key = oc.api_key)
-                  JOIN {saas_disciplinas} d ON (d.uid = od.disciplina_uid AND d.api_key = oc.api_key)
-                 WHERE oc.id = :ocid
-                   AND d.id = :disciplinaid";
-        if($DB->record_exists_sql($sql, array('ocid'=>$data['oferta_curso_id'], 'disciplinaid'=>$data['disciplina_id']))) {
+        if(empty($data['oferta_curso_id'])) {
+            $errors['oferta_curso_id'] = get_string('required');
+            return $errors;
+        }
+
+        if(empty($data['disciplina_id'])) {
+            $errors['disciplina_id'] = get_string('required');
+            return $errors;
+        }
+
+        if($data['fim'] <= $data['inicio']) {
+            $errors['fim'] = 'Data de fim deve ser posterior à de início';
+            return $errors;
+        }
+
+        $disciplinas = $saas->get_disciplinas_for_oc($data['oferta_curso_id'], true);
+        if(!isset($disciplinas[$data['disciplina_id']])) {
             $errors['disciplina_id'] = get_string('duplicated_disciplina', 'report_saas_export');
         }
         return $errors;
