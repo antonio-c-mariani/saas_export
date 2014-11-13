@@ -356,6 +356,7 @@ switch ($action) {
             $ocs = isset($_POST['oc']) ? $_POST['oc'] : array();
             $ods = isset($_POST['od']) ? $_POST['od'] : array();
             $polos = isset($_POST['polo']) ? $_POST['polo'] : array();
+
             $baseurl->param('action', $action);
             if(optional_param('export', false, PARAM_TEXT)) {
                 $send_user_details = optional_param('send_user_details', false, PARAM_BOOL);

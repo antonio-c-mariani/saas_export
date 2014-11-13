@@ -410,6 +410,9 @@ class saas {
                 $ofertas[$ocid]->ofertas_disciplinas = array();
             }
         } else {
+            if(!isset($ofertas[$oferta_curso_id])) {
+                return array();
+            }
             $cond = 'AND oc.id = :id';
             $params['id'] = $oferta_curso_id;
 
@@ -949,6 +952,8 @@ class saas {
     }
 
     function send_users_by_polo($oc_uid, $polo_uid, $users_by_roles) {
+        $this->update_progressbar("Exportando polos");
+
         $encoded_oferta_uid = rawurlencode($oc_uid);
         $encoded_polo_uid = rawurlencode($polo_uid);
         foreach($users_by_roles AS $r=>$users) {
@@ -1001,6 +1006,7 @@ class saas {
                 $users_suspended[$rec->userid] = $rec->uid;
             }
         }
+        $rs->close();
 
         //send the last one
         if($odid !== 0) {
@@ -1017,9 +1023,7 @@ class saas {
     }
 
     function send_users_by_oferta_disciplina($oferta_disciplina, $users_by_roles, $users_lastaccess, $users_suspended, $send_user_details=true) {
-        $this->progressbar_count++;
-        $this->progressbar->update($this->progressbar_count, $this->progressbar_total, "Exportando ofertas de disciplina ($this->progressbar_count/$this->progressbar_total)");
-        ob_flush();
+        $this->update_progressbar("Exportando ofertas de disciplina");
 
         $oferta_uid_encoded = rawurlencode($oferta_disciplina->uid);
         foreach($users_by_roles AS $r=>$users) {
@@ -1073,6 +1077,8 @@ class saas {
     function send_data($selected_ocs=array(), $selected_ods=array(), $selected_polos=array(), $send_user_details=true) {
         global $DB;
 
+        set_time_limit(0);
+
         $this->count_errors = 0;
         $this->errors = array();
         $this->count_sent_ods = 0;
@@ -1084,13 +1090,11 @@ class saas {
         }
 
         $this->send_resume(false);
+        $this->init_progressbar();
+
+        $this->start_progressbar("Exportando ofertas de disciplina");
 
         $ofertas_cursos = $this->get_ofertas_cursos();
-
-        $this->progressbar = new progress_bar('export_saas', 500, true);
-        $this->progressbar_total = 0;
-        $this->progressbar_count = 0;
-
         foreach($ofertas_cursos AS $ocid=>$oc) {
             if(isset($selected_ocs[$ocid])) {
                 $ods = $this->get_ofertas_disciplinas($ocid, true);
@@ -1099,9 +1103,6 @@ class saas {
                 $this->progressbar_total += count($selected_ods[$ocid]);
             }
         }
-
-        $this->progressbar->update($this->progressbar_count, $this->progressbar_total, "Exportando dados para SAAS");
-        ob_flush();
 
         foreach($ofertas_cursos AS $ocid=>$oc) {
             if(isset($selected_ocs[$ocid])) {
@@ -1115,13 +1116,18 @@ class saas {
 
         $polo_mapping_type = $this->get_config('polo_mapping');
         if($polo_mapping_type != 'no_polo') {
-            $this->progressbar_total = count($ofertas_cursos);
-            $this->progressbar_count = 0;
+            $this->start_progressbar("Exportando polos");
 
             foreach($ofertas_cursos AS $ocid=>$oc) {
-                $this->progressbar_count++;
-                $this->progressbar->update($this->progressbar_count, $this->progressbar_total, "Exportando polos para SAAS");
-                ob_flush();
+                if(isset($selected_ocs[$ocid])) {
+                    $pls = $this->get_polos_by_oferta_curso($ocid);
+                    $this->progressbar_total += count($pls[$ocid]);
+                } else if(isset($selected_polos[$ocid])) {
+                    $this->progressbar_total += count($selected_polos[$ocid]);
+                }
+            }
+
+            foreach($ofertas_cursos AS $ocid=>$oc) {
                 if(isset($selected_ocs[$ocid])) {
                     $this->send_users_by_polos($ocid, 0, $send_user_details);
                 } else if(isset($selected_polos[$ocid])) {
@@ -1133,9 +1139,7 @@ class saas {
         }
 
         $this->send_resume();
-
-        $this->progressbar->update($this->progressbar_total, $this->progressbar_total, "Exportados dados para SAAS");
-        ob_flush();
+        $this->end_progressbar();
 
         $result = array($this->count_errors, $this->errors, $this->count_sent_users, $this->count_sent_ods, $this->count_sent_polos);
         return $result;
@@ -1442,4 +1446,46 @@ class saas {
             return "CONCAT(nome, ' (', cidade, '/', estado, ')')";
         }
     }
+
+
+    function init_progressbar() {
+        $this->progressbar_total = 0;
+        $this->progressbar_count = 0;
+        if (!CLI_SCRIPT && !isset($this->progressbar)) {
+            $this->progressbar = new progress_bar('export_saas', 500, true);
+        }
+    }
+
+    function start_progressbar($msg) {
+        $this->progressbar_total = 0;
+        $this->progressbar_count = 0;
+        if (CLI_SCRIPT) {
+            echo "\n== {$msg}\n";
+        } else {
+            $this->progressbar->update_full(0, $msg);
+            ob_flush();
+        }
+    }
+
+    function update_progressbar($msg) {
+        $this->progressbar_count++;
+        $final_msg = "{$msg}: {$this->progressbar_count}/{$this->progressbar_total}";
+        if (CLI_SCRIPT) {
+            echo '  --' . $final_msg . "\n";
+        } else {
+            $this->progressbar->update($this->progressbar_count, $this->progressbar_total, $final_msg);
+            ob_flush();
+        }
+    }
+
+    function end_progressbar() {
+        $msg = "Exportados dados para SAAS";
+        if (CLI_SCRIPT) {
+            echo "\n== {$msg}\n";
+        } else {
+            $this->progressbar->update_full(100, $msg);
+            ob_flush();
+        }
+    }
+
 }

@@ -51,7 +51,7 @@ Após a descompactação, a estrutura de pastas e arquivos deve ficar conforme a
 Caso a pasta do módulo apareça com outro nome ("saas_export-master", por exemplo), ela deve ser renomeada para
 "saas_export", de forma a manter a estrutura indicada acima.
 
-INSTALAÇÃO VIA COMANDO git
+Instalação via comando git
 --------------------------
 
 Outra opção para instalação é via comando "git clone" que resulta numa cópia local do repositório disponível no GITHUB
@@ -63,8 +63,8 @@ execute uma das opções abaixo do comando "git clone":
         SSH:
             git clone git@github.com:saasexport/saas_export.git saas_export
 
-COMPLETANDO A INSTALAÇÃO
-------------------------
+Completando a instalação
+-------------------------
 
 Independente da forma de instalação (via arquivo .zip ou comando git) é necessário completar o processo de instalação.
 Para tal, acesse o Moodle via navegador e como administrador visite a página:
@@ -74,7 +74,16 @@ Caso isto não ocorra, verifique se a estrutura de pastas e arquivos está confo
 "saas_export" (e suas sub-pastas e arquivos) estão com permissões tais que o servidor de www (apache, nginx, etc)
 tenham acesso de leitura a elas.
 
-ACESSO AO RELATÓRIO
+Exportação via linha de comando
+===============================
+
+A exportação de dados pode ser feita via linha de comando por meio do script disponível em:
+        cli/send_data.php
+Este script permite a exportação para o SAAS de todas as ofertas de disciplina e de polos que tenham sido mapeados ou
+seletivamente por oferta de curso. Para ver as opções executa o comando:
+        php cli/send_data.php -h
+
+Acesso ao relatório
 ===================
 
 Conforme padrão do Moodle, o acesso ao módulo esta disponível no item:
@@ -82,7 +91,7 @@ Conforme padrão do Moodle, o acesso ao módulo esta disponível no item:
 da caixa de "Administração". Este item só aparece, contudo, para usuários do Moodle que possuam a permissão
 "report/saas_export:view" em nível global (de sistema). Veja detalhes sobre o esquema de permissões no tópico seguinte.
 
-PERMISSÕES DE ACESSO
+Permissões de acesso
 ====================
 
 O módulo SAAS define três permissões que controlam o acesso às suas funções:
