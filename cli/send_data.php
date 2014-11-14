@@ -1,6 +1,7 @@
 <?php
 
 define('CLI_SCRIPT', true);
+error_reporting(E_ALL);
 
 if (strpos(__FILE__, '/admin/report/') !== false) {
     require(dirname(dirname(dirname(dirname(dirname(__FILE__))))).'/config.php');
@@ -100,7 +101,16 @@ if($list) {
 } else {
     echo 'Início: ' . date('d/m/Y H:i:s') . "\n";
     $time_start = microtime(true);
-    $saas->send_data($selected_ocs, array(), array(), $details);
+
+    try {
+        list($count_errors, $errors, $count_sent_users, $count_sent_ods, $count_sent_polos) =
+            $saas->send_data($selected_ocs, array(), array(), $details, false);
+    } catch (Exception $e){
+        var_dump($e->getMessage());
+        exit;
+    }
+
+
     $time_end = microtime(true);
     $execution_time = ($time_end - $time_start);
     if($execution_time <= 60) {
@@ -108,6 +118,23 @@ if($list) {
     } else {
         $msg = round($execution_time/60, 2) . ' minutos';
     }
-    echo 'Fim: ' . date('d/m/Y H:i:s') . "\n";
-    echo 'Tempo da exportação: ' . $msg. "\n\n";
+    echo "\nFim: " . date('d/m/Y H:i:s') . "\n";
+    echo 'Tempo da exportação: ' . $msg. "\n";
+    echo "Chamadas de WS = {$saas->count_ws_calls}\n";
+
+    echo "\nOfertas de disciplinas exportadas = {$count_sent_ods}\n";
+    echo "Polos exportados = {$count_sent_polos}\n";
+    foreach($count_sent_users AS $r=>$count) {
+        echo get_string($r.'s', 'report_saas_export') . " exportados = {$count}\n";
+    }
+    echo "\n";
+
+    if($count_errors > 0) {
+        $n = min($count_errors, 3);
+        echo "HOUVE {$count_errors} ERROS ao exportar os dados. Os primeiros {$n} estão listados abaixo:\n";
+        for($i=0; $i < $n; $i++) {
+            echo "     - {$errors[$i]}\n";
+        }
+    }
+
 }

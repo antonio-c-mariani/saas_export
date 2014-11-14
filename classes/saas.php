@@ -16,6 +16,7 @@ class saas {
     private $errors = array();
 
     public $curl = null;
+    public $count_ws_calls = 0;
 
     function __construct() {
         $this->load_settings();
@@ -55,13 +56,18 @@ class saas {
         return !empty($this->api_key) && !empty($url);
     }
 
-    function verify_config($url) {
+    function verify_config($url='', $print_error=true) {
         try {
             $institution = $this->get_ws('', true);
             set_config('nome_instituicao', $institution->nome, 'report_saas_export');
             set_config('sigla_instituicao', $institution->sigla, 'report_saas_export');
         } catch(Exception $e) {
-            print_error('api_key_unknown', 'report_saas_export', $url);
+            if($print_error) {
+                print_error('api_key_unknown', 'report_saas_export', $url);
+            } else {
+                echo "\nERRO: " . get_string('api_key_unknown', 'report_saas_export') . "\n";
+                return false;
+            }
         }
 
         $rteacher = $this->get_config('roles_teacher');
@@ -70,8 +76,14 @@ class saas {
         $rtutor_inst = $this->get_config('roles_tutor_inst');
 
         if(empty($rteacher) && empty($rstudent) && empty($rtutor_polo) && empty($rtutor_inst)) {
-            print_error('no_roles', 'report_saas_export', $url);
+            if($print_error) {
+                print_error('no_roles', 'report_saas_export', $url);
+            } else {
+                echo "\nERRO: " . get_string('no_roles', 'report_saas_export') . "\n";
+                return false;
+            }
         }
+        return true;
     }
 
     // types: disciplinas || polos
@@ -1074,10 +1086,12 @@ class saas {
         }
     }
 
-    function send_data($selected_ocs=array(), $selected_ods=array(), $selected_polos=array(), $send_user_details=true) {
+    function send_data($selected_ocs=array(), $selected_ods=array(), $selected_polos=array(), $send_user_details=true, $print_error=true) {
         global $DB;
 
-        set_time_limit(0);
+        if($this->verify_config('', $print_error) === false) {
+            exit;
+        }
 
         $this->count_errors = 0;
         $this->errors = array();
@@ -1195,6 +1209,7 @@ class saas {
     function head_ws($functionname, $throw_exception=false) {
         $this->init_curl();
         $this->curl->head($this->make_ws_url($functionname));
+        $this->count_ws_calls++;
         return $this->handle_ws_errors($throw_exception);
     }
 
@@ -1202,6 +1217,7 @@ class saas {
         $this->init_curl();
         $response = $this->curl->get($this->make_ws_url($functionname));
         $this->handle_ws_errors($throw_exception);
+        $this->count_ws_calls++;
         return json_decode($response);
     }
 
@@ -1210,12 +1226,14 @@ class saas {
         $options = array('CURLOPT_HTTPHEADER'=>array('Content-Type: application/json'));
         $response = $this->curl->post($this->make_ws_url($functionname), json_encode($data), $options);
         $this->handle_ws_errors($throw_exception);
+        $this->count_ws_calls++;
         return json_decode($response);
     }
 
     function put_ws($functionname, $data = array(), $throw_exception=false) {
         $this->init_curl();
         $this->curl->put_json($this->make_ws_url($functionname), json_encode($data));
+        $this->count_ws_calls++;
         return $this->handle_ws_errors($throw_exception);
     }
 
