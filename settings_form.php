@@ -46,7 +46,9 @@ class saas_export_settings_form extends moodleform {
         $saas = new saas();
 
         // ----------------------------------------------------------------------------------------------
-        $mform->addElement('header', 'saas_settings', get_string('saas_settings', 'report_saas_export'));
+        $version = get_config('report_saas_export', 'version');
+        $title = get_string('saas_settings', 'report_saas_export') . ' (' . get_string('version') . ': ' . $version . ')';
+        $mform->addElement('header', 'saas_settings', $title);
 
         $mform->addElement('text', 'ws_url', get_string('ws_url', 'report_saas_export'), $text_attr);
         $mform->setDefault('ws_url', 'http://saas.ufsc.br/service');
