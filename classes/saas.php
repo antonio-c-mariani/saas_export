@@ -12,6 +12,8 @@ class saas {
     public $config;
     public $api_key;
 
+    private $saas_enrols_with_itemid = null;
+
     private $count_errors = 0;
     private $errors = array();
 
@@ -546,7 +548,9 @@ class saas {
 	        $field .= ", {$concat_nome} as nome";
         }
 
-        $concat_enrol = self::get_concat_enrol();
+        list($join_ra, $params_ra) = $this->get_join_role_assignments();
+        $params = array_merge($params, $params_ra);
+
         $concat_category = self::get_concat_category();
         $sql = "SELECT {$distinct} oc.id AS ocid, sp.id AS p_id, scr.role $field
                   FROM {saas_ofertas_cursos} oc
@@ -557,10 +561,7 @@ class saas {
                   JOIN {enrol} e ON (e.courseid = c.id AND e.status = :enable)
                   JOIN {user_enrolments} ue ON (ue.enrolid = e.id AND ue.status = :active)
                   JOIN {context} ctx ON (ctx.instanceid = c.id AND ctx.contextlevel = :contextcourse)
-                  JOIN {role_assignments} ra
-                    ON (ra.contextid = ctx.id AND
-                        ra.userid = ue.userid AND
-                        ((ra.component = '' AND e.enrol = 'manual') OR (ra.component = {$concat_enrol} AND ra.itemid = e.id)))
+                  {$join_ra}
                   JOIN {saas_config_roles} scr ON (scr.roleid = ra.roleid AND scr.role IN ('student', 'tutor_polo'))
                   JOIN {user} u ON (u.id = ue.userid AND u.deleted = 0 AND u.suspended = 0)
                   {$join_user_info_data}
@@ -616,7 +617,9 @@ class saas {
             $field .= ", {$concat_nome} as nome";
         }
 
-        $concat_enrol = self::get_concat_enrol();
+        list($join_ra, $params_ra) = $this->get_join_role_assignments();
+        $params = array_merge($params, $params_ra);
+
         $sql = "SELECT {$distinct} oc.id AS ocid, sp.id AS p_id, scr.role $field
                   FROM {saas_ofertas_cursos} oc
                   JOIN {config_plugins} cp ON (cp.plugin = 'report_saas_export' AND cp.name = 'api_key' AND cp.value = oc.api_key)
@@ -626,10 +629,7 @@ class saas {
                   JOIN {enrol} e ON (e.courseid = c.id AND e.status = :enable)
                   JOIN {user_enrolments} ue ON (ue.enrolid = e.id AND ue.status = :active)
                   JOIN {context} ctx ON (ctx.instanceid = c.id AND ctx.contextlevel = :contextcourse)
-                  JOIN {role_assignments} ra
-                    ON (ra.contextid = ctx.id AND
-                        ra.userid = ue.userid AND
-                        ((ra.component = '' AND e.enrol = 'manual') OR (ra.component = {$concat_enrol} AND ra.itemid = e.id)))
+                  {$join_ra}
                   JOIN {saas_config_roles} scr ON (scr.roleid = ra.roleid AND scr.role IN ('student', 'tutor_polo'))
                   JOIN {user} u ON (u.id = ue.userid AND u.deleted = 0 AND u.suspended = 0)
                   {$join_user_info_data}
@@ -683,7 +683,9 @@ class saas {
 	        $field .= ", {$concat_nome} as nome";
         }
 
-        $concat_enrol = self::get_concat_enrol();
+        list($join_ra, $params_ra) = $this->get_join_role_assignments();
+        $params = array_merge($params, $params_ra);
+
         $sql = "SELECT {$distinct} oc.id AS ocid, sp.id AS p_id, scr.role $field
                   FROM {saas_ofertas_cursos} oc
                   JOIN {config_plugins} cp ON (cp.plugin = 'report_saas_export' AND cp.name = 'api_key' AND cp.value = oc.api_key)
@@ -693,10 +695,7 @@ class saas {
                   JOIN {enrol} e ON (e.courseid = c.id AND e.status = :enable)
                   JOIN {user_enrolments} ue ON (ue.enrolid = e.id AND ue.status = :active)
                   JOIN {context} ctx ON (ctx.instanceid = c.id AND ctx.contextlevel = :contextcourse)
-                  JOIN {role_assignments} ra
-                    ON (ra.contextid = ctx.id AND
-                        ra.userid = ue.userid AND
-                        ((ra.component = '' AND e.enrol = 'manual') OR (ra.component = {$concat_enrol} AND ra.itemid = e.id)))
+                  {$join_ra}
                   JOIN {saas_config_roles} scr ON (scr.roleid = ra.roleid AND scr.role IN ('student', 'tutor_polo'))
                   JOIN {user} u ON (u.id = ue.userid AND u.deleted = 0 AND u.suspended = 0)
                   {$join_user_info_data}
@@ -800,7 +799,9 @@ class saas {
             $condition .= " AND oc.id = {$id_oferta_curso}";
         }
 
-        $concat_enrol = self::get_concat_enrol();
+        list($join_ra, $params_ra) = $this->get_join_role_assignments();
+        $params = array_merge($params, $params_ra);
+
         $sql = "SELECT od.id AS odid, scr.role, {$fields}
                   FROM {saas_ofertas_cursos} oc
                   JOIN {config_plugins} cp ON (cp.plugin = 'report_saas_export' AND cp.name = 'api_key' AND cp.value = oc.api_key)
@@ -810,10 +811,7 @@ class saas {
                   JOIN {enrol} e ON (e.courseid = c.id AND e.status = :enable)
                   JOIN {user_enrolments} ue ON (ue.enrolid = e.id)
                   JOIN {context} ctx ON (ctx.instanceid = c.id AND ctx.contextlevel = :contextlevel)
-                  JOIN {role_assignments} ra
-                    ON (ra.contextid = ctx.id AND
-                        ra.userid = ue.userid AND
-                        ((ra.component = '' AND e.enrol = 'manual') OR (ra.component = {$concat_enrol} AND ra.itemid = e.id)))
+                  {$join_ra}
                   JOIN {saas_config_roles} scr ON (scr.roleid = ra.roleid AND scr.role IN ('student', 'teacher', 'tutor_inst'))
                   JOIN {user} u ON (u.id = ue.userid AND u.deleted = 0 AND u.suspended = 0)
                   {$join_user_info_data}
@@ -1425,15 +1423,37 @@ class saas {
         }
     }
 
-    static function get_concat_enrol() {
+    function get_join_role_assignments() {
         global $DB;
 
-        if ($DB instanceof pgsql_native_moodle_database) {
-            return "('enrol_' || e.enrol)";
-        } else {
-            return "CONCAT('enrol_', e.enrol)";
+        if(is_null($this->saas_enrols_with_itemid)) {
+            $this->saas_enrols_with_itemid = array();
+            $sql = "SELECT DISTINCT ra.component
+                      FROM {role_assignments} ra
+                     WHERE ra.component != ''
+                       AND ra.itemid > 0";
+            foreach($DB->get_records_sql($sql) AS $component=>$obj) {
+                $this->saas_enrols_with_itemid[substr($component, 6)] = $component;
+            }
         }
+
+        if(empty($this->saas_enrols_with_itemid)) {
+            $sql = "JOIN {role_assignments} ra
+                      ON (ra.contextid = ctx.id AND
+                          ra.userid = ue.userid)";
+            $params = array();
+        } else {
+            list($not_insql_enrol, $params_enrol) = $DB->get_in_or_equal(array_keys($this->saas_enrols_with_itemid), SQL_PARAMS_NAMED, 'enrol', false);
+            list($insql_component, $params_component) = $DB->get_in_or_equal(array_values($this->saas_enrols_with_itemid), SQL_PARAMS_NAMED, 'component');
+            $params = $params_enrol + $params_component;
+            $sql = "JOIN {role_assignments} ra
+                      ON (ra.contextid = ctx.id AND
+                          ra.userid = ue.userid AND
+                          ((ra.component = '' AND e.enrol $not_insql_enrol) OR (ra.component $insql_component AND ra.itemid = e.id)))";
+        }
+        return array($sql, $params);
     }
+
 
     static function get_concat_nome() {
         global $DB;
