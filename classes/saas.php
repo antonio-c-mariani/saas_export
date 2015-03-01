@@ -39,9 +39,6 @@ class saas {
             $this->config->$role = isset($roles[$r]) ? implode(',', $roles[$r]) : '';
         }
 
-        $this->config->filter_userid_field = $this->get_config('filter_userid_field');
-        $this->config->suspended_as_evaded = $this->get_config('suspended_as_evaded');
-
         $this->api_key = $this->get_config('api_key');
     }
 
@@ -117,6 +114,7 @@ class saas {
        if ($hourdiff > 1 || $force_reload) {
            try {
                $this->load_disciplinas_saas();
+               $this->load_cursos_saas();
                $this->load_ofertas_cursos_saas();
                $this->load_ofertas_disciplinas_saas();
                $this->load_polos_saas();
@@ -133,26 +131,53 @@ class saas {
     function load_disciplinas_saas(){
         global $DB;
 
-        $local = $DB->get_records('saas_disciplinas', array('api_key'=>$this->api_key), null ,'uid, id, enable');
+        $local = $DB->get_records_menu('saas_disciplinas', array('api_key'=>$this->api_key), '', 'id, enable');
 
         $disciplinas = $this->get_ws('disciplinas');
         $disciplinas = empty($disciplinas) ? array() : $disciplinas;
 
         foreach($disciplinas as $dis) {
             $dis->enable = 1;
-            $dis->api_key = $this->api_key;
-            if (isset($local[$dis->uid])){
-                $dis->id = $local[$dis->uid]->id;
+            if($id = $DB->get_field('saas_disciplinas', 'id', array('api_key'=>$this->api_key, 'uid' => $dis->uid))) {
+                $dis->id = $id;
                 $DB->update_record('saas_disciplinas', $dis);
-                unset($local[$dis->uid]);
+                unset($local[$id]);
             } else {
+                $dis->api_key = $this->api_key;
                 $DB->insert_record('saas_disciplinas', $dis);
             }
         }
 
-        foreach($local AS $uid=>$dis) {
-            if($dis->enable){
-                $DB->set_field('saas_disciplinas', 'enable', 0, array('id'=>$dis->id));
+        foreach($local AS $id=>$enable) {
+            if($enable){
+                $DB->set_field('saas_disciplinas', 'enable', 0, array('id'=>$id));
+            }
+        }
+    }
+
+    function load_cursos_saas(){
+        global $DB;
+
+        $local = $DB->get_records_menu('saas_cursos', array('api_key'=>$this->api_key), '', 'id, enable');
+
+        $cursos = $this->get_ws('cursos');
+        $cursos = empty($cursos) ? array() : $cursos;
+
+        foreach($cursos as $cur) {
+            $cur->enable = 1;
+            if($id = $DB->get_field('saas_cursos', 'id', array('api_key'=>$this->api_key, 'uid' => $cur->uid))) {
+                $cur->id = $id;
+                $DB->update_record('saas_cursos', $cur);
+                unset($local[$id]);
+            } else {
+                $cur->api_key = $this->api_key;
+                $DB->insert_record('saas_cursos', $cur);
+            }
+        }
+
+        foreach($local AS $id=>$enable) {
+            if($enable){
+                $DB->set_field('saas_cursos', 'enable', 0, array('id'=>$id));
             }
         }
     }
@@ -160,39 +185,37 @@ class saas {
     function load_ofertas_cursos_saas(){
         global $DB;
 
-        $local = $DB->get_records('saas_ofertas_cursos', array('api_key'=>$this->api_key), null ,'uid, id, enable');
-
-        $cursos_saas = $this->get_ws('cursos');
-        $cursos_saas = empty($cursos_saas) ? array() : $cursos_saas;
+        $local = $DB->get_records_menu('saas_ofertas_cursos', array('api_key'=>$this->api_key), '', 'id, enable');
 
         $ofertas_cursos_saas = $this->get_ws('ofertas/cursos');
         $ofertas_cursos_saas = empty($ofertas_cursos_saas) ? array() : $ofertas_cursos_saas;
 
-        foreach ($cursos_saas as $curso) {
-            foreach ($ofertas_cursos_saas as $oferta_curso) {
-                if ($curso->uid == $oferta_curso->curso->uid) {
-                    $record = new stdClass();
-                    $record->api_key = $this->api_key;
-                    $record->nome = $curso->nome; //Nome do curso
-                    $record->ano = $oferta_curso->ano;
-                    $record->periodo = $oferta_curso->periodo;
-                    $record->enable = 1;
+        foreach ($ofertas_cursos_saas as $oferta_curso) {
+            $curso_id = $DB->get_field('saas_cursos', 'id', array('api_key' => $this->api_key, 'uid' => $oferta_curso->curso->uid));
+            if (empty($curso_id)) {
+                $curso_id = -1;
+            }
 
-                    if (isset($local[$oferta_curso->uid])){
-                        $record->id = $local[$oferta_curso->uid]->id;
-                        $DB->update_record('saas_ofertas_cursos', $record);
-                        unset($local[$oferta_curso->uid]);
-                    } else {
-                        $record->uid = $oferta_curso->uid;
-                        $DB->insert_record('saas_ofertas_cursos', $record);
-                    }
-                }
+            $record = new stdClass();
+            $record->curso_id = $curso_id;
+            $record->ano = $oferta_curso->ano;
+            $record->periodo = $oferta_curso->periodo;
+            $record->enable = 1;
+
+            if($id = $DB->get_field('saas_ofertas_cursos', 'id', array('api_key'=>$this->api_key, 'uid' => $oferta_curso->uid))) {
+                $record->id = $id;
+                $DB->update_record('saas_ofertas_cursos', $record);
+                unset($local[$id]);
+            } else {
+                $record->uid = $oferta_curso->uid;
+                $record->api_key = $this->api_key;
+                $DB->insert_record('saas_ofertas_cursos', $record);
             }
         }
 
-        foreach($local AS $uid=>$rec) {
-            if($rec->enable){
-                $DB->set_field('saas_ofertas_cursos', 'enable', 0, array('id'=>$rec->id));
+        foreach($local AS $id=>$enable) {
+            if($enable){
+                $DB->set_field('saas_ofertas_cursos', 'enable', 0, array('id'=>$id));
             }
         }
     }
@@ -200,35 +223,45 @@ class saas {
     function load_ofertas_disciplinas_saas(){
         global $DB;
 
-        $local = $DB->get_records('saas_ofertas_disciplinas', array('api_key'=>$this->api_key), null ,'uid, id, enable');
+        $local = $DB->get_records_menu('saas_ofertas_disciplinas', array('api_key'=>$this->api_key), '', 'id, enable');
 
         $ofertas_disciplinas = $this->get_ws('ofertas/disciplinas');
         $ofertas_disciplinas = empty($ofertas_disciplinas) ? array() : $ofertas_disciplinas;
 
         foreach ($ofertas_disciplinas as $oferta_disciplina){
+            $disciplina_id = $DB->get_field('saas_disciplinas', 'id', array('api_key' => $this->api_key, 'uid' => $oferta_disciplina->disciplina->uid));
+            if (empty($disciplina_id)) {
+                $disciplina_id = -1;
+            }
+
+            $oferta_curso_id = $DB->get_field('saas_ofertas_cursos', 'id', array('api_key' => $this->api_key, 'uid' => $oferta_disciplina->ofertaCurso->uid));
+            if (empty($oferta_curso_id)) {
+                $oferta_curso_id = -1;
+            }
+
             $record = new stdClass();
-            $record->api_key = $this->api_key;
-            $record->uid = $oferta_disciplina->uid;
-            $record->disciplina_uid = $oferta_disciplina->disciplina->uid;
+            $record->disciplina_id = $disciplina_id;
             $record->inicio = !isset($oferta_disciplina->inicio) || empty($oferta_disciplina->inicio) ? '' : $oferta_disciplina->inicio;
             $record->fim = !isset($oferta_disciplina->fim ) || empty($oferta_disciplina->fim) ? '' : $oferta_disciplina->fim;
-            $record->oferta_curso_uid = $oferta_disciplina->ofertaCurso->uid;
+            $record->oferta_curso_id = $oferta_curso_id;
             $record->enable = 1;
 
-            if (isset($local[$oferta_disciplina->uid])){
-                $record->id = $local[$oferta_disciplina->uid]->id;
+            if($id = $DB->get_field('saas_ofertas_disciplinas', 'id', array('api_key' => $this->api_key, 'uid' => $oferta_disciplina->uid))) {
+                $record->id = $id;
                 $DB->update_record('saas_ofertas_disciplinas', $record);
-                unset($local[$oferta_disciplina->uid]);
+                unset($local[$id]);
             } else {
+                $record->uid = $oferta_disciplina->uid;
+                $record->api_key = $this->api_key;
                 $max = $DB->get_field_sql("SELECT MAX(group_map_id) FROM {saas_ofertas_disciplinas}");
                 $record->group_map_id = empty($max) ? 1 : $max+1;
                 $DB->insert_record('saas_ofertas_disciplinas', $record);
             }
         }
 
-        foreach ($local AS $uid=>$rec) {
-            if($rec->enable){
-                $DB->set_field('saas_ofertas_disciplinas', 'enable', 0, array('id'=>$rec->id));
+        foreach ($local AS $id=>$enable) {
+            if($enable){
+                $DB->set_field('saas_ofertas_disciplinas', 'enable', 0, array('id'=>$id));
             }
         }
     }
@@ -236,31 +269,31 @@ class saas {
     function load_polos_saas() {
         global $DB;
 
-        $local = $DB->get_records('saas_polos', array('api_key'=>$this->api_key), '' ,'uid, id, enable');
+        $local = $DB->get_records_menu('saas_polos', array('api_key'=>$this->api_key), '', 'id, enable');
 
         $polos_saas = $this->get_ws('polos');
         $polos_saas = empty($polos_saas) ? array() : $polos_saas;
 
         foreach ($polos_saas as $pl){
             $record = new stdClass();
-            $record->api_key = $this->api_key;
             $record->nome = $pl->nome;
             $record->cidade = $pl->cidade;
             $record->estado = $pl->estado;
             $record->enable = 1;
-            if (isset($local[$pl->uid])){
-                $record->id = $local[$pl->uid]->id;
+            if($id = $DB->get_field('saas_polos', 'id', array('api_key'=>$this->api_key, 'uid' => $pl->uid))) {
+                $record->id = $id;
                 $DB->update_record('saas_polos', $record);
-                unset($local[$pl->uid]);
+                unset($local[$id]);
             } else {
                 $record->uid = $pl->uid;
+                $record->api_key = $this->api_key;
                 $DB->insert_record('saas_polos', $record);
             }
         }
 
-        foreach ($local AS $uid=>$rec) {
-            if($rec->enable){
-                $DB->set_field('saas_polos', 'enable', 0, array('id'=>$rec->id));
+        foreach ($local AS $id=>$enable) {
+            if($enable){
+                $DB->set_field('saas_polos', 'enable', 0, array('id'=>$id));
             }
         }
     }
@@ -304,8 +337,8 @@ class saas {
              LEFT JOIN (SELECT dd.id as dis_id
                           FROM {saas_ofertas_cursos} oc
                           JOIN {config_plugins} cp ON (cp.plugin = 'report_saas_export' AND cp.name = 'api_key' AND cp.value = oc.api_key)
-                          JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1 AND od.api_key = oc.api_key)
-                          JOIN {saas_disciplinas} dd ON (dd.uid = od.disciplina_uid AND dd.enable = 1 AND dd.api_key = oc.api_key)
+                          JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_id = oc.id AND od.enable = 1 AND od.api_key = oc.api_key)
+                          JOIN {saas_disciplinas} dd ON (dd.id = od.disciplina_id AND dd.enable = 1 AND dd.api_key = oc.api_key)
                          WHERE oc.enable = 1
                            {$where}) dis
                     ON (dis.dis_id = d.id)
@@ -339,7 +372,7 @@ class saas {
         $sql = "SELECT DISTINCT sp.*, oc.id as ocid
                   FROM {saas_ofertas_cursos} oc
                   JOIN {config_plugins} cp ON (cp.plugin = 'report_saas_export' AND cp.name = 'api_key' AND cp.value = oc.api_key)
-                  JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1 AND od.api_key = oc.api_key)
+                  JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_id = oc.id AND od.enable = 1 AND od.api_key = oc.api_key)
                   JOIN {saas_map_course} cm ON (cm.group_map_id = od.group_map_id)
                   JOIN {course} c ON (c.id = cm.courseid)";
 
@@ -401,14 +434,26 @@ class saas {
     function get_ofertas_cursos() {
         global $DB;
 
-        return $DB->get_records('saas_ofertas_cursos', array('enable'=>1, 'api_key'=>$this->api_key), 'nome, ano, periodo');
+        $sql = "SELECT oc.*, c.nome, c.uid as curso_uid
+                  FROM {saas_ofertas_cursos} oc
+                  JOIN {saas_cursos} c ON (c.id = oc.curso_id)
+                 WHERE oc.api_key = :api_key
+                   AND oc.enable = 1
+              ORDER BY c.nome, oc.ano, oc.periodo";
+        return $DB->get_records_sql($sql, array('api_key'=>$this->api_key));
     }
 
-    // retorna uma oferta de curso com base em seu uid do SAAS
-    function get_oferta_curso($uid) {
+    // retorna uma oferta de curso com base em seu id
+    function get_oferta_curso($id) {
         global $DB;
 
-        return $DB->get_record('saas_ofertas_cursos', array('uid'=>$uid, 'enable'=>1, 'api_key'=>$this->api_key));
+        $sql = "SELECT oc.*, c.nome, c.uid as curso_uid
+                  FROM {saas_ofertas_cursos} oc
+                  JOIN {saas_cursos} c ON (c.id = oc.curso_id)
+                 WHERE oc.api_key = :api_key
+                   AND oc.id = :id
+                   AND oc.enable = 1";
+        return $DB->get_record_sql($sql, array('api_key'=>$this->api_key, 'id'=>$id));
     }
 
     // retorna array com ofertas de curso e respectivas ofertas de disciplinas, mapeadas ou não
@@ -438,8 +483,8 @@ class saas {
         $sql = "SELECT DISTINCT od.*, d.nome, oc.id as ocid, cm.id IS NOT NULL AS mapped
                   FROM {saas_ofertas_cursos} oc
                   JOIN {config_plugins} cp ON (cp.plugin = 'report_saas_export' AND cp.name = 'api_key' AND cp.value = oc.api_key)
-                  JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1 AND od.api_key = oc.api_key)
-                  JOIN {saas_disciplinas} d ON (d.uid = od.disciplina_uid AND d.enable = 1 AND d.api_key = oc.api_key)
+                  JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_id = oc.id AND od.enable = 1 AND od.api_key = oc.api_key)
+                  JOIN {saas_disciplinas} d ON (d.id = od.disciplina_id AND d.enable = 1 AND d.api_key = oc.api_key)
              LEFT JOIN {saas_map_course} cm ON (cm.group_map_id = od.group_map_id)
                  WHERE oc.enable = 1
                    {$cond}
@@ -458,7 +503,7 @@ class saas {
         $sql = "SELECT od.*, d.nome
                   FROM {saas_ofertas_disciplinas} od
                   JOIN {config_plugins} cp ON (cp.plugin = 'report_saas_export' AND cp.name = 'api_key' AND cp.value = od.api_key)
-                  JOIN {saas_disciplinas} d ON (d.uid = od.disciplina_uid AND d.enable = 1 AND d.api_key = od.api_key)
+                  JOIN {saas_disciplinas} d ON (d.id = od.disciplina_id AND d.enable = 1 AND d.api_key = od.api_key)
                  WHERE od.id = :odid
                    AND od.enable = 1";
         return $DB->get_record_sql($sql, array('odid' => $oferta_disciplina_id));
@@ -469,7 +514,7 @@ class saas {
 
         return $DB->get_records('saas_ofertas_disciplinas',
                                  array('group_map_id'=>$group_map_id, 'api_key'=>$this->api_key, 'enable'=>1),
-                                 null, 'id, oferta_curso_uid');
+                                 null, 'id, oferta_curso_id');
     }
 
 
@@ -494,8 +539,8 @@ class saas {
         $sql = "SELECT DISTINCT od.*, d.nome, oc.id as ocid
                   FROM {saas_ofertas_disciplinas} od
                   JOIN {config_plugins} cp ON (cp.plugin = 'report_saas_export' AND cp.name = 'api_key' AND cp.value = od.api_key)
-                  JOIN {saas_ofertas_cursos} oc ON (oc.uid = od.oferta_curso_uid AND oc.enable = 1 AND oc.api_key = od.api_key)
-                  JOIN {saas_disciplinas} d ON (d.uid = od.disciplina_uid AND d.enable = 1 AND d.api_key = od.api_key)
+                  JOIN {saas_ofertas_cursos} oc ON (oc.id = od.oferta_curso_id AND oc.enable = 1 AND oc.api_key = od.api_key)
+                  JOIN {saas_disciplinas} d ON (d.id = od.disciplina_id AND d.enable = 1 AND d.api_key = od.api_key)
                   {$join}
                  WHERE od.enable = 1
                    {$where}";
@@ -555,7 +600,7 @@ class saas {
         $sql = "SELECT {$distinct} oc.id AS ocid, sp.id AS p_id, scr.role $field
                   FROM {saas_ofertas_cursos} oc
                   JOIN {config_plugins} cp ON (cp.plugin = 'report_saas_export' AND cp.name = 'api_key' AND cp.value = oc.api_key)
-                  JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1 AND od.api_key = oc.api_key)
+                  JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_id = oc.id AND od.enable = 1 AND od.api_key = oc.api_key)
                   JOIN {saas_map_course} cm ON (cm.group_map_id = od.group_map_id)
                   JOIN {course} c ON (c.id = cm.courseid)
                   JOIN {enrol} e ON (e.courseid = c.id AND e.status = :enable)
@@ -563,7 +608,7 @@ class saas {
                   JOIN {context} ctx ON (ctx.instanceid = c.id AND ctx.contextlevel = :contextcourse)
                   {$join_ra}
                   JOIN {saas_config_roles} scr ON (scr.roleid = ra.roleid AND scr.role IN ('student', 'tutor_polo'))
-                  JOIN {user} u ON (u.id = ue.userid AND u.deleted = 0 AND u.suspended = 0)
+                  JOIN {user} u ON (u.id = ue.userid AND u.deleted = 0)
                   {$join_user_info_data}
                   JOIN {course_categories} cc ON (cc.id = c.category)
                   JOIN {course_categories} ccp ON (ccp.id = cc.id OR cc.path LIKE {$concat_category})
@@ -623,7 +668,7 @@ class saas {
         $sql = "SELECT {$distinct} oc.id AS ocid, sp.id AS p_id, scr.role $field
                   FROM {saas_ofertas_cursos} oc
                   JOIN {config_plugins} cp ON (cp.plugin = 'report_saas_export' AND cp.name = 'api_key' AND cp.value = oc.api_key)
-                  JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1 AND od.api_key = oc.api_key)
+                  JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_id = oc.id AND od.enable = 1 AND od.api_key = oc.api_key)
                   JOIN {saas_map_course} cm ON (cm.group_map_id = od.group_map_id)
                   JOIN {course} c ON (c.id = cm.courseid)
                   JOIN {enrol} e ON (e.courseid = c.id AND e.status = :enable)
@@ -631,7 +676,7 @@ class saas {
                   JOIN {context} ctx ON (ctx.instanceid = c.id AND ctx.contextlevel = :contextcourse)
                   {$join_ra}
                   JOIN {saas_config_roles} scr ON (scr.roleid = ra.roleid AND scr.role IN ('student', 'tutor_polo'))
-                  JOIN {user} u ON (u.id = ue.userid AND u.deleted = 0 AND u.suspended = 0)
+                  JOIN {user} u ON (u.id = ue.userid AND u.deleted = 0)
                   {$join_user_info_data}
                   JOIN {saas_map_catcourses_polos} smcp ON (smcp.type = 'course' AND smcp.instanceid = c.id)
                   JOIN {saas_polos} sp ON (sp.id = smcp.polo_id AND sp.enable = 1 AND sp.api_key = oc.api_key)
@@ -689,7 +734,7 @@ class saas {
         $sql = "SELECT {$distinct} oc.id AS ocid, sp.id AS p_id, scr.role $field
                   FROM {saas_ofertas_cursos} oc
                   JOIN {config_plugins} cp ON (cp.plugin = 'report_saas_export' AND cp.name = 'api_key' AND cp.value = oc.api_key)
-                  JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1 AND od.api_key = oc.api_key)
+                  JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_id = oc.id AND od.enable = 1 AND od.api_key = oc.api_key)
                   JOIN {saas_map_course} cm ON (cm.group_map_id = od.group_map_id)
                   JOIN {course} c ON (c.id = cm.courseid)
                   JOIN {enrol} e ON (e.courseid = c.id AND e.status = :enable)
@@ -697,7 +742,7 @@ class saas {
                   JOIN {context} ctx ON (ctx.instanceid = c.id AND ctx.contextlevel = :contextcourse)
                   {$join_ra}
                   JOIN {saas_config_roles} scr ON (scr.roleid = ra.roleid AND scr.role IN ('student', 'tutor_polo'))
-                  JOIN {user} u ON (u.id = ue.userid AND u.deleted = 0 AND u.suspended = 0)
+                  JOIN {user} u ON (u.id = ue.userid AND u.deleted = 0)
                   {$join_user_info_data}
                   JOIN {groups} g ON (g.courseid = c.id)
                   JOIN {groups_members} gm ON (gm.groupid = g.id AND gm.userid = u.id)
@@ -758,35 +803,31 @@ class saas {
         $params = array('contextlevel'=>CONTEXT_COURSE, 'enable'=>ENROL_INSTANCE_ENABLED);
         $group_by = 'GROUP BY odid, scr.role';
 
-        if($this->get_config('suspended_as_evaded') && !$only_count) {
-            $user_enrol_condition = "AND (ue.status = :active OR scr.role = 'student')";
-        } else {
-            $user_enrol_condition = 'AND ue.status = :active';
-        }
-        $params['active'] = ENROL_USER_ACTIVE;
-
         $join_user_info_data = '';
         $join_user_lastaccess = '';
         if($only_count) {
-            $fields = 'COUNT(DISTINCT ra.userid) AS count';
+            $fields = ', COUNT(DISTINCT ra.userid) AS count';
             $orderby = '';
         } else {
+            $fields = ', u.suspended AS global_suspended';
+            $group_by .= ', u.suspended';
+
             $userid_field = $this->get_config('userid_field');
             if($userid_field == 'username' || $userid_field == 'idnumber') {
-                $fields = "ra.userid, u.{$userid_field} AS uid";
+                $fields .= ", ra.userid, u.{$userid_field} AS uid";
                 $group_by .= ', ra.userid, u.' . $userid_field;
             } else {
                 if($fieldid = $DB->get_field('user_info_field', 'id', array('shortname'=>$userid_field))) {
                     $join_user_info_data = "JOIN {user_info_data} udt ON (udt.fieldid = :fieldid AND udt.userid = u.id AND udt.data != '')";
                     $params['fieldid'] = $fieldid;
-                    $fields = "ra.userid, udt.data AS uid";
+                    $fields .= ", ra.userid, udt.data AS uid";
                     $group_by .= ', ra.userid, udt.data';
                 } else {
                     print_error('userid_field_unknown', 'report_saas_export', '', $userid_field);
                 }
             }
             $join_user_lastaccess = 'LEFT JOIN {user_lastaccess} ul ON (ul.userid = u.id AND ul.courseid = c.id)';
-            $fields .= ', MAX(ue.status) as suspended, MAX(u.currentlogin) AS currentlogin, MAX(ul.timeaccess) AS lastaccess';
+            $fields .= ', MIN(ue.status) as suspended, MAX(u.currentlogin) AS currentlogin, MAX(ul.timeaccess) AS lastaccess';
             $orderby = ', ' . self::get_concat_nome();
             $group_by .= ', u.firstname, u.lastname';
         }
@@ -802,10 +843,10 @@ class saas {
         list($join_ra, $params_ra) = $this->get_join_role_assignments();
         $params = array_merge($params, $params_ra);
 
-        $sql = "SELECT od.id AS odid, scr.role, {$fields}
+        $sql = "SELECT od.id AS odid, scr.role {$fields}
                   FROM {saas_ofertas_cursos} oc
                   JOIN {config_plugins} cp ON (cp.plugin = 'report_saas_export' AND cp.name = 'api_key' AND cp.value = oc.api_key)
-                  JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1 AND od.api_key = oc.api_key)
+                  JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_id = oc.id AND od.enable = 1 AND od.api_key = oc.api_key)
                   JOIN {saas_map_course} cm ON (cm.group_map_id = od.group_map_id)
                   JOIN {course} c ON (c.id = cm.courseid)
                   JOIN {enrol} e ON (e.courseid = c.id AND e.status = :enable)
@@ -813,12 +854,11 @@ class saas {
                   JOIN {context} ctx ON (ctx.instanceid = c.id AND ctx.contextlevel = :contextlevel)
                   {$join_ra}
                   JOIN {saas_config_roles} scr ON (scr.roleid = ra.roleid AND scr.role IN ('student', 'teacher', 'tutor_inst'))
-                  JOIN {user} u ON (u.id = ue.userid AND u.deleted = 0 AND u.suspended = 0)
+                  JOIN {user} u ON (u.id = ue.userid AND u.deleted = 0)
                   {$join_user_info_data}
                   {$join_user_lastaccess}
                  WHERE oc.enable = 1
                    {$condition}
-                   {$user_enrol_condition}
               {$group_by}
               ORDER BY odid, scr.role {$orderby}";
         return array($sql, $params);
@@ -906,7 +946,8 @@ class saas {
     function send_users_by_polos($pocid, $id_polo=0, $send_user_details=true) {
         global $DB;
 
-        $oc = $DB->get_record('saas_ofertas_cursos', array('id'=>$pocid));
+        $oc = $this->get_oferta_curso($pocid);
+
         $role_types = $this->get_role_types('polos');
 
         if($id_polo) {
@@ -996,31 +1037,22 @@ class saas {
 
             if($rec->odid != $odid) {
                 if($odid !== 0) {
-                    $this->send_users_by_oferta_disciplina($ofertas[$odid], $users_by_roles, $users_lastaccess, $users_suspended, $send_user_details);
+                    $this->send_users_by_oferta_disciplina($ofertas[$odid], $users_by_roles, $send_user_details);
                     unset($ofertas[$odid]);
                 }
                 foreach($role_types AS $r) {
                     $users_by_roles[$r] = array();
                 }
-                $users_lastaccess = array();
-                $users_suspended = array();
                 $odid = $rec->odid;
             }
 
-            if(empty($rec->suspended)) {
-                $users_by_roles[$rec->role][$rec->userid] = $rec->uid;
-                if(!empty($rec->lastaccess)) {
-                    $users_lastaccess[$rec->userid] = $rec->lastaccess;
-                }
-            } else {
-                $users_suspended[$rec->userid] = $rec->uid;
-            }
+            $users_by_roles[$rec->role][$rec->uid] = $rec;
         }
         $rs->close();
 
         //send the last one
         if($odid !== 0) {
-            $this->send_users_by_oferta_disciplina($ofertas[$odid], $users_by_roles, $users_lastaccess, $users_suspended, $send_user_details);
+            $this->send_users_by_oferta_disciplina($ofertas[$odid], $users_by_roles, $send_user_details);
             unset($ofertas[$odid]);
         }
 
@@ -1028,43 +1060,35 @@ class saas {
             $users_by_roles[$r] = array();
         }
         foreach($ofertas AS $odid=>$od) {
-            $this->send_users_by_oferta_disciplina($od, $users_by_roles, array(), array(), false);
+            $this->send_users_by_oferta_disciplina($od, $users_by_roles, false);
         }
     }
 
-    function send_users_by_oferta_disciplina($oferta_disciplina, $users_by_roles, $users_lastaccess, $users_suspended, $send_user_details=true) {
+    function send_users_by_oferta_disciplina($oferta_disciplina, $users_by_roles, $send_user_details=true) {
         $this->update_progressbar("Exportando ofertas de disciplina");
 
         $oferta_uid_encoded = rawurlencode($oferta_disciplina->uid);
         foreach($users_by_roles AS $r=>$users) {
-            $this->put_ws("ofertas/disciplinas/{$oferta_uid_encoded}/". self::$role_types[$r], array_values($users));
+            $this->put_ws("ofertas/disciplinas/{$oferta_uid_encoded}/". self::$role_types[$r], array_keys($users));
             if($r == 'student' && $send_user_details) {
                 $grades = $this->get_grades($oferta_disciplina->id);
                 $obj_nota = new stdClass();
                 $obj_lastaccess = new stdClass();
-                foreach($users AS $userid=>$uid) {
-                    if(!empty($uid)) {
-                        $user_uid_encoded = rawurlencode($uid);
-                        if(isset($grades[$userid])) {
-                            $obj_nota->nota = $grades[$userid];
-                            $this->put_ws("ofertas/disciplinas/{$oferta_uid_encoded}/estudantes/{$user_uid_encoded}/nota", $obj_nota);
-                        }
-
-                        if(isset($users_lastaccess[$userid])) {
-                            $obj_lastaccess->ultimoAcesso = $users_lastaccess[$userid];
-                            $this->put_ws("ofertas/disciplinas/{$oferta_uid_encoded}/estudantes/{$user_uid_encoded}/ultimoAcesso", $obj_lastaccess);
-                        }
-
-                    }
-                }
-
                 $obj_suspended = new stdClass();
-                foreach($users_suspended AS $userid=>$uid) {
-                    if(!empty($uid)) {
-                        $user_uid_encoded = rawurlencode($uid);
-                        $obj_suspended->suspenso = true;
-                        $this->put_ws("ofertas/disciplinas/{$oferta_uid_encoded}/estudantes/{$user_uid_encoded}/suspenso", $obj_suspended);
+                foreach($users AS $uid=>$user) {
+                    $user_uid_encoded = rawurlencode($uid);
+                    if(isset($grades[$user->userid])) {
+                        $obj_nota->nota = $grades[$user->userid];
+                        $this->put_ws("ofertas/disciplinas/{$oferta_uid_encoded}/estudantes/{$user_uid_encoded}/nota", $obj_nota);
                     }
+
+                    if(!empty($users_lastaccess[$user->userid])) {
+                        $obj_lastaccess->ultimoAcesso = $users_lastaccess[$user->userid];
+                        $this->put_ws("ofertas/disciplinas/{$oferta_uid_encoded}/estudantes/{$user_uid_encoded}/ultimoAcesso", $obj_lastaccess);
+                    }
+
+                    $obj_suspended->suspenso = $user->suspended == ENROL_USER_SUSPENDED;
+                    $this->put_ws("ofertas/disciplinas/{$oferta_uid_encoded}/estudantes/{$user_uid_encoded}/suspenso", $obj_suspended);
                 }
             }
         }
@@ -1076,8 +1100,13 @@ class saas {
         if(!isset($this->sent_users[$rec->userid])) {
             $user_uid_encoded = rawurlencode($rec->uid);
             $this->put_ws("pessoas/{$user_uid_encoded}",  $this->get_user($rec->role, $rec->userid, $rec->uid));
-            if($send_user_details && $rec->role == 'student' && !empty($rec->uid) && !empty($rec->currentlogin)) {
-                $this->put_ws("pessoas/{$user_uid_encoded}/ultimoLogin", array('ultimoLogin'=>$rec->currentlogin));
+
+            if($send_user_details && $rec->role == 'student') {
+                if(!empty($rec->currentlogin)) {
+                    $this->put_ws("pessoas/{$user_uid_encoded}/ultimoLogin", array('ultimoLogin'=>$rec->currentlogin));
+                }
+// TODO
+//                $this->put_ws("pessoas/{$user_uid_encoded}/suspenso", array('suspenso'=>!empty($rec->global_suspended)));
             }
             $this->sent_users[$rec->userid] = true;
             $this->count_sent_users[$rec->role]++;
@@ -1277,6 +1306,13 @@ class saas {
                 }
                 unset($data->$rname);
             }
+        }
+
+        if(!isset($data->filter_userid_field)) {
+            set_config('filter_userid_field', '0', 'report_saas_export');
+        }
+        if(!isset($data->suspended_as_evaded)) {
+            set_config('suspended_as_evaded', '0', 'report_saas_export');
         }
 
         foreach($data AS $key=>$value) {

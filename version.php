@@ -19,11 +19,11 @@
  *
  * @package    report
  * @subpackage saas-export
- * @copyright  2014 Caio Doneda and Daniel Neis
+ * @copyright  2014 Antonio Carlos Mariani, Caio Doneda and Daniel Neis
  */
 
 defined('MOODLE_INTERNAL') || die;
 
-$plugin->version   = 2014112500;        // The current plugin version (Date: YYYYMMDDXX)
+$plugin->version   = 2015030102;        // The current plugin version (Date: YYYYMMDDXX)
 $plugin->requires  = 2010112400;        // Requires this Moodle version
 $plugin->component = 'report_saas_export'; // Full name of the plugin (used for diagnostics)

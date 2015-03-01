@@ -8,22 +8,17 @@ $may_export = has_capability('report/saas_export:export', $syscontext);
 $message = '';
 
 if(isset($_POST['map_polos']) && isset($_POST['save']) && $may_export) {
-    $sql = "SELECT smgp.groupname, smgp.id, smgp.polo_id
-              FROM {saas_map_groups_polos} smgp
-              JOIN {config_plugins} cp ON (cp.plugin = 'report_saas_export' AND cp.name = 'api_key' AND cp.value = smgp.api_key)
-          ORDER BY groupname";
-    $mapped_groups = $DB->get_records_sql($sql);
     $saved = false;
 
     foreach($_POST['map_polos'] AS $groupname=>$poloid) {
-        if(isset($mapped_groups[$groupname])) {
+        if($map_group_polo = $DB->get_record('saas_map_groups_polos', array('api_key'=>$saas->api_key, 'groupname'=>$groupname), 'id, polo_id')) {
             if(empty($poloid)) {
-                $DB->delete_records('saas_map_groups_polos', array('id'=>$mapped_groups[$groupname]->id));
+                $DB->delete_records('saas_map_groups_polos', array('id'=>$map_group_polo->id));
                 $saved = true;
             } else {
-                if($poloid != $mapped_groups[$groupname]->polo_id) {
+                if($poloid != $map_group_polo->polo_id) {
                     $obj = new stdClass();
-                    $obj->id = $mapped_groups[$groupname]->id;
+                    $obj->id = $map_group_polo->id;
                     $obj->polo_id = $poloid;
                     $DB->update_record('saas_map_groups_polos', $obj);
                     $saved = true;
@@ -40,6 +35,7 @@ if(isset($_POST['map_polos']) && isset($_POST['save']) && $may_export) {
             }
         }
     }
+
     $message = $saved  ? get_string('saved', 'report_saas_export') : get_string('no_changes', 'report_saas_export');
 }
 

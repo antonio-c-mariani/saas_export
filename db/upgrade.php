@@ -243,5 +243,113 @@ function xmldb_report_saas_export_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2014100400, 'report', 'saas_export');
     }
 
+    if ($oldversion < 2015030102) {
+
+        if (strpos(__FILE__, '/admin/report/') !== false) {
+            $pluginpath = $CFG->dirroot . '/admin/report/saas_export';
+        } else {
+            $pluginpath = $CFG->dirroot . '/report/saas_export';
+        }
+
+        $table = new xmldb_table('saas_cursos');
+        if (!$dbman->table_exists($table)) {
+            $dbman->install_one_table_from_xmldb_file(dirname(__FILE__). '/install.xml', 'saas_cursos');
+            try {
+                include_once($pluginpath . '/classes/saas.php');
+                $saas = new saas();
+                $saas->load_cursos_saas();
+            } catch (Exception $e) {}
+        }
+
+        // --------------------------------------------------------------------------------------------
+
+        $table = new xmldb_table('saas_ofertas_cursos');
+
+        $field = new xmldb_field('curso_id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'uid');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+
+            try {
+                if (!isset($saas)) {
+                    include_once($pluginpath . '/classes/saas.php');
+                    $saas = new saas();
+                }
+                $saas->load_ofertas_cursos_saas();
+            } catch (Exception $e) {}
+        }
+
+        if ($dbman->field_exists($table, $field)) {
+            $index = new xmldb_index('curso_id', XMLDB_INDEX_NOTUNIQUE, array('curso_id'));
+            if (!$dbman->index_exists($table, $index)) {
+                $dbman->add_index($table, $index);
+            }
+        }
+
+        $field = new xmldb_field('nome');
+        if ($dbman->field_exists($table, $field)) {
+            $dbman->drop_field($table, $field);
+        }
+
+        // --------------------------------------------------------------------------------------------
+
+        $table = new xmldb_table('saas_ofertas_disciplinas');
+        if ($dbman->table_exists($table)) {
+            $field = new xmldb_field('disciplina_id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'uid');
+            if (!$dbman->field_exists($table, $field)) {
+                $dbman->add_field($table, $field);
+            }
+
+            $index = new xmldb_index('disciplina_id', XMLDB_INDEX_NOTUNIQUE, array('disciplina_id'));
+            if (!$dbman->index_exists($table, $index)) {
+                $dbman->add_index($table, $index);
+            }
+
+            $field = new xmldb_field('disciplina_uid');
+            if ($dbman->field_exists($table, $field)) {
+                $sql = "UPDATE {saas_ofertas_disciplinas} od
+                          JOIN {saas_disciplinas} d ON (d.api_key = od.api_key AND d.uid = od.oferta_curso_uid)
+                           SET od.disciplina_id = d.id";
+                $DB->execute($sql);
+
+                $index = new xmldb_index('disciplina_uid', XMLDB_INDEX_NOTUNIQUE, array('disciplina_uid'));
+                if ($dbman->index_exists($table, $index)) {
+                    $dbman->drop_index($table, $index);
+                }
+
+                $dbman->drop_field($table, $field);
+            }
+
+
+            // --------------------------------------------------------------------------------------------
+
+            $field = new xmldb_field('oferta_curso_id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'fim');
+            if (!$dbman->field_exists($table, $field)) {
+                $dbman->add_field($table, $field);
+            }
+
+            $index = new xmldb_index('oferta_curso_id', XMLDB_INDEX_NOTUNIQUE, array('oferta_curso_id'));
+            if (!$dbman->index_exists($table, $index)) {
+                $dbman->add_index($table, $index);
+            }
+
+            $field = new xmldb_field('oferta_curso_uid');
+            if ($dbman->field_exists($table, $field)) {
+                $sql = "UPDATE {saas_ofertas_disciplinas} od
+                          JOIN {saas_ofertas_cursos} oc ON (oc.api_key = od.api_key AND oc.uid = od.oferta_curso_uid)
+                           SET od.oferta_curso_id = oc.id";
+                $DB->execute($sql);
+
+                $index = new xmldb_index('oferta_curso_uid', XMLDB_INDEX_NOTUNIQUE, array('oferta_curso_uid'));
+                if ($dbman->index_exists($table, $index)) {
+                    $dbman->drop_index($table, $index);
+                }
+
+                $dbman->drop_field($table, $field);
+            }
+        }
+
+        upgrade_plugin_savepoint(true, 2015030102, 'report', 'saas_export');
+    }
+
     return true;
 }

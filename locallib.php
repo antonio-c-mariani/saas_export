@@ -84,7 +84,7 @@ function saas_show_categories_tree($group_map_id) {
     $sql = "SELECT od.*, d.nome
               FROM {saas_ofertas_disciplinas} od
               JOIN {config_plugins} cp ON (cp.plugin = 'report_saas_export' AND cp.name = 'api_key' AND cp.value = od.api_key)
-              JOIN {saas_disciplinas} d ON (d.uid = od.disciplina_uid AND d.enable = 1 AND d.api_key = od.api_key)
+              JOIN {saas_disciplinas} d ON (d.id = od.disciplina_id AND d.enable = 1 AND d.api_key = od.api_key)
              WHERE od.enable = 1
                AND od.group_map_id = :group_map_id";
     $ods = $DB->get_records_sql($sql, array('group_map_id'=>$group_map_id));
@@ -120,7 +120,7 @@ function saas_show_categories_tree($group_map_id) {
         $title_ods = 'Disciplinas:' . html_writer::tag('UL', html_writer::tag('font', $title_ods, array('color'=>'darkblue')));
     }
 
-    $oc = $saas->get_oferta_curso($od->oferta_curso_uid);
+    $oc = $saas->get_oferta_curso($od->oferta_curso_id);
     $cancel_url = new moodle_url('index.php', array('action'=>'course_mapping', 'subaction'=>'ofertas', 'ocid'=>$oc->id));
 
     echo html_writer::start_tag('div', array('align'=>'center'));
@@ -540,7 +540,7 @@ function saas_show_table_overview_polos($polos) {
 function saas_show_users_oferta_curso_polo($ocid, $poloid, $sql, $params) {
     global $DB, $OUTPUT, $saas;
 
-    $oc = $DB->get_record('saas_ofertas_cursos', array('id'=>$ocid));
+    $oc = $saas->get_oferta_curso($ocid);
     $polo = $DB->get_record('saas_polos', array('id'=>$poloid));
 
     $role_types = $saas->get_role_types('polos');
@@ -587,7 +587,7 @@ function saas_show_users_oferta_disciplina($ofer_disciplina_id) {
     $grades = $saas->get_grades($ofer_disciplina_id);
 
     $od = $saas->get_oferta_disciplina($ofer_disciplina_id);
-    $oc = $saas->get_oferta_curso($od->oferta_curso_uid);
+    $oc = $saas->get_oferta_curso($od->oferta_curso_id);
 
     print $OUTPUT->box_start('generalbox boxwidthwide boxaligncenter');
     print $OUTPUT->heading("Curso: {$oc->nome} ({$oc->ano}/{$oc->periodo})", 3);
@@ -894,8 +894,9 @@ function saas_show_export_options($url, $selected_ocs=true, $selected_ods=true, 
         print html_writer::table($table);
 
         print html_writer::start_tag('DIV', array('class'=>'centeralign'));
-        print html_writer::checkbox('send_user_details', 'ok', true, 'Enviar detalhes de estudantes (últimos acessos e notas)');
-        print html_writer::empty_tag('br');
+        // Removido em função de decisão do Cislaghi de 20/02/2015
+        // print html_writer::checkbox('send_user_details', 'ok', true, 'Enviar detalhes de estudantes (últimos acessos e notas)');
+        // print html_writer::empty_tag('br');
         print html_writer::empty_tag('input', array('type'=>'submit', 'name'=>'export', 'value'=>s(get_string('saas_export:export', 'report_saas_export')), 'class'=>'boxaligncenter'));
         print html_writer::end_tag('DIV');
 
@@ -938,12 +939,13 @@ function saas_show_course_mappings($pocid=0) {
 
     $sql = "SELECT oc.id as ocid, od.id as odid, od.group_map_id, od.inicio, od.fim, d.nome
               FROM {saas_ofertas_cursos} oc
+              JOIN {saas_cursos} c ON (c.id = oc.curso_id AND c.api_key = oc.api_key)
               JOIN {config_plugins} cp ON (cp.plugin = 'report_saas_export' AND cp.name = 'api_key' AND cp.value = oc.api_key)
-              JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_uid = oc.uid AND od.enable = 1 AND od.api_key = oc.api_key)
-              JOIN {saas_disciplinas} d ON (d.uid = od.disciplina_uid AND d.enable = 1 AND d.api_key = oc.api_key)
+              JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_id = oc.id AND od.enable = 1 AND od.api_key = oc.api_key)
+              JOIN {saas_disciplinas} d ON (d.id = od.disciplina_id AND d.enable = 1 AND d.api_key = oc.api_key)
              WHERE oc.enable = 1
                {$cond}
-          ORDER BY oc.nome, od.group_map_id ,d.nome";
+          ORDER BY c.nome, od.group_map_id ,d.nome";
     $ofertas = array();
     foreach($DB->get_recordset_sql($sql, $params) AS $rec) {
         $ofertas[$rec->ocid][$rec->group_map_id][] = $rec;

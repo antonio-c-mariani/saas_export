@@ -44,12 +44,28 @@
         <INDEX NAME="polo_id" UNIQUE="false" FIELDS="polo_id" PREVIOUS="api_key"/>
       </INDEXES>
     </TABLE>
-    <TABLE NAME="saas_ofertas_cursos" COMMENT="Ofertas de cursos do SAAS" PREVIOUS="saas_map_groups_polos" NEXT="saas_ofertas_disciplinas">
+    <TABLE NAME="saas_cursos" COMMENT="Cursos do SAAS" PREVIOUS="saas_map_groups_polos" NEXT="saas_ofertas_cursos">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" NEXT="api_key"/>
         <FIELD NAME="api_key" TYPE="char" LENGTH="30" NOTNULL="true" SEQUENCE="false" PREVIOUS="id" NEXT="uid"/>
         <FIELD NAME="uid" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="api_key" NEXT="nome"/>
-        <FIELD NAME="nome" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="uid" NEXT="ano"/>
+        <FIELD NAME="nome" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="uid" NEXT="enable"/>
+        <FIELD NAME="enable" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" SEQUENCE="false" PREVIOUS="nome"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id" NEXT="uid"/>
+        <KEY NAME="uid" TYPE="unique" FIELDS="api_key,uid" COMMENT="must be unique" PREVIOUS="primary"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="enable" UNIQUE="false" FIELDS="enable"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="saas_ofertas_cursos" COMMENT="Ofertas de cursos do SAAS" PREVIOUS="saas_cursos" NEXT="saas_ofertas_disciplinas">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" NEXT="api_key"/>
+        <FIELD NAME="api_key" TYPE="char" LENGTH="30" NOTNULL="true" SEQUENCE="false" PREVIOUS="id" NEXT="uid"/>
+        <FIELD NAME="uid" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="api_key" NEXT="nome"/>
+        <FIELD NAME="curso_id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" PREVIOUS="uid" NEXT="ano"/>
         <FIELD NAME="ano" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="nome" NEXT="periodo"/>
         <FIELD NAME="periodo" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="ano" NEXT="enable"/>
         <FIELD NAME="enable" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" SEQUENCE="false" PREVIOUS="periodo"/>
@@ -66,12 +82,12 @@
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" NEXT="api_key"/>
         <FIELD NAME="api_key" TYPE="char" LENGTH="30" NOTNULL="true" SEQUENCE="false" PREVIOUS="id" NEXT="uid"/>
-        <FIELD NAME="uid" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="api_key" NEXT="disciplina_uid"/>
-        <FIELD NAME="disciplina_uid" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="uid" NEXT="inicio"/>
-        <FIELD NAME="inicio" TYPE="char" LENGTH="15" NOTNULL="true" SEQUENCE="false" PREVIOUS="disciplina_uid" NEXT="fim"/>
-        <FIELD NAME="fim" TYPE="char" LENGTH="15" NOTNULL="true" SEQUENCE="false" PREVIOUS="inicio" NEXT="oferta_curso_uid"/>
-        <FIELD NAME="oferta_curso_uid" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="fim" NEXT="group_map_id"/>
-        <FIELD NAME="group_map_id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" PREVIOUS="oferta_curso_uid" NEXT="enable"/>
+        <FIELD NAME="uid" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="api_key" NEXT="disciplina_id"/>
+        <FIELD NAME="disciplina_id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" PREVIOUS="uid" NEXT="inicio"/>
+        <FIELD NAME="inicio" TYPE="char" LENGTH="15" NOTNULL="true" SEQUENCE="false" PREVIOUS="disciplina_id" NEXT="fim"/>
+        <FIELD NAME="fim" TYPE="char" LENGTH="15" NOTNULL="true" SEQUENCE="false" PREVIOUS="inicio" NEXT="oferta_curso_id"/>
+        <FIELD NAME="oferta_curso_id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" PREVIOUS="fim" NEXT="group_map_id"/>
+        <FIELD NAME="group_map_id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" PREVIOUS="oferta_curso_id" NEXT="enable"/>
         <FIELD NAME="enable" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" SEQUENCE="false" PREVIOUS="group_map_id"/>
       </FIELDS>
       <KEYS>
@@ -79,9 +95,9 @@
         <KEY NAME="offer_dis_uid_unique" TYPE="unique" FIELDS="api_key,uid" COMMENT="must be unique" PREVIOUS="primary"/>
       </KEYS>
       <INDEXES>
-        <INDEX NAME="disciplina_uid" UNIQUE="false" FIELDS="disciplina_uid" NEXT="oferta_curso_uid"/>
-        <INDEX NAME="oferta_curso_uid" UNIQUE="false" FIELDS="oferta_curso_uid" PREVIOUS="disciplina_uid" NEXT="group_map_id"/>
-        <INDEX NAME="group_map_id" UNIQUE="false" FIELDS="group_map_id" PREVIOUS="oferta_curso_uid" NEXT="enable"/>
+        <INDEX NAME="disciplina_id" UNIQUE="false" FIELDS="disciplina_id" NEXT="oferta_curso_id"/>
+        <INDEX NAME="oferta_curso_id" UNIQUE="false" FIELDS="oferta_curso_id" PREVIOUS="disciplina_id" NEXT="group_map_id"/>
+        <INDEX NAME="group_map_id" UNIQUE="false" FIELDS="group_map_id" PREVIOUS="oferta_curso_id" NEXT="enable"/>
         <INDEX NAME="enable" UNIQUE="false" FIELDS="enable" PREVIOUS="group_map_id"/>
       </INDEXES>
     </TABLE>

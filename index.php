@@ -226,7 +226,7 @@ switch ($action) {
                 case 'change_group':
                     $odid = required_param('odid', PARAM_INT);
                     $group_map_id = required_param('group_map_id', PARAM_INT);
-                    $od = $DB->get_record('saas_ofertas_disciplinas', array('id'=>$odid), 'id, group_map_id, oferta_curso_uid', MUST_EXIST);
+                    $od = $DB->get_record('saas_ofertas_disciplinas', array('id'=>$odid), 'id, group_map_id, oferta_curso_id', MUST_EXIST);
                     if($group_map_id == -1) {
                         $max = $DB->get_field_sql("SELECT MAX(group_map_id) FROM {saas_ofertas_disciplinas} od");
                         $od->group_map_id = empty($max) ? 1 : $max+1;
@@ -234,7 +234,7 @@ switch ($action) {
                         $od->group_map_id = $group_map_id;
                     }
                     $DB->update_record('saas_ofertas_disciplinas', $od);
-                    $oc = $saas->get_oferta_curso($od->oferta_curso_uid);
+                    $oc = $saas->get_oferta_curso($od->oferta_curso_id);
                     $ocid = $oc->id;
                     break;
                 case 'delete':
@@ -254,7 +254,7 @@ switch ($action) {
                     $DB->insert_record('saas_map_course', $map);
                     $ods = $saas->get_ofertas_disciplinas_by_group_map($group_map_id);
                     $od = reset($ods);
-                    $oc = $saas->get_oferta_curso($od->oferta_curso_uid);
+                    $oc = $saas->get_oferta_curso($od->oferta_curso_id);
                     $ocid = $oc->id;
 
                     $SESSION->last_categoryid = $course->category;
@@ -359,7 +359,9 @@ switch ($action) {
 
             $baseurl->param('action', $action);
             if(optional_param('export', false, PARAM_TEXT)) {
-                $send_user_details = optional_param('send_user_details', false, PARAM_BOOL);
+                // Alterado em função de decisão do Cislaghi de 20/02/2015
+                // $send_user_details = optional_param('send_user_details', true, PARAM_BOOL);
+                $send_user_details = true;
 
                 $exception_msg = false;
                 try {
