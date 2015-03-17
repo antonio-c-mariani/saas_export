@@ -792,10 +792,8 @@ function saas_show_table_ofertas_curso_disciplinas($oferta_curso_id=0, $show_cou
     print html_writer::end_tag('DIV');
 }
 
-function saas_show_export_options($url, $selected_ocs=true, $selected_ods=true, $selected_polos=true) {
+function saas_show_export_options($url, $selected_ocs=true) {
     global $DB, $saas, $PAGE, $OUTPUT;
-
-    $PAGE->requires->js_init_call('M.report_saas_export.init');
 
     $ofertas_cursos = $saas->get_ofertas_cursos();
     $ofertas_disciplinas_oc = $saas->get_ofertas_disciplinas(0, true);
@@ -826,18 +824,12 @@ function saas_show_export_options($url, $selected_ocs=true, $selected_ods=true, 
             $cell = new html_table_cell();
             if(isset($ofertas_disciplinas_oc[$ocid])) {
                 $show_form = true;
-                $cell->text = html_writer::start_tag('UL', array('style'=>'list-style-type: none;'));
+                $cell->text = html_writer::start_tag('UL');
                 $params = array_merge($disabled, array('class'=>'od_'.$tag_checkbox));
                 foreach($ofertas_disciplinas_oc[$ocid] AS $odid=>$od) {
-                    $checked = $selected_ocs===true || isset($selected_ods[$ocid][$odid]);
                     $label = $od->nome . ' (' . $saas->format_date($od->inicio, $od->fim) . ')';
-                    $checkbox = html_writer::checkbox("od[{$ocid}][{$odid}]", $ocid, $checked, $label, $params);
-                    $cell->text .= html_writer::tag('LI', $checkbox);
+                    $cell->text .= html_writer::tag('LI', $label);
                 }
-
-                $cell->text .= html_writer::empty_tag('img', array('src'=>'img/arrow_ltr.png'));
-                $params = array_merge($disabled, array('class'=>'checkall_button', 'id'=>"od_{$tag_checkbox}"));
-                $cell->text .= html_writer::checkbox('', '', true, 'todos/nenhum', $params);
 
                 $cell->text .= html_writer::end_tag('UL');
             }
@@ -848,17 +840,11 @@ function saas_show_export_options($url, $selected_ocs=true, $selected_ods=true, 
                 $cell = new html_table_cell();
                 if(!empty($polos_oc[$ocid])) {
                     $show_form = true;
-                    $cell->text = html_writer::start_tag('UL', array('style'=>'list-style-type: none;'));
+                    $cell->text = html_writer::start_tag('UL');
                     $params = array_merge($disabled, array('class'=>'polo_'.$tag_checkbox));
                     foreach($polos_oc[$ocid] AS $plid=>$pl) {
-                        $checked = $selected_ocs===true || isset($selected_polos[$ocid][$plid]);
-                        $checkbox = html_writer::checkbox("polo[{$ocid}][{$plid}]", $ocid, $checked, $pl->nome, $params);
-                        $cell->text .= html_writer::tag('LI', $checkbox);
+                        $cell->text .= html_writer::tag('LI', $pl->nome);
                     }
-                    $cell->text .= html_writer::empty_tag('img', array('src'=>'img/arrow_ltr.png'));
-                    $params = array_merge($disabled, array('class'=>'checkall_button', 'id'=>"polo_{$tag_checkbox}"));
-                    $cell->text .= html_writer::checkbox('', '', true, 'todos/nenhum', $params);
-
                     $cell->text .= html_writer::end_tag('UL');
                 }
                 $cell->style = "vertical-align: middle;";

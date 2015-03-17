@@ -354,8 +354,6 @@ switch ($action) {
 
         if(has_capability('report/saas_export:export', $syscontext)) {
             $ocs = isset($_POST['oc']) ? $_POST['oc'] : array();
-            $ods = isset($_POST['od']) ? $_POST['od'] : array();
-            $polos = isset($_POST['polo']) ? $_POST['polo'] : array();
 
             $baseurl->param('action', $action);
             if(optional_param('export', false, PARAM_TEXT)) {
@@ -366,7 +364,7 @@ switch ($action) {
                 $exception_msg = false;
                 try {
                     list($count_errors, $errors, $count_sent_users, $count_sent_ods, $count_sent_polos) =
-                                        $saas->send_data($ocs, $ods, $polos, $send_user_details);
+                                        $saas->send_data($ocs, $send_user_details);
                 } catch (dml_exception $e){
                     $debuginfo = empty($e->debuginfo) ? '' : '<BR>'.$e->debuginfo;
                     $exception_msg = get_string('bd_error', 'report_saas_export', $e->getMessage() . $debuginfo);
@@ -401,7 +399,7 @@ switch ($action) {
                 }
                 print $OUTPUT->box_end();
                 print html_writer::end_tag('DIV');
-                saas_show_export_options($baseurl, $ocs, $ods, $polos);
+                saas_show_export_options($baseurl, $ocs);
             } else {
                 saas_show_export_options($baseurl);
             }
