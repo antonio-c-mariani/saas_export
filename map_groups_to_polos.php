@@ -80,12 +80,15 @@ if($message) {
 print html_writer::start_tag('form', array('method'=>'post', 'action'=>'index.php'));
 print html_writer::empty_tag('input', array('type'=>'hidden', 'name'=>'action', 'value'=>'polo_mapping'));
 
-foreach(array(1, -1) AS $tipo) {
+$tipos = array(0 => 'Grupos novos (ainda não mapeados)',
+               1 => 'Grupos corresponentes a polos SAAS',
+               2 => 'Grupos que não correspondem a polos SAAS');
+foreach($tipos AS $tipo => $title) {
     $rows = array();
     $index = 0;
     foreach($map AS $groupname=>$m) {
         $poloid = empty($m->polo_id) ? 0 : $m->polo_id;
-        if($tipo == 1 && $poloid >= 0 || $tipo == -1 && $poloid == -1) {
+        if($tipo == 0 && $poloid == 0 || $tipo == 1 && $poloid > 0 || $tipo == 2 && $poloid == -1) {
             $index++;
             $polo_name = empty($m->saas_polo_nome) ? '' : $m->saas_polo_nome;
 
@@ -115,18 +118,20 @@ foreach(array(1, -1) AS $tipo) {
         }
     }
 
-    $table = new html_table();
-    $table->head  = array('', get_string('moodle_group', 'report_saas_export'), get_string('polo_saas', 'report_saas_export'));
-    $table->colclasses = array('leftalign', 'leftalign', 'leftalign');
-    $table->data = $rows;
-    $table->attributes = array('class'=>'saas_table');
+    if (!empty($rows)) {
+        $table = new html_table();
+        $table->head  = array('', get_string('moodle_group', 'report_saas_export'), get_string('polo_saas', 'report_saas_export'));
+        $table->colclasses = array('leftalign', 'leftalign', 'leftalign');
+        $table->data = $rows;
 
-    print $OUTPUT->box_start('generalbox boxwidthwide');
-    $title = $tipo == 1 ? 'Grupos corresponentes a polos SAAS' : 'Grupos que não correspondem a polos SAAS';
-    print $OUTPUT->heading($title, 3);
-    $table->tablealign = 'center';
-    print html_writer::table($table);
-    print $OUTPUT->box_end();
+        $table->attributes = array('class'=>'saas_table');
+
+        print $OUTPUT->box_start('generalbox boxwidthwide');
+        print $OUTPUT->heading($title, 3);
+        $table->tablealign = 'center';
+        print html_writer::table($table);
+        print $OUTPUT->box_end();
+    }
 }
 
 if($may_export) {
