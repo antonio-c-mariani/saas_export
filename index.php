@@ -378,7 +378,7 @@ switch ($action) {
                 $report_url = $saas->make_ws_url('moodle/relatorioDeExportacao');
                 if($exception_msg) {
                     print html_writer::tag('SPAN', $exception_msg, array('class'=>'saas_export_error'));
-                } else if($count_errors == 0) {
+                } else {
                     print html_writer::tag('SPAN', get_string('export_ok', 'report_saas_export', $report_url), array('class'=>'saas_export_message'));
                     $rows = array();
                     $rows[] = array('Ofertas de disciplinas exportadas', $count_sent_ods);
@@ -391,11 +391,13 @@ switch ($action) {
                     $table->attributes = array('class'=>'saas_table');
                     $table->data = $rows;
                     print html_writer::table($table);
-                } else {
-                    $a = new stdClass();
-                    $a->report_url = $report_url;
-                    $a->errors = $count_errors;
-                    print html_writer::tag('SPAN', get_string('export_errors', 'report_saas_export', $a), array('class'=>'saas_export_error'));
+
+                    if($count_errors != 0) {
+                        $a = new stdClass();
+                        $a->report_url = $report_url;
+                        $a->errors = $count_errors;
+                        print html_writer::tag('SPAN', get_string('export_errors', 'report_saas_export', $a), array('class'=>'saas_export_error'));
+                    }
                 }
                 print $OUTPUT->box_end();
                 print html_writer::end_tag('DIV');

@@ -18,17 +18,17 @@ list($options, $unrecognized) = cli_get_params(
               'all'      => false,
               'ocid'     => false,
               'list'     => false,
-              'details'  => false,
+              'nodetails'=> false,
              ),
         array('h' => 'help',
               'l' => 'list',
-              'd' => 'details',
+              'n' => 'nodetails',
               'a' => 'all',
              ));
 
 $all = !empty($options['all']);
 $list = !empty($options['list']);
-$details = !empty($options['details']);
+$details = empty($options['nodetails']);
 
 if(empty($options['ocid'])) {
     $ocid = 0;
@@ -55,7 +55,7 @@ if ($options['help'] || !empty($unrecognized) || (empty($all) && empty($ocid) &&
         -h, --help                  Mostra este auxílio
         -l, --list                  Lista ofertas de curso
         -a, --all                   Exporta dados de todos as ofertas de curso
-        -d, --details               Exporta detalhes dos estudantes (notas, último acesso, etc)
+        -n, --nodetails             Não exporta detalhes dos estudantes (notas, último acesso, etc)
 
             --ocid=<id da oferta de curso>  Exporta dados de uma oferta de curso específica
 
@@ -121,9 +121,6 @@ if($list) {
     echo "\nFim: " . date('d/m/Y H:i:s') . "\n";
     echo 'Tempo da exportação: ' . $msg. "\n";
     echo 'Chamadas de WS = ' . var_export($saas->count_ws_calls, true) . "\n";
-    foreach($saas->count_ws_calls AS $wstype => $count) {
-        echo "\t{$wstype}:\t{$count}\n";
-    }
 
     echo "\nOfertas de disciplinas exportadas = {$count_sent_ods}\n";
     echo "Polos exportados = {$count_sent_polos}\n";
