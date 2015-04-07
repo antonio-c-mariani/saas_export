@@ -120,7 +120,10 @@ if($list) {
     }
     echo "\nFim: " . date('d/m/Y H:i:s') . "\n";
     echo 'Tempo da exportação: ' . $msg. "\n";
-    echo "Chamadas de WS = {$saas->count_ws_calls}\n";
+    echo 'Chamadas de WS = ' . var_export($saas->count_ws_calls, true) . "\n";
+    foreach($saas->count_ws_calls AS $wstype => $count) {
+        echo "\t{$wstype}:\t{$count}\n";
+    }
 
     echo "\nOfertas de disciplinas exportadas = {$count_sent_ods}\n";
     echo "Polos exportados = {$count_sent_polos}\n";

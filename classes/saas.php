@@ -18,7 +18,7 @@ class saas {
     private $errors = array();
 
     public $curl = null;
-    public $count_ws_calls = 0;
+    public $count_ws_calls = array('head'=>0, 'get'=>0, 'post'=>0, 'put'=>0, 'delete'=>0);
 
     function __construct() {
         $this->load_settings();
@@ -61,10 +61,11 @@ class saas {
             set_config('nome_instituicao', $institution->nome, 'report_saas_export');
             set_config('sigla_instituicao', $institution->sigla, 'report_saas_export');
         } catch(Exception $e) {
+            $url_saas = $this->make_ws_url();
             if($print_error) {
-                print_error('api_key_unknown', 'report_saas_export', $url);
+                print_error('api_key_unknown', 'report_saas_export', $url, $url_saas);
             } else {
-                echo "\nERRO: " . get_string('api_key_unknown', 'report_saas_export') . "\n";
+                echo "\nERRO: " . get_string('api_key_unknown', 'report_saas_export', $url_saas) . "\n";
                 return false;
             }
         }
@@ -988,13 +989,6 @@ class saas {
             $this->send_users_by_polo($oc->uid, $polos[$poloid]->uid, $users_by_roles);
             unset($polos[$poloid]);
         }
-
-        foreach($role_types AS $r) {
-            $users_by_roles[$r] = array();
-        }
-        foreach($polos AS $pid=>$polo) {
-            $this->send_users_by_polo($oc->uid, $polo->uid, $users_by_roles, false);
-        }
     }
 
     function send_users_by_polo($oc_uid, $polo_uid, $users_by_roles, $show_progress=true) {
@@ -1048,13 +1042,6 @@ class saas {
         if($odid !== 0) {
             $this->send_users_by_oferta_disciplina($ofertas[$odid], $users_by_roles, $send_user_details);
             unset($ofertas[$odid]);
-        }
-
-        foreach($role_types AS $r) {
-            $users_by_roles[$r] = array();
-        }
-        foreach($ofertas AS $odid=>$od) {
-            $this->send_users_by_oferta_disciplina($od, $users_by_roles, false, false);
         }
     }
 
@@ -1221,15 +1208,15 @@ class saas {
     function head_ws($functionname, $throw_exception=false) {
         $this->init_curl();
         $this->curl->head($this->make_ws_url($functionname));
-        $this->count_ws_calls++;
-        return $this->handle_ws_errors($throw_exception);
+        $this->count_ws_calls['head']++;
+        return $this->handle_ws_errors('head', $throw_exception);
     }
 
     function get_ws($functionname='', $throw_exception=false) {
         $this->init_curl();
         $response = $this->curl->get($this->make_ws_url($functionname));
-        $this->handle_ws_errors($throw_exception);
-        $this->count_ws_calls++;
+        $this->handle_ws_errors('get', $throw_exception);
+        $this->count_ws_calls['get']++;
         return json_decode($response);
     }
 
@@ -1237,33 +1224,40 @@ class saas {
         $this->init_curl();
         $options = array('CURLOPT_HTTPHEADER'=>array('Content-Type: application/json'));
         $response = $this->curl->post($this->make_ws_url($functionname), json_encode($data), $options);
-        $this->handle_ws_errors($throw_exception);
-        $this->count_ws_calls++;
+        $this->handle_ws_errors('post', $throw_exception);
+        $this->count_ws_calls['post']++;
         return json_decode($response);
     }
 
     function put_ws($functionname, $data = array(), $throw_exception=false) {
         $this->init_curl();
         $this->curl->put_json($this->make_ws_url($functionname), json_encode($data));
-        $this->count_ws_calls++;
-        return $this->handle_ws_errors($throw_exception);
+        $this->count_ws_calls['put']++;
+        return $this->handle_ws_errors('put', $throw_exception);
     }
 
-    function handle_ws_errors($throw_exception=false) {
+    function delete_ws($functionname, $data = array(), $throw_exception=false) {
+        $this->init_curl();
+        $this->curl->delete($this->make_ws_url($functionname), $data);
+        $this->count_ws_calls['delete']++;
+        return $this->handle_ws_errors('delete', $throw_exception);
+    }
+
+    function handle_ws_errors($ws_type, $throw_exception=false) {
         $info = $this->curl->get_info();
         if($info['http_code'] <= 299) {
             return true;
         } else if($info['http_code'] <= 499) {
             $this->count_errors++;
             if(count($this->errors) < 50) {
-                $this->errors[] = "Falha {$info['http_code']} no acesso ao SAAS para: ". $info['url'];
+                $this->errors[] = "Falha {$info['http_code']} executando '{$ws_type}' no SAAS para: ". $info['url'];
             }
             if($throw_exception) {
-                throw new Exception("Falha {$info['http_code']} no acesso ao SAAS para: ". $info['url']);
+                throw new Exception("Falha {$info['http_code']} executando '{$ws_type}' no SAAS para: ". $info['url']);
             }
             return true;
         } else {
-            throw new Exception("Falha {$info['http_code']} no acesso ao SAAS para: ". $info['url']);
+            throw new Exception("Falha {$info['http_code']} executando '{$ws_type}' no SAAS para: ". $info['url']);
         }
     }
 
