@@ -34,7 +34,7 @@ class saas_export_settings_form extends moodleform {
         $syscontext = saas::get_context_system();
         $may_config = has_capability('report/saas_export:config', $syscontext);
 
-        if($may_config) {
+        if ($may_config) {
             $attributes = array();
             $text_attr = array('size' => 50);
         } else {
@@ -60,7 +60,7 @@ class saas_export_settings_form extends moodleform {
         $mform->setType('api_key', PARAM_RAW);
 
 
-        if(isset($saas->config->nome_instituicao)) {
+        if (isset($saas->config->nome_instituicao)) {
             $mform->addElement('static', 'nome_instituicao', get_string('nome_instituicao', 'report_saas_export'));
         }
 
@@ -191,7 +191,7 @@ class saas_export_settings_form extends moodleform {
 
         $this->set_data($saas->config);
 
-        if($may_config) {
+        if ($may_config) {
             $this->add_action_buttons();
         }
     }
@@ -202,21 +202,21 @@ class saas_export_settings_form extends moodleform {
         $errors = parent::validation($data, $files);
 
         $ws_url = trim($data['ws_url'], ' /');
-        if(empty($ws_url) || filter_var($ws_url , FILTER_VALIDATE_URL) === false) {
+        if (empty($ws_url) || filter_var($ws_url , FILTER_VALIDATE_URL) === false) {
             $errors['ws_url'] = 'Inválida ou não informada.';
         }
 
         $api_key = trim($data['api_key']);
-        if(empty($api_key) || !preg_match('|^[0-9]{15,30}$|', $api_key) ) {
+        if (empty($api_key) || !preg_match('|^[0-9]{15,30}$|', $api_key) ) {
             $errors['api_key'] = 'Inválida ou não informada.';
         }
 
         $roles = array();
-        foreach(saas::$role_types AS $r=>$rname) {
+        foreach (saas::$role_types AS $r=>$rname) {
             $role = 'roles_' . $r;
-            if(isset($data[$role])) {
-                foreach($data[$role] AS $roleid) {
-                    if(!empty($roleid) && isset($roles[$roleid])) {
+            if (isset($data[$role])) {
+                foreach ($data[$role] AS $roleid) {
+                    if (!empty($roleid) && isset($roles[$roleid])) {
                         $errors[$role] = get_string('duplicated_role', 'report_saas_export');
                     }
                     $roles[$roleid] = true;

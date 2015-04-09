@@ -30,11 +30,11 @@ class saas {
         $this->config = get_config('report_saas_export');
 
         $roles = array();
-        foreach($DB->get_recordset('saas_config_roles') as $rec) {
+        foreach ($DB->get_recordset('saas_config_roles') as $rec) {
             $roles[$rec->role][] = $rec->roleid;
         }
 
-        foreach(self::$role_types as $r=>$rname) {
+        foreach (self::$role_types as $r=>$rname) {
             $role = 'roles_'.$r;
             $this->config->$role = isset($roles[$r]) ? implode(',', $roles[$r]) : '';
         }
@@ -43,7 +43,7 @@ class saas {
     }
 
     function get_config($name) {
-        if(isset($this->config->{$name})) {
+        if (isset($this->config->{$name})) {
             return $this->config->{$name};
         } else {
             return false;
@@ -62,7 +62,7 @@ class saas {
             set_config('sigla_instituicao', $institution->sigla, 'report_saas_export');
         } catch(Exception $e) {
             $url_saas = $this->make_ws_url();
-            if($print_error) {
+            if ($print_error) {
                 print_error('api_key_unknown', 'report_saas_export', $url, $url_saas);
             } else {
                 echo "\nERRO: " . get_string('api_key_unknown', 'report_saas_export', $url_saas) . "\n";
@@ -75,8 +75,8 @@ class saas {
         $rtutor_polo = $this->get_config('roles_tutor_polo');
         $rtutor_inst = $this->get_config('roles_tutor_inst');
 
-        if(empty($rteacher) && empty($rstudent) && empty($rtutor_polo) && empty($rtutor_inst)) {
-            if($print_error) {
+        if (empty($rteacher) && empty($rstudent) && empty($rtutor_polo) && empty($rtutor_inst)) {
+            if ($print_error) {
                 print_error('no_roles', 'report_saas_export', $url);
             } else {
                 echo "\nERRO: " . get_string('no_roles', 'report_saas_export') . "\n";
@@ -90,9 +90,9 @@ class saas {
     function get_role_types($type='disciplinas') {
         global $DB;
 
-        if($type == 'disciplinas') {
+        if ($type == 'disciplinas') {
             $role_types = self::$role_types_disciplinas;
-        } else if($type == 'polos') {
+        } else if ($type == 'polos') {
             $role_types = self::$role_types_polos;
         } else {
             return array();
@@ -107,7 +107,7 @@ class saas {
     //Carrega os dados do web service para o plugin
     //---------------------------------------------------------------------------------------------------------------
     function load_saas_data($force_reload=false) {
-       if(!$lastupdated = get_config('report_saas_export', 'lastupdated')) {
+       if (!$lastupdated = get_config('report_saas_export', 'lastupdated')) {
            $lastupdated = 0;
        }
        $now = time();
@@ -137,9 +137,9 @@ class saas {
         $disciplinas = $this->get_ws('disciplinas');
         $disciplinas = empty($disciplinas) ? array() : $disciplinas;
 
-        foreach($disciplinas as $dis) {
+        foreach ($disciplinas as $dis) {
             $dis->enable = 1;
-            if($id = $DB->get_field('saas_disciplinas', 'id', array('api_key'=>$this->api_key, 'uid' => $dis->uid))) {
+            if ($id = $DB->get_field('saas_disciplinas', 'id', array('api_key'=>$this->api_key, 'uid' => $dis->uid))) {
                 $dis->id = $id;
                 $DB->update_record('saas_disciplinas', $dis);
                 unset($local[$id]);
@@ -149,8 +149,8 @@ class saas {
             }
         }
 
-        foreach($local AS $id=>$enable) {
-            if($enable){
+        foreach ($local AS $id=>$enable) {
+            if ($enable){
                 $DB->set_field('saas_disciplinas', 'enable', 0, array('id'=>$id));
             }
         }
@@ -164,9 +164,9 @@ class saas {
         $cursos = $this->get_ws('cursos');
         $cursos = empty($cursos) ? array() : $cursos;
 
-        foreach($cursos as $cur) {
+        foreach ($cursos as $cur) {
             $cur->enable = 1;
-            if($id = $DB->get_field('saas_cursos', 'id', array('api_key'=>$this->api_key, 'uid' => $cur->uid))) {
+            if ($id = $DB->get_field('saas_cursos', 'id', array('api_key'=>$this->api_key, 'uid' => $cur->uid))) {
                 $cur->id = $id;
                 $DB->update_record('saas_cursos', $cur);
                 unset($local[$id]);
@@ -176,8 +176,8 @@ class saas {
             }
         }
 
-        foreach($local AS $id=>$enable) {
-            if($enable){
+        foreach ($local AS $id=>$enable) {
+            if ($enable){
                 $DB->set_field('saas_cursos', 'enable', 0, array('id'=>$id));
             }
         }
@@ -203,7 +203,7 @@ class saas {
             $record->periodo = $oferta_curso->periodo;
             $record->enable = 1;
 
-            if($id = $DB->get_field('saas_ofertas_cursos', 'id', array('api_key'=>$this->api_key, 'uid' => $oferta_curso->uid))) {
+            if ($id = $DB->get_field('saas_ofertas_cursos', 'id', array('api_key'=>$this->api_key, 'uid' => $oferta_curso->uid))) {
                 $record->id = $id;
                 $DB->update_record('saas_ofertas_cursos', $record);
                 unset($local[$id]);
@@ -214,8 +214,8 @@ class saas {
             }
         }
 
-        foreach($local AS $id=>$enable) {
-            if($enable){
+        foreach ($local AS $id=>$enable) {
+            if ($enable){
                 $DB->set_field('saas_ofertas_cursos', 'enable', 0, array('id'=>$id));
             }
         }
@@ -247,7 +247,7 @@ class saas {
             $record->oferta_curso_id = $oferta_curso_id;
             $record->enable = 1;
 
-            if($id = $DB->get_field('saas_ofertas_disciplinas', 'id', array('api_key' => $this->api_key, 'uid' => $oferta_disciplina->uid))) {
+            if ($id = $DB->get_field('saas_ofertas_disciplinas', 'id', array('api_key' => $this->api_key, 'uid' => $oferta_disciplina->uid))) {
                 $record->id = $id;
                 $DB->update_record('saas_ofertas_disciplinas', $record);
                 unset($local[$id]);
@@ -261,7 +261,7 @@ class saas {
         }
 
         foreach ($local AS $id=>$enable) {
-            if($enable){
+            if ($enable){
                 $DB->set_field('saas_ofertas_disciplinas', 'enable', 0, array('id'=>$id));
             }
         }
@@ -281,7 +281,7 @@ class saas {
             $record->cidade = $pl->cidade;
             $record->estado = $pl->estado;
             $record->enable = 1;
-            if($id = $DB->get_field('saas_polos', 'id', array('api_key'=>$this->api_key, 'uid' => $pl->uid))) {
+            if ($id = $DB->get_field('saas_polos', 'id', array('api_key'=>$this->api_key, 'uid' => $pl->uid))) {
                 $record->id = $id;
                 $DB->update_record('saas_polos', $record);
                 unset($local[$id]);
@@ -293,7 +293,7 @@ class saas {
         }
 
         foreach ($local AS $id=>$enable) {
-            if($enable){
+            if ($enable){
                 $DB->set_field('saas_polos', 'enable', 0, array('id'=>$id));
             }
         }
@@ -301,7 +301,7 @@ class saas {
 
     function get_not_empty_polos_saas_from_oferta_curso($oc_uid) {
         $types = array();
-        foreach(self::$role_types_polos AS $t) {
+        foreach (self::$role_types_polos AS $t) {
             $types[] = 'quantidadeDe' . ucfirst(self::$role_types[$t]);
         }
 
@@ -309,9 +309,9 @@ class saas {
         $polos = $this->get_ws("ofertas/cursos/{$encoded_oferta_uid}/polos");
 
         $not_empty_polos = array();
-        foreach($polos AS $p) {
-            foreach($types AS $t) {
-                if($p->$t != 0) {
+        foreach ($polos AS $p) {
+            foreach ($types AS $t) {
+                if ($p->$t != 0) {
                     $not_empty_polos[$p->uid] = $p;
                     break;
                 }
@@ -322,7 +322,7 @@ class saas {
 
     function get_not_empty_ofertas_disciplinas_saas_from_oferta_curso($oc_uid) {
         $types = array();
-        foreach(self::$role_types_disciplinas AS $t) {
+        foreach (self::$role_types_disciplinas AS $t) {
             $types[] = 'quantidadeDe' . ucfirst(self::$role_types[$t]);
         }
 
@@ -330,9 +330,9 @@ class saas {
         $ods = $this->get_ws("ofertas/cursos/{$encoded_oferta_uid}/disciplinas");
 
         $not_empty_ods = array();
-        foreach($ods AS $od) {
-            foreach($types AS $t) {
-                if($od->$t != 0) {
+        foreach ($ods AS $od) {
+            foreach ($types AS $t) {
+                if ($od->$t != 0) {
                     $not_empty_ods[$od->uid] = $od;
                     break;
                 }
@@ -369,7 +369,7 @@ class saas {
 
         $where = '';
         $params = array();
-        if(!empty($ocid)) {
+        if (!empty($ocid)) {
             $where = "AND oc.id = :ocid";
             $params['ocid'] = $ocid;
         }
@@ -388,11 +388,11 @@ class saas {
                  WHERE d.enable = 1
                    AND dis.dis_id IS NULL
               ORDER BY d.nome";
-        if($menu_format) {
+        if ($menu_format) {
             return $DB->get_records_sql_menu($sql, $params);
         } else {
             $disciplinas = array();
-            foreach($DB->get_recordset_sql($sql, $params) AS $rec) {
+            foreach ($DB->get_recordset_sql($sql, $params) AS $rec) {
                 $disciplinas[] = array($rec->id, $rec->nome);
             }
             return $disciplinas;
@@ -449,14 +449,14 @@ class saas {
         $params = array();
 
         $polos = array();
-        if($oferta_curso_id) {
+        if ($oferta_curso_id) {
             $sql .= " AND oc.id = :ocid";
             $params['ocid'] = $oferta_curso_id;
             $polos[$oferta_curso_id] = array();
         } else {
             $ocs = $this->get_ofertas_cursos();
-            if(!empty($ocs)) {
-                foreach($ocs AS $ocid=>$oc) {
+            if (!empty($ocs)) {
+                foreach ($ocs AS $ocid=>$oc) {
                     $polos[$ocid] = array();
                 }
             }
@@ -466,7 +466,7 @@ class saas {
         $sql .= " ORDER BY sp.nome, sp.cidade, sp.estado";
 
         $recs = $DB->get_recordset_sql($sql, $params);
-        foreach($recs as $rec) {
+        foreach ($recs as $rec) {
             $polos[$rec->ocid][$rec->id] = $rec;
         }
         return $polos;
@@ -513,12 +513,12 @@ class saas {
 
         $cond = '';
         $params = array();
-        if(empty($oferta_curso_id)) {
-            foreach($ofertas AS $ocid=>$oc) {
+        if (empty($oferta_curso_id)) {
+            foreach ($ofertas AS $ocid=>$oc) {
                 $ofertas[$ocid]->ofertas_disciplinas = array();
             }
         } else {
-            if(!isset($ofertas[$oferta_curso_id])) {
+            if (!isset($ofertas[$oferta_curso_id])) {
                 return array();
             }
             $cond = 'AND oc.id = :id';
@@ -539,7 +539,7 @@ class saas {
                    {$cond}
               ORDER BY d.nome";
         $recs = $DB->get_recordset_sql($sql, $params);
-        foreach($recs as $rec) {
+        foreach ($recs as $rec) {
             $ofertas[$rec->ocid]->ofertas_disciplinas[$rec->id] = $rec;
         }
         return $ofertas;
@@ -583,7 +583,7 @@ class saas {
     function get_ofertas_disciplinas($ocid=0, $only_mapped=true) {
         global $DB;
 
-        if(empty($ocid)) {
+        if (empty($ocid)) {
             $where = '';
             $params = array();
         } else {
@@ -592,7 +592,7 @@ class saas {
         }
 
         $join = '';
-        if($only_mapped) {
+        if ($only_mapped) {
             $join = 'JOIN {saas_map_course} cm ON (cm.group_map_id = od.group_map_id)';
         }
 
@@ -606,7 +606,7 @@ class saas {
                    {$where}";
         $recs = $DB->get_recordset_sql($sql, $params);
         $ofertas = array();
-        foreach($recs as $rec) {
+        foreach ($recs as $rec) {
             $ofertas[$rec->ocid][$rec->id] = $rec;
         }
         return $ofertas;
@@ -618,17 +618,17 @@ class saas {
         $condition = '';
 	    $field = '';
         $params = array('contextcourse'=>CONTEXT_COURSE, 'enable'=>ENROL_INSTANCE_ENABLED);
-        if($ocid) {
+        if ($ocid) {
             $condition .= ' AND oc.id = :ocid';
             $params['ocid'] = $ocid;
         }
-        if($poloid) {
+        if ($poloid) {
             $condition .= ' AND sp.id = :poloid';
             $params['poloid'] = $poloid;
         }
 
         $join_user_info_data = '';
-        if($only_count) {
+        if ($only_count) {
             $group_by = 'GROUP BY oc.id, sp.id, scr.role';
             $field .= ', COUNT(DISTINCT ra.userid) AS count';
             $distinct = '';
@@ -636,10 +636,10 @@ class saas {
         } else {
             $group_by = '';
             $userid_field = $this->get_config('userid_field');
-            if($userid_field == 'username' || $userid_field == 'idnumber') {
+            if ($userid_field == 'username' || $userid_field == 'idnumber') {
                 $field .= ", ra.userid, u.{$userid_field} AS uid";
             } else {
-                if($fieldid = $DB->get_field('user_info_field', 'id', array('shortname'=>$userid_field))) {
+                if ($fieldid = $DB->get_field('user_info_field', 'id', array('shortname'=>$userid_field))) {
                     $join_user_info_data = "JOIN {user_info_data} udt ON (udt.fieldid = :fieldid AND udt.userid = u.id AND udt.data != '')";
                     $params['fieldid'] = $fieldid;
                     $field = ", ra.userid, udt.data AS uid";
@@ -687,17 +687,17 @@ class saas {
         $condition = '';
 	    $field = '';
         $params = array('contextcourse'=>CONTEXT_COURSE, 'enable'=>ENROL_INSTANCE_ENABLED);
-        if($ocid) {
+        if ($ocid) {
             $condition .= ' AND oc.id = :ocid';
             $params['ocid'] = $ocid;
         }
-        if($poloid) {
+        if ($poloid) {
             $condition .= ' AND sp.id = :poloid';
             $params['poloid'] = $poloid;
         }
 
         $join_user_info_data = '';
-        if($only_count) {
+        if ($only_count) {
             $group_by = 'GROUP BY oc.id, sp.id, scr.role';
             $field = ', COUNT(DISTINCT ra.userid) AS count';
             $distinct = '';
@@ -705,10 +705,10 @@ class saas {
         } else {
             $group_by = '';
             $userid_field = $this->get_config('userid_field');
-            if($userid_field == 'username' || $userid_field == 'idnumber') {
+            if ($userid_field == 'username' || $userid_field == 'idnumber') {
                 $field = ", ra.userid, u.{$userid_field} AS uid";
             } else {
-                if($fieldid = $DB->get_field('user_info_field', 'id', array('shortname'=>$userid_field))) {
+                if ($fieldid = $DB->get_field('user_info_field', 'id', array('shortname'=>$userid_field))) {
                     $join_user_info_data = "JOIN {user_info_data} udt ON (udt.fieldid = :fieldid AND udt.userid = u.id AND udt.data != '')";
                     $params['fieldid'] = $fieldid;
                     $field = ", ra.userid, udt.data AS uid";
@@ -753,17 +753,17 @@ class saas {
         $condition = '';
 	    $field = '';
         $params = array('contextcourse'=>CONTEXT_COURSE, 'enable'=>ENROL_INSTANCE_ENABLED);
-        if($ocid) {
+        if ($ocid) {
             $condition .= ' AND oc.id = :ocid';
             $params['ocid'] = $ocid;
         }
-        if($poloid) {
+        if ($poloid) {
             $condition .= ' AND sp.id = :poloid';
             $params['poloid'] = $poloid;
         }
 
         $join_user_info_data = '';
-        if($only_count) {
+        if ($only_count) {
             $group_by = 'GROUP BY oc.id, sp.id, scr.role';
             $field .= ', COUNT(DISTINCT ra.userid) AS count';
             $distinct = '';
@@ -771,10 +771,10 @@ class saas {
         } else {
             $group_by = '';
             $userid_field = $this->get_config('userid_field');
-            if($userid_field == 'username' || $userid_field == 'idnumber') {
+            if ($userid_field == 'username' || $userid_field == 'idnumber') {
                 $field .= ", ra.userid, u.{$userid_field} AS uid";
             } else {
-                if($fieldid = $DB->get_field('user_info_field', 'id', array('shortname'=>$userid_field))) {
+                if ($fieldid = $DB->get_field('user_info_field', 'id', array('shortname'=>$userid_field))) {
                     $join_user_info_data = "JOIN {user_info_data} udt ON (udt.fieldid = :fieldid AND udt.userid = u.id AND udt.data != '')";
                     $params['fieldid'] = $fieldid;
                     $field .= ", ra.userid, udt.data AS uid";
@@ -850,7 +850,7 @@ class saas {
 
         $rs = $DB->get_recordset_sql($sql, $params);
 
-        foreach($rs AS $rec) {
+        foreach ($rs AS $rec) {
             $polo_counts[$rec->ocid][$rec->p_id][$rec->role] = $rec->count;
         }
 
@@ -865,7 +865,7 @@ class saas {
 
         $join_user_info_data = '';
         $join_user_lastaccess = '';
-        if($only_count) {
+        if ($only_count) {
             $fields = ', COUNT(DISTINCT ra.userid) AS count';
             $orderby = '';
         } else {
@@ -873,11 +873,11 @@ class saas {
             $group_by .= ', u.suspended';
 
             $userid_field = $this->get_config('userid_field');
-            if($userid_field == 'username' || $userid_field == 'idnumber') {
+            if ($userid_field == 'username' || $userid_field == 'idnumber') {
                 $fields .= ", ra.userid, u.{$userid_field} AS uid";
                 $group_by .= ', ra.userid, u.' . $userid_field;
             } else {
-                if($fieldid = $DB->get_field('user_info_field', 'id', array('shortname'=>$userid_field))) {
+                if ($fieldid = $DB->get_field('user_info_field', 'id', array('shortname'=>$userid_field))) {
                     $join_user_info_data = "JOIN {user_info_data} udt ON (udt.fieldid = :fieldid AND udt.userid = u.id AND udt.data != '')";
                     $params['fieldid'] = $fieldid;
                     $fields .= ", ra.userid, udt.data AS uid";
@@ -893,10 +893,10 @@ class saas {
         }
 
         $condition = '';
-        if($id_oferta_disciplina) {
+        if ($id_oferta_disciplina) {
             $condition .= " AND od.id = {$id_oferta_disciplina}";
         }
-        if($id_oferta_curso) {
+        if ($id_oferta_curso) {
             $condition .= " AND oc.id = {$id_oferta_curso}";
         }
 
@@ -940,8 +940,8 @@ class saas {
             default: $user->nome = $dbuser->firstname . ' ' . $dbuser->lastname;
         }
         $name_regexp =  $this->get_config('name_regexp');
-        if(!empty($name_regexp)) {
-            if(preg_match($name_regexp, $user->nome, $matches)) {
+        if (!empty($name_regexp)) {
+            if (preg_match($name_regexp, $user->nome, $matches)) {
                 unset($matches[0]);
                 $user->nome = implode('', $matches);
             }
@@ -954,7 +954,7 @@ class saas {
             case 'idnumber': $cpf = $dbuser->idnumber; break;
             case 'lastname': $cpf = $dbuser->lastname; break;
             default:
-                if($fieldid = $DB->get_field('user_info_field', 'id', array('shortname'=>$cpf_field))) {
+                if ($fieldid = $DB->get_field('user_info_field', 'id', array('shortname'=>$cpf_field))) {
                     $cpf = $DB->get_field('user_info_data', 'data', array('userid'=>$dbuser->id, 'fieldid'=>$fieldid));
                 } else {
                     $cpf = '';
@@ -969,7 +969,7 @@ class saas {
         global $DB;
 
         $grades = array();
-        foreach($DB->get_records('saas_map_course', array('group_map_id' => $group_map_id)) AS $rec) {
+        foreach ($DB->get_records('saas_map_course', array('group_map_id' => $group_map_id)) AS $rec) {
             $grade_item = grade_item::fetch_course_item($rec->courseid);
             $sql = "SELECT DISTINCT ra.userid
                       FROM {context} ctx
@@ -977,11 +977,11 @@ class saas {
                       JOIN {saas_config_roles} scr ON (scr.role = 'student' AND scr.roleid = ra.roleid)
                      WHERE ctx.instanceid = :courseid
                        AND ctx.contextlevel = :contextlevel";
-            foreach($DB->get_recordset_sql($sql, array('courseid'=>$rec->courseid, 'contextlevel'=>CONTEXT_COURSE)) AS $us) {
-                if($grade_item->gradetype == GRADE_TYPE_VALUE) {
+            foreach ($DB->get_recordset_sql($sql, array('courseid'=>$rec->courseid, 'contextlevel'=>CONTEXT_COURSE)) AS $us) {
+                if ($grade_item->gradetype == GRADE_TYPE_VALUE) {
                     $grade = new grade_grade(array('itemid'=>$grade_item->id, 'userid'=>$us->userid));
                     $finalgrade = $grade->finalgrade;
-                    if(is_numeric($finalgrade)) {
+                    if (is_numeric($finalgrade)) {
                         $final = (float)$finalgrade / $grade_item->grademax * 10;
                     } else {
                         $final = 0.0;
@@ -989,7 +989,7 @@ class saas {
                 } else {
                     $final = -1.0;
                 }
-                if(isset($grades[$us->userid])) {
+                if (isset($grades[$us->userid])) {
                     $grades[$us->userid] = max($grades[$us->userid], $final);
                 } else {
                     $grades[$us->userid] = $final;
@@ -1027,14 +1027,14 @@ class saas {
         $rs = $DB->get_recordset_sql($sql, $params);
         $poloid = 0;
         $users_by_roles = array();
-        foreach($rs AS $rec) {
+        foreach ($rs AS $rec) {
             $this->send_user($rec, $send_user_details);
 
-            if($rec->p_id != $poloid) {
-                if($poloid !== 0) {
+            if ($rec->p_id != $poloid) {
+                if ($poloid !== 0) {
                     $this->send_users_by_polo($oc->uid, $polos[$poloid]->uid, $users_by_roles);
                 }
-                foreach($role_types AS $r) {
+                foreach ($role_types AS $r) {
                     $users_by_roles[$r] = array();
                 }
                 $poloid = $rec->p_id;
@@ -1043,16 +1043,16 @@ class saas {
         }
 
         //send the last one
-        if($poloid !== 0) {
+        if ($poloid !== 0) {
             $this->send_users_by_polo($oc->uid, $polos[$poloid]->uid, $users_by_roles);
         }
 
         // clear not mapped polos that user selected
         $users_by_roles = array();
-        foreach($role_types AS $r) {
+        foreach ($role_types AS $r) {
             $users_by_roles[$r] = array();
         }
-        foreach($clear_poloids AS $poloid=>$ok) {
+        foreach ($clear_poloids AS $poloid=>$ok) {
             $this->send_users_by_polo($oc->uid, $polos[$poloid]->uid, $users_by_roles, false, false);
         }
     }
@@ -1064,7 +1064,7 @@ class saas {
 
         $encoded_oferta_uid = rawurlencode($oc_uid);
         $encoded_polo_uid = rawurlencode($polo_uid);
-        foreach($users_by_roles AS $r=>$users) {
+        foreach ($users_by_roles AS $r=>$users) {
             $this->put_ws("ofertas/cursos/{$encoded_oferta_uid}/polos/{$encoded_polo_uid}/".self::$role_types[$r], $users);
         }
 
@@ -1086,14 +1086,14 @@ class saas {
         $rs = $DB->get_recordset_sql($sql, $params);
         $odid = 0;
         $users_by_roles = array();
-        foreach($rs AS $rec) {
+        foreach ($rs AS $rec) {
             $this->send_user($rec, $send_user_details);
 
-            if($rec->odid != $odid) {
-                if($odid !== 0) {
+            if ($rec->odid != $odid) {
+                if ($odid !== 0) {
                     $this->send_users_by_oferta_disciplina($ofertas[$odid], $users_by_roles, $send_user_details);
                 }
-                foreach($role_types AS $r) {
+                foreach ($role_types AS $r) {
                     $users_by_roles[$r] = array();
                 }
                 $odid = $rec->odid;
@@ -1104,41 +1104,41 @@ class saas {
         $rs->close();
 
         //send the last one
-        if($odid !== 0) {
+        if ($odid !== 0) {
             $this->send_users_by_oferta_disciplina($ofertas[$odid], $users_by_roles, $send_user_details);
         }
 
         // clear not mapped ods that user selected
         $users_by_roles = array();
-        foreach($role_types AS $r) {
+        foreach ($role_types AS $r) {
             $users_by_roles[$r] = array();
         }
-        foreach($clear_odids AS $odid=>$ok) {
+        foreach ($clear_odids AS $odid=>$ok) {
             $this->send_users_by_oferta_disciplina($ofertas[$odid], $users_by_roles, false, false);
         }
     }
 
     function send_users_by_oferta_disciplina($oferta_disciplina, $users_by_roles, $send_user_details=true, $show_progress=true) {
-        if($show_progress) {
+        if ($show_progress) {
             $this->update_progressbar("Exportando ofertas de disciplina");
         }
 
         $oferta_uid_encoded = rawurlencode($oferta_disciplina->uid);
-        foreach($users_by_roles AS $r=>$users) {
+        foreach ($users_by_roles AS $r=>$users) {
             $this->put_ws("ofertas/disciplinas/{$oferta_uid_encoded}/". self::$role_types[$r], array_keys($users));
-            if($r == 'student' && $send_user_details) {
+            if ($r == 'student' && $send_user_details) {
                 $grades = $this->get_grades($oferta_disciplina->id);
                 $obj_nota = new stdClass();
                 $obj_lastaccess = new stdClass();
                 $obj_suspended = new stdClass();
-                foreach($users AS $uid=>$user) {
+                foreach ($users AS $uid=>$user) {
                     $user_uid_encoded = rawurlencode($uid);
-                    if(isset($grades[$user->userid])) {
+                    if (isset($grades[$user->userid])) {
                         $obj_nota->nota = $grades[$user->userid];
                         $this->put_ws("ofertas/disciplinas/{$oferta_uid_encoded}/estudantes/{$user_uid_encoded}/nota", $obj_nota);
                     }
 
-                    if(!empty($users_lastaccess[$user->userid])) {
+                    if (!empty($users_lastaccess[$user->userid])) {
                         $obj_lastaccess->ultimoAcesso = $users_lastaccess[$user->userid];
                         $this->put_ws("ofertas/disciplinas/{$oferta_uid_encoded}/estudantes/{$user_uid_encoded}/ultimoAcesso", $obj_lastaccess);
                     }
@@ -1149,18 +1149,18 @@ class saas {
             }
         }
 
-        if($show_progress) {
+        if ($show_progress) {
             $this->count_sent_ods++;
         }
     }
 
     function send_user($rec, $send_user_details=true) {
-        if(!isset($this->sent_users[$rec->userid])) {
+        if (!isset($this->sent_users[$rec->userid])) {
             $user_uid_encoded = rawurlencode($rec->uid);
             $this->put_ws("pessoas/{$user_uid_encoded}",  $this->get_user($rec->role, $rec->userid, $rec->uid));
 
-            if($send_user_details && $rec->role == 'student') {
-                if(!empty($rec->currentlogin)) {
+            if ($send_user_details && $rec->role == 'student') {
+                if (!empty($rec->currentlogin)) {
                     $this->put_ws("pessoas/{$user_uid_encoded}/ultimoLogin", array('ultimoLogin'=>$rec->currentlogin));
                 }
                 $this->put_ws("pessoas/{$user_uid_encoded}/suspenso", array('suspenso'=>!empty($rec->global_suspended)));
@@ -1173,7 +1173,7 @@ class saas {
     function send_data($selected_ocs=array(), $send_user_details=true, $clear_ods=array(), $clear_polos=array(), $print_error=true) {
         global $DB;
 
-        if($this->verify_config('', $print_error) === false) {
+        if ($this->verify_config('', $print_error) === false) {
             exit;
         }
 
@@ -1183,7 +1183,7 @@ class saas {
         $this->count_sent_polos = 0;
         $this->sent_users = array();
         $this->count_sent_users = array();
-        foreach(self::$role_types AS $r=>$rname) {
+        foreach (self::$role_types AS $r=>$rname) {
             $this->count_sent_users[$r] = 0;
         }
 
@@ -1195,33 +1195,33 @@ class saas {
         $ofertas_cursos = $this->get_ofertas_cursos();
         $ods_saas = array();
         $polos_saas = array();
-        foreach($ofertas_cursos AS $ocid=>$oc) {
-            if(isset($selected_ocs[$ocid])) {
+        foreach ($ofertas_cursos AS $ocid=>$oc) {
+            if (isset($selected_ocs[$ocid])) {
                 $ods = $this->get_ofertas_disciplinas($ocid, true);
                 $this->progressbar_total += count($ods[$ocid]);
             }
         }
 
-        foreach($ofertas_cursos AS $ocid=>$oc) {
-            if(isset($selected_ocs[$ocid])) {
+        foreach ($ofertas_cursos AS $ocid=>$oc) {
+            if (isset($selected_ocs[$ocid])) {
                 $clear = isset($clear_ods[$ocid]) ? $clear_ods[$ocid] : array();
                 $this->send_users_by_ofertas_disciplinas($ocid, $send_user_details, $clear);
             }
         }
 
         $polo_mapping_type = $this->get_config('polo_mapping');
-        if($polo_mapping_type != 'no_polo') {
+        if ($polo_mapping_type != 'no_polo') {
             $this->start_progressbar("Exportando polos");
 
-            foreach($ofertas_cursos AS $ocid=>$oc) {
-                if(isset($selected_ocs[$ocid])) {
+            foreach ($ofertas_cursos AS $ocid=>$oc) {
+                if (isset($selected_ocs[$ocid])) {
                     $pls = $this->get_polos_by_oferta_curso($ocid);
                     $this->progressbar_total += count($pls[$ocid]);
                 }
             }
 
-            foreach($ofertas_cursos AS $ocid=>$oc) {
-                if(isset($selected_ocs[$ocid])) {
+            foreach ($ofertas_cursos AS $ocid=>$oc) {
+                if (isset($selected_ocs[$ocid])) {
                     $clear = isset($clear_polos[$ocid]) ? $clear_polos[$ocid] : array();
                     $this->send_users_by_polos($ocid, $send_user_details, $clear);
                 }
@@ -1238,7 +1238,7 @@ class saas {
     function send_resume($complete=true) {
         $resume = array();
         $resume['config'] = $this->config;
-        if($complete) {
+        if ($complete) {
             $resume['count_errors'] = $this->count_errors;
             $resume['errors'] = $this->errors;
             $resume['count_sent_ods'] = $this->count_sent_ods;
@@ -1271,7 +1271,7 @@ class saas {
 
     //Métodos para acesso ao webservice.
     function make_ws_url($functionname='') {
-        if(empty($functionname)) {
+        if (empty($functionname)) {
             return $this->config->ws_url . '/instituicoes/' . $this->config->api_key;
         } else {
             return $this->config->ws_url . '/instituicoes/' . $this->config->api_key  . '/' . $functionname;
@@ -1322,14 +1322,14 @@ class saas {
 
     function handle_ws_errors($ws_type, $throw_exception=false) {
         $info = $this->curl->get_info();
-        if($info['http_code'] <= 299) {
+        if ($info['http_code'] <= 299) {
             return true;
-        } else if($info['http_code'] <= 499) {
+        } else if ($info['http_code'] <= 499) {
             $this->count_errors++;
-            if(count($this->errors) < 50) {
+            if (count($this->errors) < 50) {
                 $this->errors[] = "Falha {$info['http_code']} executando '{$ws_type}' no SAAS para: ". $info['url'];
             }
-            if($throw_exception) {
+            if ($throw_exception) {
                 throw new Exception("Falha {$info['http_code']} executando '{$ws_type}' no SAAS para: ". $info['url']);
             }
             return true;
@@ -1349,11 +1349,11 @@ class saas {
         $data->ws_url = trim($data->ws_url, ' /');
         $data->api_key = trim($data->api_key);
 
-        foreach(self::$role_types AS $r=>$rname) {
+        foreach (self::$role_types AS $r=>$rname) {
             $rname = 'roles_' . $r;
-            if(isset($data->$rname)) {
-                foreach($data->$rname AS $roleid) {
-                    if($roleid !== '0') {
+            if (isset($data->$rname)) {
+                foreach ($data->$rname AS $roleid) {
+                    if ($roleid !== '0') {
                         $rec = new stdClass();
                         $rec->role = $r;
                         $rec->roleid = $roleid;
@@ -1364,16 +1364,16 @@ class saas {
             }
         }
 
-        if(!isset($data->filter_userid_field)) {
+        if (!isset($data->filter_userid_field)) {
             set_config('filter_userid_field', '0', 'report_saas_export');
         }
-        if(!isset($data->suspended_as_evaded)) {
+        if (!isset($data->suspended_as_evaded)) {
             set_config('suspended_as_evaded', '0', 'report_saas_export');
         }
 
-        foreach($data AS $key=>$value) {
-            if($key != 'submitbutton') {
-                if(is_array($value)) {
+        foreach ($data AS $key=>$value) {
+            if ($key != 'submitbutton') {
+                if (is_array($value)) {
                     $val = implode(',', $value);
                 } else {
                     $val = $value;
@@ -1391,7 +1391,7 @@ class saas {
         $context = self::get_context_system();
         $roles = role_fix_names(get_all_roles($context), $context);
 
-        if(isset($CFG->gradebookroles) && !empty($CFG->gradebookroles)) {
+        if (isset($CFG->gradebookroles) && !empty($CFG->gradebookroles)) {
             $roleids = $CFG->gradebookroles;
         } else {
             $roleids = $DB->get_field('role', 'id', array('shortname' => 'student'));
@@ -1409,7 +1409,7 @@ class saas {
         $context = self::get_context_system();
         $roles = role_fix_names(get_all_roles($context), $context);
 
-        if(isset($CFG->gradebookroles) && !empty($CFG->gradebookroles)) {
+        if (isset($CFG->gradebookroles) && !empty($CFG->gradebookroles)) {
             $roleids = $CFG->gradebookroles;
         } else {
             $roleids = $DB->get_field('role', 'id', array('shortname' => 'student'));
@@ -1442,7 +1442,7 @@ class saas {
 
     function format_date($saas_timestamp_inicio, $saas_timestamp_fim=false, $separador=' / ') {
         $result = empty($saas_timestamp_inicio) ? '' : date("d-m-Y", substr($saas_timestamp_inicio, 0, 10));
-        if($saas_timestamp_fim !== false) {
+        if ($saas_timestamp_fim !== false) {
             $result .= $separador;
             $result .= empty($saas_timestamp_fim) ? '' : date("d-m-Y", substr($saas_timestamp_fim, 0, 10));
         }
@@ -1450,12 +1450,12 @@ class saas {
     }
 
     function format_cpf($cpf) {
-        if(empty($cpf)) {
+        if (empty($cpf)) {
             $cpf = '';
         } else {
             $cpf_regexp = $this->get_config('cpf_regexp');
-            if(!empty($cpf_regexp)) {
-                if(preg_match($cpf_regexp, $cpf, $matches)) {
+            if (!empty($cpf_regexp)) {
+                if (preg_match($cpf_regexp, $cpf, $matches)) {
                     unset($matches[0]);
                     $cpf = implode('', $matches);
                 }
@@ -1494,11 +1494,11 @@ class saas {
                     'SE'=>'Sergipe',
                     'SP'=>'São Paulo',
                     'TO'=>'Tocantins');
-        if($mostrar_sigla) {
+        if ($mostrar_sigla) {
             $siglas = array();
             $keys = array_keys($ufs);
             sort($keys);
-            foreach($keys AS $sigla) {
+            foreach ($keys AS $sigla) {
                 $siglas[$sigla] = $sigla;
             }
             return $siglas;
@@ -1508,7 +1508,7 @@ class saas {
     }
 
     static function get_context_system() {
-        if(class_exists('context_system')) {
+        if (class_exists('context_system')) {
             return context_system::instance();
         } else {
             return get_context_instance(CONTEXT_SYSTEM);
@@ -1518,18 +1518,18 @@ class saas {
     function get_join_role_assignments() {
         global $DB;
 
-        if(is_null($this->saas_enrols_with_itemid)) {
+        if (is_null($this->saas_enrols_with_itemid)) {
             $this->saas_enrols_with_itemid = array();
             $sql = "SELECT DISTINCT ra.component
                       FROM {role_assignments} ra
                      WHERE ra.component != ''
                        AND ra.itemid > 0";
-            foreach($DB->get_records_sql($sql) AS $component=>$obj) {
+            foreach ($DB->get_records_sql($sql) AS $component=>$obj) {
                 $this->saas_enrols_with_itemid[substr($component, 6)] = $component;
             }
         }
 
-        if(empty($this->saas_enrols_with_itemid)) {
+        if (empty($this->saas_enrols_with_itemid)) {
             $sql = "JOIN {role_assignments} ra
                       ON (ra.contextid = ctx.id AND
                           ra.userid = ue.userid)";

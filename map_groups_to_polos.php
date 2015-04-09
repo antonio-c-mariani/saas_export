@@ -7,16 +7,16 @@ $may_export = has_capability('report/saas_export:export', $syscontext);
 
 $message = '';
 
-if(isset($_POST['map_polos']) && isset($_POST['save']) && $may_export) {
+if (isset($_POST['map_polos']) && isset($_POST['save']) && $may_export) {
     $saved = false;
 
-    foreach($_POST['map_polos'] AS $groupname=>$poloid) {
-        if($map_group_polo = $DB->get_record('saas_map_groups_polos', array('api_key'=>$saas->api_key, 'groupname'=>$groupname), 'id, polo_id')) {
-            if(empty($poloid)) {
+    foreach ($_POST['map_polos'] AS $groupname=>$poloid) {
+        if ($map_group_polo = $DB->get_record('saas_map_groups_polos', array('api_key'=>$saas->api_key, 'groupname'=>$groupname), 'id, polo_id')) {
+            if (empty($poloid)) {
                 $DB->delete_records('saas_map_groups_polos', array('id'=>$map_group_polo->id));
                 $saved = true;
             } else {
-                if($poloid != $map_group_polo->polo_id) {
+                if ($poloid != $map_group_polo->polo_id) {
                     $obj = new stdClass();
                     $obj->id = $map_group_polo->id;
                     $obj->polo_id = $poloid;
@@ -25,7 +25,7 @@ if(isset($_POST['map_polos']) && isset($_POST['save']) && $may_export) {
                 }
             }
         } else {
-            if(!empty($poloid)) {
+            if (!empty($poloid)) {
                 $obj = new stdClass();
                 $obj->api_key = $saas->api_key;
                 $obj->groupname = $groupname;
@@ -73,7 +73,7 @@ print $OUTPUT->heading(get_string('group_to_polo', 'report_saas_export') .
 print html_writer::end_tag('DIV');
 
 print html_writer::start_tag('div', array('class'=>'saas_area_normal'));
-if($message) {
+if ($message) {
     print $OUTPUT->heading($message, 4, 'saas_export_message');
 }
 
@@ -83,12 +83,12 @@ print html_writer::empty_tag('input', array('type'=>'hidden', 'name'=>'action', 
 $tipos = array(0 => 'Grupos novos (ainda não mapeados)',
                1 => 'Grupos corresponentes a polos SAAS',
                2 => 'Grupos que não correspondem a polos SAAS');
-foreach($tipos AS $tipo => $title) {
+foreach ($tipos AS $tipo => $title) {
     $rows = array();
     $index = 0;
-    foreach($map AS $groupname=>$m) {
+    foreach ($map AS $groupname=>$m) {
         $poloid = empty($m->polo_id) ? 0 : $m->polo_id;
-        if($tipo == 0 && $poloid == 0 || $tipo == 1 && $poloid > 0 || $tipo == 2 && $poloid == -1) {
+        if ($tipo == 0 && $poloid == 0 || $tipo == 1 && $poloid > 0 || $tipo == 2 && $poloid == -1) {
             $index++;
             $polo_name = empty($m->saas_polo_nome) ? '' : $m->saas_polo_nome;
 
@@ -99,14 +99,14 @@ foreach($tipos AS $tipo => $title) {
             $row->cells[] = $cell;
 
             $cell = new html_table_cell();
-            if(empty($m->polo_id)) {
+            if (empty($m->polo_id)) {
                 $cell->text = html_writer::tag('span', $m->groupname, array('style'=>'color:red'));
             } else {
                 $cell->text = $m->groupname;
             }
             $row->cells[] = $cell;
 
-            if($poloid == 0) {
+            if ($poloid == 0) {
                $poloid = isset($candidate_group_names[$m->groupname]) ? $candidate_group_names[$m->groupname] : -1;
             }
 
@@ -134,7 +134,7 @@ foreach($tipos AS $tipo => $title) {
     }
 }
 
-if($may_export) {
+if ($may_export) {
     print html_writer::empty_tag('input', array('type'=>'submit', 'name'=>'save', 'value'=>s(get_string('save', 'admin'))));
 }
 print html_writer::end_tag('form');

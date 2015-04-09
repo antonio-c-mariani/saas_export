@@ -49,16 +49,16 @@ class polo_form extends moodleform {
         $errors = parent::validation($data, $files);
 
         $nome = trim($data['nome']);
-        if(empty($nome)) {
+        if (empty($nome)) {
             $errors['nome'] = get_string('invalid_nome_polo', 'report_saas_export');
         } else {
-            if($DB->record_exists('saas_polos', array('nome'=>$nome, 'api_key'=>$saas->get_config('api_key'), 'enable'=>1))) {
+            if ($DB->record_exists('saas_polos', array('nome'=>$nome, 'api_key'=>$saas->get_config('api_key'), 'enable'=>1))) {
                 $errors['nome'] = get_string('exists_nome_polo', 'report_saas_export');
             }
         }
 
         $cidade = trim($data['cidade']);
-        if(empty($cidade)) {
+        if (empty($cidade)) {
             $errors['cidade'] = get_string('invalid_cidade', 'report_saas_export');
         }
 

@@ -10,7 +10,7 @@ $may_export = has_capability('report/saas_export:export', $syscontext);
 $message = '';
 $errors = array();
 
-if(isset($_POST['map_polos']) && isset($_POST['save']) && $may_export) {
+if (isset($_POST['map_polos']) && isset($_POST['save']) && $may_export) {
     $sql = "SELECT smcp.instanceid, smcp.id, smcp.polo_id, cc.path
               FROM {saas_map_catcourses_polos} smcp
               JOIN {saas_polos} pl ON (pl.id = smcp.polo_id AND pl.enable = 1)
@@ -19,16 +19,16 @@ if(isset($_POST['map_polos']) && isset($_POST['save']) && $may_export) {
              WHERE smcp.type = 'category'";
     $mapped = $DB->get_records_sql($sql);
     $saved = false;
-    foreach($_POST['map_polos'] AS $categoryid=>$polo_id) {
-        if(isset($mapped[$categoryid]) && empty($polo_id)) {
+    foreach ($_POST['map_polos'] AS $categoryid=>$polo_id) {
+        if (isset($mapped[$categoryid]) && empty($polo_id)) {
             $DB->delete_records('saas_map_catcourses_polos', array('id'=>$mapped[$categoryid]->id));
             unset($mapped[$categoryid]);
             $saved = true;
         }
     }
-    foreach($_POST['map_polos'] AS $categoryid=>$polo_id) {
-        if(isset($mapped[$categoryid]) && !empty($polo_id)) {
-            if($polo_id != $mapped[$categoryid]->polo_id) {
+    foreach ($_POST['map_polos'] AS $categoryid=>$polo_id) {
+        if (isset($mapped[$categoryid]) && !empty($polo_id)) {
+            if ($polo_id != $mapped[$categoryid]->polo_id) {
                 $obj = new stdClass();
                 $obj->id = $mapped[$categoryid]->id;
                 $obj->polo_id = $polo_id;
@@ -40,8 +40,8 @@ if(isset($_POST['map_polos']) && isset($_POST['save']) && $may_export) {
     }
 
     $concat_category = saas::get_concat_category();
-    foreach($_POST['map_polos'] AS $categoryid=>$polo_id) {
-        if(!isset($mapped[$categoryid]) && !empty($polo_id)) {
+    foreach ($_POST['map_polos'] AS $categoryid=>$polo_id) {
+        if (!isset($mapped[$categoryid]) && !empty($polo_id)) {
             $sql = "SELECT cc.*
                       FROM {course_categories} cc
                       JOIN {saas_map_catcourses_polos} smcp ON (smcp.instanceid = cc.id AND smcp.type = 'category')
@@ -57,7 +57,7 @@ if(isset($_POST['map_polos']) && isset($_POST['save']) && $may_export) {
                       JOIN {config_plugins} cp ON (cp.plugin = 'report_saas_export' AND cp.name = 'api_key' AND cp.value = pl.api_key)
                      WHERE cc.id = {$categoryid}";
             $cats = $DB->get_records_sql($sql);
-            if(empty($cats)) {
+            if (empty($cats)) {
                 $obj = new stdClass();
                 $obj->type = 'category';
                 $obj->instanceid = $categoryid;
@@ -82,22 +82,22 @@ print html_writer::end_tag('DIV');
 
 print html_writer::start_tag('div', array('class'=>'saas_area_large'));
 
-if(!empty($errors)) {
+if (!empty($errors)) {
     print $OUTPUT->box_start('generalbox boxwidthwide');
     print html_writer::start_tag('ul');
-    foreach($errors AS $err) {
+    foreach ($errors AS $err) {
         print html_writer::tag('LI', $err, array('class'=>'saas_export_error'));
     }
     print html_writer::end_tag('ul');
     print $OUTPUT->box_end();
-} else if($message) {
+} else if ($message) {
     print $OUTPUT->heading($message, 4, 'saas_export_message');
 }
 
 $categories = saas_get_category_tree_map_categories_polos();
 $polos = $saas->get_polos_menu();
 
-if(empty($categories)) {
+if (empty($categories)) {
     print $OUTPUT->heading('Não foram encontrados mapeamentos de cursos Moodle para ofertas de disciplinas', 3);
 } else {
     $rows = array();

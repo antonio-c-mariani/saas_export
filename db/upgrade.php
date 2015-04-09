@@ -200,7 +200,7 @@ function xmldb_report_saas_export_upgrade($oldversion) {
     if ($oldversion < 2014100400) {
         $api_key = get_config('report_saas_export', 'api_key');
         $tables = array('saas_disciplinas', 'saas_polos', 'saas_ofertas_cursos', 'saas_ofertas_disciplinas');
-        foreach($tables AS $tab) {
+        foreach ($tables AS $tab) {
             $table = new xmldb_table($tab);
             if ($dbman->table_exists($table)) {
                 $field = new xmldb_field('api_key', XMLDB_TYPE_CHAR, '30', null, XMLDB_NOTNULL, null, null, 'id');

@@ -34,7 +34,7 @@ class oferta_form extends moodleform {
         $ocid = $this->_customdata['data'];
 
         $ofertas_cursos = empty($ocid) ? array(0=>'-- selecione uma oferta de curso') : array();
-        foreach($saas->get_ofertas_cursos() AS $oc) {
+        foreach ($saas->get_ofertas_cursos() AS $oc) {
             $ofertas_cursos[$oc->id] = "{$oc->nome} {$oc->ano}/{$oc->periodo}";
         }
 
@@ -45,7 +45,7 @@ class oferta_form extends moodleform {
         $mform->setDefault('oferta_curso_id', $ocid);
 
         $mform->addElement('select', 'disciplina_id', get_string('disciplina', 'report_saas_export'), $disciplinas);
-        $mform->disabledIf('disciplina_id', 'oferta_curso_id', 'eq', 0);
+        $mform->disabledif ('disciplina_id', 'oferta_curso_id', 'eq', 0);
 
         $year = date('Y');
         $attributes = array(
@@ -56,9 +56,9 @@ class oferta_form extends moodleform {
                 'optional'  => false,
                 );
         $mform->addElement('date_selector', 'inicio', get_string('inicio', 'report_saas_export'), $attributes);
-        $mform->disabledIf('inicio', 'disciplina_id', 'eq', 0);
+        $mform->disabledif ('inicio', 'disciplina_id', 'eq', 0);
         $mform->addElement('date_selector', 'fim', get_string('fim', 'report_saas_export'), $attributes);
-        $mform->disabledIf('fim', 'disciplina_id', 'eq', 0);
+        $mform->disabledif ('fim', 'disciplina_id', 'eq', 0);
 
         $this->add_action_buttons();
     }
@@ -68,23 +68,23 @@ class oferta_form extends moodleform {
 
         $errors = parent::validation($data, $files);
 
-        if(empty($data['oferta_curso_id'])) {
+        if (empty($data['oferta_curso_id'])) {
             $errors['oferta_curso_id'] = get_string('required');
             return $errors;
         }
 
-        if(empty($data['disciplina_id'])) {
+        if (empty($data['disciplina_id'])) {
             $errors['disciplina_id'] = get_string('required');
             return $errors;
         }
 
-        if($data['fim'] <= $data['inicio']) {
+        if ($data['fim'] <= $data['inicio']) {
             $errors['fim'] = 'Data de fim deve ser posterior à de início';
             return $errors;
         }
 
         $disciplinas = $saas->get_disciplinas_for_oc($data['oferta_curso_id'], true);
-        if(!isset($disciplinas[$data['disciplina_id']])) {
+        if (!isset($disciplinas[$data['disciplina_id']])) {
             $errors['disciplina_id'] = get_string('duplicated_disciplina', 'report_saas_export');
         }
         return $errors;

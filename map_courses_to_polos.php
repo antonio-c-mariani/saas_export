@@ -9,7 +9,7 @@ $may_export = has_capability('report/saas_export:export', $syscontext);
 
 $message = '';
 
-if(isset($_POST['map_polos']) && isset($_POST['save']) && $may_export) {
+if (isset($_POST['map_polos']) && isset($_POST['save']) && $may_export) {
     $sql = "SELECT smcp.instanceid, smcp.id, smcp.polo_id
               FROM {saas_map_catcourses_polos} smcp
               JOIN {saas_polos} pl ON (pl.id = smcp.polo_id AND pl.enable = 1)
@@ -17,15 +17,15 @@ if(isset($_POST['map_polos']) && isset($_POST['save']) && $may_export) {
              WHERE smcp.type = 'course'";
     $mapped = $DB->get_records_sql($sql);
     $saved = false;
-    foreach($_POST['map_polos'] AS $courseid=>$polo_id) {
-        if(isset($mapped[$courseid]) && empty($polo_id)) {
+    foreach ($_POST['map_polos'] AS $courseid=>$polo_id) {
+        if (isset($mapped[$courseid]) && empty($polo_id)) {
             $DB->delete_records('saas_map_catcourses_polos', array('id'=>$mapped[$courseid]->id));
             $saved = true;
         }
     }
-    foreach($_POST['map_polos'] AS $courseid=>$polo_id) {
-        if(isset($mapped[$courseid]) && !empty($polo_id)) {
-            if($polo_id != $mapped[$courseid]->polo_id) {
+    foreach ($_POST['map_polos'] AS $courseid=>$polo_id) {
+        if (isset($mapped[$courseid]) && !empty($polo_id)) {
+            if ($polo_id != $mapped[$courseid]->polo_id) {
                 $obj = new stdClass();
                 $obj->id = $mapped[$courseid]->id;
                 $obj->polo_id = $polo_id;
@@ -34,8 +34,8 @@ if(isset($_POST['map_polos']) && isset($_POST['save']) && $may_export) {
             }
         }
     }
-    foreach($_POST['map_polos'] AS $courseid=>$polo_id) {
-        if(!isset($mapped[$courseid]) && !empty($polo_id)) {
+    foreach ($_POST['map_polos'] AS $courseid=>$polo_id) {
+        if (!isset($mapped[$courseid]) && !empty($polo_id)) {
             $obj = new stdClass();
             $obj->type = 'course';
             $obj->instanceid = $courseid;
@@ -54,14 +54,14 @@ print $OUTPUT->heading(get_string('course_to_polo', 'report_saas_export') .
 print html_writer::end_tag('DIV');
 
 print html_writer::start_tag('div', array('class'=>'saas_area_large'));
-if($message) {
+if ($message) {
     print $OUTPUT->heading($message, 4, 'saas_export_message');
 }
 
 $categories = saas_get_category_tree_map_courses_polos();
 $polos = $saas->get_polos_menu();
 
-if(empty($categories)) {
+if (empty($categories)) {
     print $OUTPUT->heading('Não foram encontrados mapeamentos de cursos Moodle para ofertas de disciplinas', 4);
 } else {
     $rows = array();
