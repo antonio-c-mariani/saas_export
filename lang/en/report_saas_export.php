@@ -22,6 +22,13 @@ $string['inicio'] = 'Início';
 $string['fim'] = 'Fim';
 $string['periodo'] = 'Período';
 
+$string['od_mapped'] = 'Ofertas de disciplinas mapeadas:';
+$string['od_notmapped'] = 'Ofertas de disciplinas não mapeadas, mas com dados no SAAS:';
+$string['polos_mapped'] = 'Polos mapeadas:';
+$string['polos_notmapped'] = 'Polos não mapeadas, mas com dados no SAAS:';
+$string['mark_clear'] = '(*) Marque acima as ofertas de disciplina e polos cujos professores, estudantes e tutores
+    devam ser delas/deles desassociados no SAAS.';
+
 $string['course_selection'] = 'Seleção de curso Moodle';
 $string['course_selection_help'] = '<P>Clique num dos cursos Moodle abaixo para associá-lo à oferta de disciplina indicada
     nesta página.</P>

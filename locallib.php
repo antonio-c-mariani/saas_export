@@ -795,6 +795,8 @@ function saas_show_table_ofertas_curso_disciplinas($oferta_curso_id=0, $show_cou
 function saas_show_export_options($url, $selected_ocs=true) {
     global $DB, $saas, $PAGE, $OUTPUT;
 
+    $PAGE->requires->js_init_call('M.report_saas_export.init');
+
     $ofertas_cursos = $saas->get_ofertas_cursos();
     $ofertas_disciplinas_oc = $saas->get_ofertas_disciplinas(0, true);
 
@@ -810,6 +812,9 @@ function saas_show_export_options($url, $selected_ocs=true) {
     $show_form = false;
     foreach($ofertas_cursos AS $ocid=>$oc) {
         if(isset($ofertas_disciplinas_oc[$ocid]) || ($show_polos && !empty($polos_oc[$ocid]))) {
+            $not_empty_polos = $saas->get_not_empty_polos_saas_from_oferta_curso($oc->uid);
+            $not_empty_ods = $saas->get_not_empty_ofertas_disciplinas_saas_from_oferta_curso($oc->uid);
+
             $tag_checkbox = 'saas_oc_' . $ocid;
             $row = new html_table_row();
 
@@ -824,15 +829,41 @@ function saas_show_export_options($url, $selected_ocs=true) {
             $cell = new html_table_cell();
             if(isset($ofertas_disciplinas_oc[$ocid])) {
                 $show_form = true;
-                $cell->text = html_writer::start_tag('UL');
-                $params = array_merge($disabled, array('class'=>'od_'.$tag_checkbox));
+                $cell->text .= '<b>' . get_string('od_mapped', 'report_saas_export') . '</b>';
+                $cell->text .= html_writer::start_tag('UL');
                 foreach($ofertas_disciplinas_oc[$ocid] AS $odid=>$od) {
                     $label = $od->nome . ' (' . $saas->format_date($od->inicio, $od->fim) . ')';
                     $cell->text .= html_writer::tag('LI', $label);
+
+                    unset($not_empty_ods[$od->uid]);
                 }
 
                 $cell->text .= html_writer::end_tag('UL');
             }
+
+            $show_msg_clear = false;
+
+            if(!empty($not_empty_ods)) {
+                $empty = true;
+                foreach($not_empty_ods AS $od_uid=>$data) {
+                    if($od = $saas->get_oferta_disciplina_by_uid($od_uid)) {
+                        if($empty) {
+                            $show_form = true;
+                            $cell->text .= '<b>' . get_string('od_notmapped', 'report_saas_export') . '</b>';
+                            $cell->text .= html_writer::start_tag('UL', array('class'=>'saas_list'));
+                        }
+                        $label = $od->nome . ' (' . $saas->format_date($od->inicio, $od->fim) . ')';
+                        $checkbox = html_writer::checkbox("clear_ods[{$od->id}]", $oc->id, false, $label, array('class'=>'od_'.$tag_checkbox));
+                        $cell->text .= html_writer::tag('LI', $checkbox);
+                        $empty = false;
+                    }
+                }
+                if(!$empty) {
+                    $cell->text .= html_writer::end_tag('UL');
+                }
+                $show_msg_clear = $show_msg_clear || !$empty;
+            }
+
             $cell->style = "vertical-align: middle;";
             $row->cells[] = $cell;
 
@@ -840,17 +871,53 @@ function saas_show_export_options($url, $selected_ocs=true) {
                 $cell = new html_table_cell();
                 if(!empty($polos_oc[$ocid])) {
                     $show_form = true;
-                    $cell->text = html_writer::start_tag('UL');
-                    $params = array_merge($disabled, array('class'=>'polo_'.$tag_checkbox));
+                    $cell->text .= '<b>' . get_string('polos_mapped', 'report_saas_export') . '</b>';
+                    $cell->text .= html_writer::start_tag('UL');
                     foreach($polos_oc[$ocid] AS $plid=>$pl) {
-                        $cell->text .= html_writer::tag('LI', $pl->nome);
+                        $label = "{$pl->nome} ({$pl->cidade}/{$pl->estado})";
+                        $cell->text .= html_writer::tag('LI', $label);
+                        unset($not_empty_polos[$pl->uid]);
                     }
                     $cell->text .= html_writer::end_tag('UL');
                 }
                 $cell->style = "vertical-align: middle;";
                 $row->cells[] = $cell;
+
+                if(!empty($not_empty_polos)) {
+                    $empty = true;
+                    foreach($not_empty_polos AS $polo_uid=>$data) {
+                        if($pl = $saas->get_polo_by_uid($polo_uid)) {
+                            if($empty) {
+                                $show_form = true;
+                                $cell->text .= '<b>' . get_string('polos_notmapped', 'report_saas_export') . '</b>';
+                                $cell->text .= html_writer::start_tag('UL', array('class'=>'saas_list'));
+                            }
+                            $label = "{$pl->nome} ({$pl->cidade}/{$pl->estado})";
+                            $checkbox = html_writer::checkbox("clear_polos[{$oc->id}_{$pl->id}]", 1, false, $label, array('class'=>'polo_'.$tag_checkbox));
+                            $cell->text .= html_writer::tag('LI', $checkbox);
+                            $empty = false;
+                        }
+                    }
+                    if(!$empty) {
+                        $cell->text .= html_writer::end_tag('UL');
+                    }
+                    $show_msg_clear = $show_msg_clear || !$empty;
+                }
             }
 
+            $rows[] = $row;
+
+            $row = new html_table_row();
+            $row->cells[] = new html_table_cell();
+
+            $cell = new html_table_cell();
+            if($show_msg_clear) {
+                $cell->colspan = 2;
+                $cell->text = '<small>' . get_string('mark_clear', 'report_saas_export') . '</small>';
+            } else {
+                $cell->text = '&nbsp;';
+            }
+            $row->cells[] = $cell;
             $rows[] = $row;
         }
     }

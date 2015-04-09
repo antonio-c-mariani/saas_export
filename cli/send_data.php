@@ -104,7 +104,7 @@ if($list) {
 
     try {
         list($count_errors, $errors, $count_sent_users, $count_sent_ods, $count_sent_polos) =
-            $saas->send_data($selected_ocs, $details, false);
+            $saas->send_data($selected_ocs, $details, array(), array(), false);
     } catch (Exception $e){
         var_dump($e->getMessage());
         exit;

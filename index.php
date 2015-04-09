@@ -361,10 +361,23 @@ switch ($action) {
                 // $send_user_details = optional_param('send_user_details', true, PARAM_BOOL);
                 $send_user_details = true;
 
+                $clear_ods_params = optional_param_array('clear_ods', array(), PARAM_INT);
+                $clear_ods = array();
+                foreach($clear_ods_params AS $odid=>$ocid) {
+                    $clear_ods[$ocid][$odid] = true;
+                }
+
+                $clear_polos_params = optional_param_array('clear_polos', array(), PARAM_INT);
+                $clear_polos = array();
+                foreach($clear_polos_params AS $ocpl=>$ok) {
+                    list($ocid, $poloid) = explode('_', $ocpl);
+                    $clear_polos[$ocid][$poloid] = true;
+                }
+
                 $exception_msg = false;
                 try {
                     list($count_errors, $errors, $count_sent_users, $count_sent_ods, $count_sent_polos) =
-                                        $saas->send_data($ocs, $send_user_details);
+                                        $saas->send_data($ocs, $send_user_details, $clear_ods, $clear_polos);
                 } catch (dml_exception $e){
                     $debuginfo = empty($e->debuginfo) ? '' : '<BR>'.$e->debuginfo;
                     $exception_msg = get_string('bd_error', 'report_saas_export', $e->getMessage() . $debuginfo);
