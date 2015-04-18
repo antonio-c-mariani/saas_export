@@ -603,10 +603,11 @@ function saas_show_users_oferta_disciplina($ofer_disciplina_id) {
         $rows[$r] = array();
     }
     foreach ($rs AS $rec) {
-        if (empty($rec->suspended)) {
+        if (empty($rec->global_suspended) && empty($rec->suspended)) {
             $user = $saas->get_user($rec->role, $rec->userid, $rec->uid);
             $row = array((count($rows[$rec->role])+1) . '.', $user->nome, $user->uid, $user->email, $user->cpf);
             if ($rec->role == 'student') {
+                $row[] = get_string('no');
                 $row[] = get_string('no');
                 $row[] = empty($rec->currentlogin) ? '-' : date('d-m-Y H:i', $rec->currentlogin);
                 $row[] = empty($rec->lastaccess) ? '-' : date('d-m-Y H:i', $rec->lastaccess);
@@ -620,17 +621,26 @@ function saas_show_users_oferta_disciplina($ofer_disciplina_id) {
 
     foreach ($suspended AS $rec) {
         $user = $saas->get_user($rec->role, $rec->userid, $rec->uid);
-        $row = new html_table_row();
+        $row = array();
 
-        $row->cells[] = (count($rows[$rec->role])+1) . '.';
-        $row->cells[] = $user->nome;
-        $row->cells[] = $user->uid;
-        $row->cells[] = $user->email;
-        $row->cells[] = $user->cpf;
-        $row->cells[] = html_writer::tag('span', get_string('yes'), array('class'=>'saas_export_warning'));
-        $row->cells[] = empty($rec->currentlogin) ? '-' : date('d-m-Y H:i', $rec->currentlogin);
-        $row->cells[] = empty($rec->lastaccess) ? '-' : date('d-m-Y H:i', $rec->lastaccess);
-        $row->cells[] = isset($grades[$rec->userid]) && $grades[$rec->userid] >= 0 ? $grades[$rec->userid] : '-';
+        $row[] = (count($rows[$rec->role])+1) . '.';
+        $row[] = $user->nome;
+        $row[] = $user->uid;
+        $row[] = $user->email;
+        $row[] = $user->cpf;
+        if (empty($rec->global_suspended)) {
+            $row[] = get_string('no');
+        } else {
+            $row[] = html_writer::tag('span', get_string('yes'), array('class'=>'saas_export_warning'));
+        }
+        if (empty($rec->suspended)) {
+            $row[] = get_string('no');
+        } else {
+            $row[] = html_writer::tag('span', get_string('yes'), array('class'=>'saas_export_warning'));
+        }
+        $row[] = empty($rec->currentlogin) ? '-' : date('d-m-Y H:i', $rec->currentlogin);
+        $row[] = empty($rec->lastaccess) ? '-' : date('d-m-Y H:i', $rec->lastaccess);
+        $row[] = isset($grades[$rec->userid]) && $grades[$rec->userid] >= 0 ? $grades[$rec->userid] : '-';
 
         $rows[$rec->role][] = $row;
     }
@@ -644,6 +654,7 @@ function saas_show_users_oferta_disciplina($ofer_disciplina_id) {
                 print html_writer::start_tag('DIV', array('class'=>'saas_area_large'));
                 print $OUTPUT->box_start('generalbox boxaligncenter');
 
+                $table->head[] = get_string('global_suspended', 'report_saas_export');
                 $table->head[] = get_string('suspended', 'report_saas_export');
                 $table->head[] = get_string('lastlogin');
                 $table->head[] = get_string('lastcourseaccess', 'report_saas_export');
