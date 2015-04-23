@@ -132,6 +132,10 @@ class saas {
     function load_disciplinas_saas(){
         global $DB;
 
+        if (empty($this->api_key)) {
+            return;
+        }
+
         $local = $DB->get_records_menu('saas_disciplinas', array('api_key'=>$this->api_key), '', 'id, enable');
 
         $disciplinas = $this->get_ws('disciplinas');
@@ -159,6 +163,10 @@ class saas {
     function load_cursos_saas(){
         global $DB;
 
+        if (empty($this->api_key)) {
+            return;
+        }
+
         $local = $DB->get_records_menu('saas_cursos', array('api_key'=>$this->api_key), '', 'id, enable');
 
         $cursos = $this->get_ws('cursos');
@@ -185,6 +193,10 @@ class saas {
 
     function load_ofertas_cursos_saas(){
         global $DB;
+
+        if (empty($this->api_key)) {
+            return;
+        }
 
         $local = $DB->get_records_menu('saas_ofertas_cursos', array('api_key'=>$this->api_key), '', 'id, enable');
 
@@ -223,6 +235,10 @@ class saas {
 
     function load_ofertas_disciplinas_saas(){
         global $DB;
+
+        if (empty($this->api_key)) {
+            return;
+        }
 
         $local = $DB->get_records_menu('saas_ofertas_disciplinas', array('api_key'=>$this->api_key), '', 'id, enable');
 
@@ -269,6 +285,10 @@ class saas {
 
     function load_polos_saas() {
         global $DB;
+
+        if (empty($this->api_key)) {
+            return;
+        }
 
         $local = $DB->get_records_menu('saas_polos', array('api_key'=>$this->api_key), '', 'id, enable');
 

@@ -306,10 +306,15 @@ function xmldb_report_saas_export_upgrade($oldversion) {
 
             $field = new xmldb_field('disciplina_uid');
             if ($dbman->field_exists($table, $field)) {
-                $sql = "UPDATE {saas_ofertas_disciplinas} od
-                          JOIN {saas_disciplinas} d ON (d.api_key = od.api_key AND d.uid = od.oferta_curso_uid)
-                           SET od.disciplina_id = d.id";
-                $DB->execute($sql);
+                $disciplinas = $DB->get_records('saas_disciplinas');
+                foreach ($disciplinas AS $d) {
+                    $sql = "UPDATE {saas_ofertas_disciplinas}
+                                SET disciplina_id = :did
+                              WHERE api_key = :apikey
+                                AND disciplina_uid = :duid";
+                    $params = array('apikey' => $d->api_key, 'duid' => $d->uid, 'did' => $d->id);
+                    $DB->execute($sql, $params);
+                }
 
                 $index = new xmldb_index('disciplina_uid', XMLDB_INDEX_NOTUNIQUE, array('disciplina_uid'));
                 if ($dbman->index_exists($table, $index)) {
@@ -334,10 +339,15 @@ function xmldb_report_saas_export_upgrade($oldversion) {
 
             $field = new xmldb_field('oferta_curso_uid');
             if ($dbman->field_exists($table, $field)) {
-                $sql = "UPDATE {saas_ofertas_disciplinas} od
-                          JOIN {saas_ofertas_cursos} oc ON (oc.api_key = od.api_key AND oc.uid = od.oferta_curso_uid)
-                           SET od.oferta_curso_id = oc.id";
-                $DB->execute($sql);
+                $ofertas_cursos = $DB->get_records('saas_ofertas_cursos');
+                foreach ($ofertas_cursos AS $oc) {
+                    $sql = "UPDATE {saas_ofertas_disciplinas}
+                                SET oferta_curso_id = :ocid
+                              WHERE api_key = :apikey
+                                AND oferta_curso_uid = :ocuid";
+                    $params = array('apikey' => $oc->api_key, 'ocuid' => $oc->uid, 'ocid' => $oc->id);
+                    $DB->execute($sql, $params);
+                }
 
                 $index = new xmldb_index('oferta_curso_uid', XMLDB_INDEX_NOTUNIQUE, array('oferta_curso_uid'));
                 if ($dbman->index_exists($table, $index)) {
