@@ -29,7 +29,7 @@
         <INDEX NAME="group_map_id" UNIQUE="false" FIELDS="group_map_id"/>
       </INDEXES>
     </TABLE>
-    <TABLE NAME="saas_map_groups_polos" COMMENT="Mapeamento de grupos do Moodle para polos do SAAS" PREVIOUS="saas_map_course" NEXT="saas_ofertas_cursos">
+    <TABLE NAME="saas_map_groups_polos" COMMENT="Mapeamento de grupos do Moodle para polos do SAAS" PREVIOUS="saas_map_course" NEXT="saas_cursos">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" NEXT="api_key"/>
         <FIELD NAME="api_key" TYPE="char" LENGTH="30" NOTNULL="true" SEQUENCE="false" PREVIOUS="id" NEXT="groupname"/>
@@ -64,9 +64,9 @@
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" NEXT="api_key"/>
         <FIELD NAME="api_key" TYPE="char" LENGTH="30" NOTNULL="true" SEQUENCE="false" PREVIOUS="id" NEXT="uid"/>
-        <FIELD NAME="uid" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="api_key" NEXT="nome"/>
+        <FIELD NAME="uid" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="api_key" NEXT="curso_id"/>
         <FIELD NAME="curso_id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" PREVIOUS="uid" NEXT="ano"/>
-        <FIELD NAME="ano" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="nome" NEXT="periodo"/>
+        <FIELD NAME="ano" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="curso_id" NEXT="periodo"/>
         <FIELD NAME="periodo" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="ano" NEXT="enable"/>
         <FIELD NAME="enable" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" SEQUENCE="false" PREVIOUS="periodo"/>
       </FIELDS>
