@@ -205,8 +205,8 @@ $string['filter_userid_field'] = 'Aplicar filtro de CPF';
 $string['filter_userid_field_help'] = 'Aplicar filtro de limpeza e formatação de CFP sobre o campo \'Id. de usuários\', resultando em um número de 11 dígitos (com zeros a esquerda).';
 
 $string['lastcourseaccess'] = 'Último acesso<br>à disciplina';
-$string['suspended'] = 'Suspenso<br>na disciplina';
-$string['global_suspended'] = 'Suspenso<br>global';
+$string['suspended'] = 'Evasão<br><small>Suspenso disciplina</small>';
+$string['global_suspended'] = 'Evasão<br><small>Suspenso global</small>';
 $string['suspended_as_evaded'] = 'Tratar como evasão as inscrições suspensas';
 $string['suspended_as_evaded_help'] = 'Considerar como evasão as inscrições em cursos Moodle que estão com o estado de suspensas. Caso esta opção não esteja marcada,
     as inscrições suspensas são completamente ignoradas.';

@@ -1,5 +1,56 @@
 <?php
 
+/**
+ * Returns a particular array value for the named variable, taken from
+ * POST or GET, otherwise returning a given default.
+ *
+ * This function should be used to initialise all optional values
+ * in a script that are based on parameters.  Usually it will be
+ * used like this:
+ *    $ids = optional_param('id', array(), PARAM_INT);
+ *
+ * Note: arrays of arrays are not supported, only alphanumeric keys with _ and - are supported
+ *
+ * @param string $parname the name of the page parameter we want
+ * @param mixed $default the default value to return if nothing is found
+ * @param string $type expected type of parameter
+ * @return array
+ * @throws coding_exception
+ */
+function saas_optional_param_array($parname, $default, $type) {
+    if (function_exists('optional_param_array')) {
+        return optional_param_array($parname, $default, $type);
+    }
+
+    if (func_num_args() != 3 or empty($parname) or empty($type)) {
+        throw new coding_exception('optional_param_array requires $parname, $default + $type to be specified (parameter: '.$parname.')');
+    }
+
+    // POST has precedence.
+    if (isset($_POST[$parname])) {
+        $param = $_POST[$parname];
+    } else if (isset($_GET[$parname])) {
+        $param = $_GET[$parname];
+    } else {
+        return $default;
+    }
+    if (!is_array($param)) {
+        debugging('optional_param_array() expects array parameters only: '.$parname);
+        return $default;
+    }
+
+    $result = array();
+    foreach ($param as $key => $value) {
+        if (!preg_match('/^[a-z0-9_-]+$/i', $key)) {
+            debugging('Invalid key name in optional_param_array() detected: '.$key.', parameter: '.$parname);
+            continue;
+        }
+        $result[$key] = clean_param($value, $type);
+    }
+
+    return $result;
+}
+
 // ----------------------------------------------------------------------------------------------
 // Rotinas auxiliares para mapeamento de ofertas de disciplina para cursos Moodle
 
@@ -602,20 +653,26 @@ function saas_show_users_oferta_disciplina($ofer_disciplina_id) {
     foreach ($role_types AS $r) {
         $rows[$r] = array();
     }
+    $suspended_as_evaded = $saas->get_config('suspended_as_evaded');
     foreach ($rs AS $rec) {
-        if (empty($rec->global_suspended) && empty($rec->suspended)) {
-            $user = $saas->get_user($rec->role, $rec->userid, $rec->uid);
-            $row = array((count($rows[$rec->role])+1) . '.', $user->nome, $user->uid, $user->email, $user->cpf);
-            if ($rec->role == 'student') {
+        if ($rec->role == 'student') {
+            if ($suspended_as_evaded && (!empty($rec->global_suspended) || !empty($rec->suspended))) {
+                $suspended[] = $rec;
+            } else {
+                $user = $saas->get_user($rec->role, $rec->userid, $rec->uid);
+                $row = array((count($rows[$rec->role])+1) . '.', $user->nome, $user->uid, $user->email, $user->cpf);
                 $row[] = get_string('no');
                 $row[] = get_string('no');
                 $row[] = empty($rec->currentlogin) ? '-' : date('d-m-Y H:i', $rec->currentlogin);
                 $row[] = empty($rec->lastaccess) ? '-' : date('d-m-Y H:i', $rec->lastaccess);
-                $row[] = isset($grades[$rec->userid]) && $grades[$rec->userid] >= 0 ? $grades[$rec->userid] : '-';
+                $row[] = isset($grades[$rec->userid]) && $grades[$rec->userid] >= 0 ? format_float($grades[$rec->userid],1,true) : '-';
+
+                $rows[$rec->role][] = $row;
             }
-            $rows[$rec->role][] = $row;
         } else {
-            $suspended[] = $rec;
+            $user = $saas->get_user($rec->role, $rec->userid, $rec->uid);
+            $row = array((count($rows[$rec->role])+1) . '.', $user->nome, $user->uid, $user->email, $user->cpf);
+            $rows[$rec->role][] = $row;
         }
     }
 
@@ -640,7 +697,7 @@ function saas_show_users_oferta_disciplina($ofer_disciplina_id) {
         }
         $row[] = empty($rec->currentlogin) ? '-' : date('d-m-Y H:i', $rec->currentlogin);
         $row[] = empty($rec->lastaccess) ? '-' : date('d-m-Y H:i', $rec->lastaccess);
-        $row[] = isset($grades[$rec->userid]) && $grades[$rec->userid] >= 0 ? $grades[$rec->userid] : '-';
+        $row[] = isset($grades[$rec->userid]) && $grades[$rec->userid] >= 0 ? format_float($grades[$rec->userid],1,true) : '-';
 
         $rows[$rec->role][] = $row;
     }
@@ -659,6 +716,7 @@ function saas_show_users_oferta_disciplina($ofer_disciplina_id) {
                 $table->head[] = get_string('lastlogin');
                 $table->head[] = get_string('lastcourseaccess', 'report_saas_export');
                 $table->head[] = get_string('finalgrade', 'grades');
+                $table->colclasses[] = 'centeralign';
                 $table->colclasses[] = 'centeralign';
                 $table->colclasses[] = 'centeralign';
                 $table->colclasses[] = 'centeralign';

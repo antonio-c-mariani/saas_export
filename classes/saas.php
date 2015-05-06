@@ -985,11 +985,15 @@ class saas {
         return $user;
     }
 
-    function get_grades($group_map_id) {
+    function get_grades($oferta_disciplina_id) {
         global $DB;
 
         $grades = array();
-        foreach ($DB->get_records('saas_map_course', array('group_map_id' => $group_map_id)) AS $rec) {
+        $sql = "SELECT mc.courseid
+                  FROM {saas_ofertas_disciplinas} od
+                  JOIN {saas_map_course} mc ON (mc.group_map_id = od.group_map_id)
+                 WHERE od.id = :odid";
+        foreach ($DB->get_recordset_sql($sql, array('odid' => $oferta_disciplina_id)) AS $rec) {
             $grade_item = grade_item::fetch_course_item($rec->courseid);
             $sql = "SELECT DISTINCT ra.userid
                       FROM {context} ctx
@@ -1002,13 +1006,14 @@ class saas {
                     $grade = new grade_grade(array('itemid'=>$grade_item->id, 'userid'=>$us->userid));
                     $finalgrade = $grade->finalgrade;
                     if (is_numeric($finalgrade)) {
-                        $final = (float)$finalgrade / $grade_item->grademax * 10;
+                        $final = grade_grade::standardise_score($grade->finalgrade, $grade->rawgrademin, $grade->rawgrademax, 0, 10);
                     } else {
                         $final = 0.0;
                     }
                 } else {
                     $final = -1.0;
                 }
+
                 if (isset($grades[$us->userid])) {
                     $grades[$us->userid] = max($grades[$us->userid], $final);
                 } else {
@@ -1144,6 +1149,7 @@ class saas {
         }
 
         $oferta_uid_encoded = rawurlencode($oferta_disciplina->uid);
+        $suspended_as_evaded = $this->get_config('suspended_as_evaded');
         foreach ($users_by_roles AS $r=>$users) {
             $this->put_ws("ofertas/disciplinas/{$oferta_uid_encoded}/". self::$role_types[$r], array_keys($users));
             if ($r == 'student' && $send_user_details) {
@@ -1163,7 +1169,7 @@ class saas {
                         $this->put_ws("ofertas/disciplinas/{$oferta_uid_encoded}/estudantes/{$user_uid_encoded}/ultimoAcesso", $obj_lastaccess);
                     }
 
-                    $obj_suspended->suspenso = $user->suspended == ENROL_USER_SUSPENDED;
+                    $obj_suspended->suspenso = $suspended_as_evaded && $user->suspended == ENROL_USER_SUSPENDED;
                     $this->put_ws("ofertas/disciplinas/{$oferta_uid_encoded}/estudantes/{$user_uid_encoded}/suspenso", $obj_suspended);
                 }
             }
@@ -1183,7 +1189,8 @@ class saas {
                 if (!empty($rec->currentlogin)) {
                     $this->put_ws("pessoas/{$user_uid_encoded}/ultimoLogin", array('ultimoLogin'=>$rec->currentlogin));
                 }
-                $this->put_ws("pessoas/{$user_uid_encoded}/suspenso", array('suspenso'=>!empty($rec->global_suspended)));
+                $suspended = $this->get_config('suspended_as_evaded') && !empty($rec->global_suspended);
+                $this->put_ws("pessoas/{$user_uid_encoded}/suspenso", array('suspenso'=>$suspended));
             }
             $this->sent_users[$rec->userid] = true;
             $this->count_sent_users[$rec->role]++;

@@ -361,13 +361,13 @@ switch ($action) {
                 // $send_user_details = optional_param('send_user_details', true, PARAM_BOOL);
                 $send_user_details = true;
 
-                $clear_ods_params = optional_param_array('clear_ods', array(), PARAM_INT);
+                $clear_ods_params = saas_optional_param_array('clear_ods', array(), PARAM_INT);
                 $clear_ods = array();
                 foreach ($clear_ods_params AS $odid=>$ocid) {
                     $clear_ods[$ocid][$odid] = true;
                 }
 
-                $clear_polos_params = optional_param_array('clear_polos', array(), PARAM_INT);
+                $clear_polos_params = saas_optional_param_array('clear_polos', array(), PARAM_INT);
                 $clear_polos = array();
                 foreach ($clear_polos_params AS $ocpl=>$ok) {
                     list($ocid, $poloid) = explode('_', $ocpl);
