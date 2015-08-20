@@ -61,11 +61,13 @@ class saas {
             set_config('nome_instituicao', $institution->nome, 'report_saas_export');
             set_config('sigla_instituicao', $institution->sigla, 'report_saas_export');
         } catch(Exception $e) {
-            $url_saas = $this->make_ws_url();
+            $a = new stdClass();
+            $a->url_saas = $this->make_ws_url();
+            $a->message = $e->getMessage();
             if ($print_error) {
-                print_error('api_key_unknown', 'report_saas_export', $url, $url_saas);
+                print_error('saas_access_fail', 'report_saas_export', $url, $a);
             } else {
-                echo "\nERRO: " . get_string('api_key_unknown', 'report_saas_export', $url_saas) . "\n";
+                echo "\nERRO: " . get_string('saas_access_fail', 'report_saas_export', $a) . "\n";
                 return false;
             }
         }
@@ -1435,23 +1437,28 @@ class saas {
 
         $context = self::get_context_system();
         $roles = role_fix_names(get_all_roles($context), $context);
-
-        if (isset($CFG->gradebookroles) && !empty($CFG->gradebookroles)) {
-            $roleids = $CFG->gradebookroles;
-        } else {
-            $roleids = $DB->get_field('role', 'id', array('shortname' => 'student'));
-        }
-
-        $sql = "SELECT *
-                  FROM {role}
-                 WHERE id NOT IN ($roleids)
-                   AND shortname NOT IN ('manager', 'guest', 'user', 'frontpage')";
-        $dbroles = $DB->get_records_sql($sql);
-
         $roles_menu = array();
-        foreach ($dbroles as $r) {
+        foreach ($roles as $r) {
             $roles_menu[$r->id] = $roles[$r->id]->localname;
         }
+
+        if (isset($CFG->gradebookroles) && !empty($CFG->gradebookroles)) {
+            foreach(explode(',', $CFG->gradebookroles) AS $rid) {
+                unset($roles_menu[$rid]);
+            }
+        } else {
+            if ($rid = $DB->get_field('role', 'id', array('shortname' => 'student'))) {
+                unset($roles_menu[$rid]);
+            }
+        }
+
+        $sql = "SELECT id, name
+                  FROM {role}
+                 WHERE shortname IN ('manager', 'guest', 'user', 'frontpage')";
+         foreach ($DB->get_records_sql($sql) AS $r) {
+             unset($roles_menu[$r->id]);
+         }
+
         return $roles_menu;
     }
 

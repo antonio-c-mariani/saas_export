@@ -192,7 +192,9 @@ $string['ws_url_help'] = 'URL do servidor do SAAS para onde os dados serão tran
 
 $string['api_key'] = 'Chave da Instituição';
 $string['api_key_help'] = 'Chave de identificação da instituição definida no SAAS. Entre em contato com a administração do SAAS para solicitar a chave.';
-$string['api_key_unknown'] = 'Não foi possível obter os dados da institução via URL: \'{$a}\'. Entre em contato com a administração do SAAS para confirmar a validade desta URL.';
+$string['saas_access_fail'] = 'Não foi possível obter os dados da institução via URL: \'{$a->url_saas}\'.<br>
+    Entre em contato com a administração do SAAS para confirmar a validade desta URL.<br>
+    Erro: \'{$a->message}\'';
 $string['nome_instituicao'] = 'Instituição';
 
 $string['course_name_default'] = 'Nome de cursos';
