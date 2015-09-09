@@ -865,6 +865,7 @@ function saas_show_export_options($url, $selected_ocs=true) {
     global $DB, $saas, $PAGE, $OUTPUT;
 
     $PAGE->requires->js_init_call('M.report_saas_export.init');
+    $report_path = strpos(__FILE__, '/admin/report/') !== false ? '/admin/report' : '/report';
 
     $ofertas_cursos = $saas->get_ofertas_cursos();
     $ofertas_disciplinas_oc = $saas->get_ofertas_disciplinas(0, true);
@@ -928,6 +929,9 @@ function saas_show_export_options($url, $selected_ocs=true) {
                     }
                 }
                 if (!$empty) {
+                    $cell->text .= html_writer::empty_tag('img', array('class'=>'saas_img_folder',
+                                  'src' => new moodle_url($report_path . '/saas_export/img/arrow_ltr.png')));
+                    $cell->text .= '<small>' . get_string('mark_clear', 'report_saas_export') . '</small>';
                     $cell->text .= html_writer::end_tag('UL');
                 }
                 $show_msg_clear = $show_msg_clear || !$empty;
@@ -968,26 +972,26 @@ function saas_show_export_options($url, $selected_ocs=true) {
                         }
                     }
                     if (!$empty) {
+                        $cell->text .= html_writer::empty_tag('img', array('class'=>'saas_img_folder',
+                                      'src' => new moodle_url($report_path . '/saas_export/img/arrow_ltr.png')));
+                        $cell->text .= '<small>' . get_string('mark_clear', 'report_saas_export') . '</small>';
                         $cell->text .= html_writer::end_tag('UL');
                     }
                     $show_msg_clear = $show_msg_clear || !$empty;
                 }
             }
 
-            $rows[] = $row;
-
-            $row = new html_table_row();
-            $row->cells[] = new html_table_cell();
-
+            $divrow = new html_table_row();
             $cell = new html_table_cell();
-            if ($show_msg_clear) {
-                $cell->colspan = 2;
-                $cell->text = '<small>' . get_string('mark_clear', 'report_saas_export') . '</small>';
-            } else {
-                $cell->text = '&nbsp;';
+            $cell->text = html_writer::empty_tag('hr', array('class'=>'saas_hr'));
+            $cell->colspan = 3;
+            $divrow->cells[] = $cell;
+
+            if (empty($rows)) {
+                $rows[] = $divrow;
             }
-            $row->cells[] = $cell;
             $rows[] = $row;
+            $rows[] = $divrow;
         }
     }
 
@@ -997,6 +1001,13 @@ function saas_show_export_options($url, $selected_ocs=true) {
     print html_writer::end_tag('DIV');
 
     if ($show_form) {
+
+        $export_btn = html_writer::empty_tag('img', array('class'=>'saas_img_folder',
+                                      'src' => new moodle_url($report_path . '/saas_export/img/arrow_ltr.png')));
+        $export_btn .=  html_writer::empty_tag('input', array('type'=>'submit', 'name'=>'export', 'value'=>s(get_string('saas_export:export', 'report_saas_export')), 'class'=>'boxaligncenter'));
+
+        $rows[] = array($export_btn);
+
         print html_writer::start_tag('DIV', array('class'=>'saas_area_large'));
         print $OUTPUT->box_start('generalbox boxaligncenter');
 
@@ -1014,13 +1025,6 @@ function saas_show_export_options($url, $selected_ocs=true) {
         $table->tablealign = 'center';
         $table->cellpadding = 5;
         print html_writer::table($table);
-
-        print html_writer::start_tag('DIV', array('class'=>'centeralign'));
-        // Removido em função de decisão do Cislaghi de 20/02/2015
-        // print html_writer::checkbox('send_user_details', 'ok', true, 'Enviar detalhes de estudantes (últimos acessos e notas)');
-        // print html_writer::empty_tag('br');
-        print html_writer::empty_tag('input', array('type'=>'submit', 'name'=>'export', 'value'=>s(get_string('saas_export:export', 'report_saas_export')), 'class'=>'boxaligncenter'));
-        print html_writer::end_tag('DIV');
 
         print html_writer::end_tag('form');
 

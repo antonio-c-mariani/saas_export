@@ -17,6 +17,8 @@
     padding-bottom: 2em;
 }
 
+.saas_hr {border-color: #CCC}
+
 .saas_list {list-style-type: none;}
 
 .saas_export_message {color: green; text-align: center; margin-top: 1em; margin-bottom: 1em;}

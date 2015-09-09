@@ -551,7 +551,7 @@ class saas {
             $ofertas = array($oferta_curso_id => $oferta);
         }
 
-        $sql = "SELECT DISTINCT od.*, d.nome, oc.id as ocid, cm.id IS NOT NULL AS mapped
+        $sql = "SELECT DISTINCT od.*, d.nome, oc.id as ocid, CASE WHEN cm.id IS NULL THEN 0 ELSE 1 END AS mapped
                   FROM {saas_ofertas_cursos} oc
                   JOIN {config_plugins} cp ON (cp.plugin = 'report_saas_export' AND cp.name = 'api_key' AND cp.value = oc.api_key)
                   JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_id = oc.id AND od.enable = 1 AND od.api_key = oc.api_key)
@@ -634,12 +634,44 @@ class saas {
         return $ofertas;
     }
 
-    function get_sql_users_by_oferta_curso_polo_categories($ocid=0, $poloid=0, $only_count=false) {
+    private function build_sql_users_by_oferta_curso_polo($ocid, $poloid, $only_count, $join_polo) {
         global $DB;
 
-        $condition = '';
-	    $field = '';
         $params = array('contextcourse'=>CONTEXT_COURSE, 'enable'=>ENROL_INSTANCE_ENABLED);
+
+        $fields_user = '';
+        $condition = '';
+        $join_user_info_data = '';
+
+        $userid_field = $this->get_config('userid_field');
+        if ($userid_field == 'username' || $userid_field == 'idnumber') {
+            $fields_user = ", ra.userid, u.{$userid_field} AS uid";
+            $condition .= " AND u.{$userid_field} != ''";
+        } else {
+            if ($fieldid = $DB->get_field('user_info_field', 'id', array('shortname'=>$userid_field))) {
+                $fields_user = ", ra.userid, udt.data AS uid";
+                $join_user_info_data = "JOIN {user_info_data} udt ON (udt.fieldid = :fieldid AND udt.userid = u.id AND udt.data != '')";
+                $params['fieldid'] = $fieldid;
+            } else {
+                print_error('userid_field_unknown', 'report_saas_export', '', $userid_field);
+            }
+        }
+
+        $fields = 'oc.id AS ocid, sp.id AS p_id, scr.role';
+        $distinct = '';
+        $group_by = '';
+        $order_by = '';
+
+        if ($only_count) {
+            $fields .= ', COUNT(DISTINCT ra.userid) AS count';
+            $group_by = 'GROUP BY oc.id, sp.id, scr.role';
+        } else {
+            $concat_nome = self::get_concat_nome();
+	        $fields .= $fields_user . ", {$concat_nome} as nome";
+            $distinct = 'DISTINCT';
+            $order_by = ", {$concat_nome}";
+        }
+
         if ($ocid) {
             $condition .= ' AND oc.id = :ocid';
             $params['ocid'] = $ocid;
@@ -649,105 +681,10 @@ class saas {
             $params['poloid'] = $poloid;
         }
 
-        $join_user_info_data = '';
-        if ($only_count) {
-            $group_by = 'GROUP BY oc.id, sp.id, scr.role';
-            $field .= ', COUNT(DISTINCT ra.userid) AS count';
-            $distinct = '';
-            $orderby = '';
-        } else {
-            $group_by = '';
-            $userid_field = $this->get_config('userid_field');
-            if ($userid_field == 'username' || $userid_field == 'idnumber') {
-                $field .= ", ra.userid, u.{$userid_field} AS uid";
-            } else {
-                if ($fieldid = $DB->get_field('user_info_field', 'id', array('shortname'=>$userid_field))) {
-                    $join_user_info_data = "JOIN {user_info_data} udt ON (udt.fieldid = :fieldid AND udt.userid = u.id AND udt.data != '')";
-                    $params['fieldid'] = $fieldid;
-                    $field = ", ra.userid, udt.data AS uid";
-                } else {
-                    print_error('userid_field_unknown', 'report_saas_export', '', $userid_field);
-                }
-            }
-            $distinct = 'DISTINCT';
-            $concat_nome = self::get_concat_nome();
-            $orderby = ", {$concat_nome}";
-	        $field .= ", {$concat_nome} as nome";
-        }
-
         list($join_ra, $params_ra) = $this->get_join_role_assignments();
         $params = array_merge($params, $params_ra);
 
-        $concat_category = self::get_concat_category();
-        $sql = "SELECT {$distinct} oc.id AS ocid, sp.id AS p_id, scr.role $field
-                  FROM {saas_ofertas_cursos} oc
-                  JOIN {config_plugins} cp ON (cp.plugin = 'report_saas_export' AND cp.name = 'api_key' AND cp.value = oc.api_key)
-                  JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_id = oc.id AND od.enable = 1 AND od.api_key = oc.api_key)
-                  JOIN {saas_map_course} cm ON (cm.group_map_id = od.group_map_id)
-                  JOIN {course} c ON (c.id = cm.courseid)
-                  JOIN {enrol} e ON (e.courseid = c.id AND e.status = :enable)
-                  JOIN {user_enrolments} ue ON (ue.enrolid = e.id)
-                  JOIN {context} ctx ON (ctx.instanceid = c.id AND ctx.contextlevel = :contextcourse)
-                  {$join_ra}
-                  JOIN {saas_config_roles} scr ON (scr.roleid = ra.roleid AND scr.role IN ('student', 'tutor_polo'))
-                  JOIN {user} u ON (u.id = ue.userid AND u.deleted = 0)
-                  {$join_user_info_data}
-                  JOIN {course_categories} cc ON (cc.id = c.category)
-                  JOIN {course_categories} ccp ON (ccp.id = cc.id OR cc.path LIKE {$concat_category})
-                  JOIN {saas_map_catcourses_polos} smcp ON (smcp.type = 'category' AND smcp.instanceid = ccp.id)
-                  JOIN {saas_polos} sp ON (sp.id = smcp.polo_id AND sp.enable = 1 AND sp.api_key = oc.api_key)
-                 WHERE oc.enable = 1
-                   {$condition}
-              {$group_by}
-              ORDER BY oc.id, sp.id, scr.role {$orderby}";
-        return array($sql, $params);
-    }
-
-    function get_sql_users_by_oferta_curso_polo_courses($ocid=0, $poloid=0, $only_count=false) {
-        global $DB;
-
-        $condition = '';
-	    $field = '';
-        $params = array('contextcourse'=>CONTEXT_COURSE, 'enable'=>ENROL_INSTANCE_ENABLED);
-        if ($ocid) {
-            $condition .= ' AND oc.id = :ocid';
-            $params['ocid'] = $ocid;
-        }
-        if ($poloid) {
-            $condition .= ' AND sp.id = :poloid';
-            $params['poloid'] = $poloid;
-        }
-
-        $join_user_info_data = '';
-        if ($only_count) {
-            $group_by = 'GROUP BY oc.id, sp.id, scr.role';
-            $field = ', COUNT(DISTINCT ra.userid) AS count';
-            $distinct = '';
-            $orderby = '';
-        } else {
-            $group_by = '';
-            $userid_field = $this->get_config('userid_field');
-            if ($userid_field == 'username' || $userid_field == 'idnumber') {
-                $field = ", ra.userid, u.{$userid_field} AS uid";
-            } else {
-                if ($fieldid = $DB->get_field('user_info_field', 'id', array('shortname'=>$userid_field))) {
-                    $join_user_info_data = "JOIN {user_info_data} udt ON (udt.fieldid = :fieldid AND udt.userid = u.id AND udt.data != '')";
-                    $params['fieldid'] = $fieldid;
-                    $field = ", ra.userid, udt.data AS uid";
-                } else {
-                    print_error('userid_field_unknown', 'report_saas_export', '', $userid_field);
-                }
-            }
-            $distinct = 'DISTINCT';
-            $concat_nome = self::get_concat_nome();
-            $orderby = ", {$concat_nome}";
-            $field .= ", {$concat_nome} as nome";
-        }
-
-        list($join_ra, $params_ra) = $this->get_join_role_assignments();
-        $params = array_merge($params, $params_ra);
-
-        $sql = "SELECT {$distinct} oc.id AS ocid, sp.id AS p_id, scr.role $field
+        $sql = "SELECT {$distinct} $fields
                   FROM {saas_ofertas_cursos} oc
                   JOIN {config_plugins} cp ON (cp.plugin = 'report_saas_export' AND cp.name = 'api_key' AND cp.value = oc.api_key)
                   JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_id = oc.id AND od.enable = 1 AND od.api_key = oc.api_key)
@@ -760,81 +697,35 @@ class saas {
                   JOIN {saas_config_roles} scr ON (scr.roleid = ra.roleid AND scr.role IN ('student', 'tutor_polo'))
                   JOIN {user} u ON (u.id = ue.userid AND u.deleted = 0)
                   {$join_user_info_data}
-                  JOIN {saas_map_catcourses_polos} smcp ON (smcp.type = 'course' AND smcp.instanceid = c.id)
-                  JOIN {saas_polos} sp ON (sp.id = smcp.polo_id AND sp.enable = 1 AND sp.api_key = oc.api_key)
+                  {$join_polo}
                  WHERE oc.enable = 1
                    {$condition}
               {$group_by}
-              ORDER BY oc.id, sp.id, scr.role {$orderby}";
+              ORDER BY oc.id, sp.id, scr.role {$order_by}";
         return array($sql, $params);
     }
 
+    function get_sql_users_by_oferta_curso_polo_categories($ocid=0, $poloid=0, $only_count=false) {
+        $concat_category = self::get_concat_category();
+        $join = " JOIN {course_categories} cc ON (cc.id = c.category)
+                  JOIN {course_categories} ccp ON (ccp.id = cc.id OR cc.path LIKE {$concat_category})
+                  JOIN {saas_map_catcourses_polos} smcp ON (smcp.type = 'category' AND smcp.instanceid = ccp.id)
+                  JOIN {saas_polos} sp ON (sp.id = smcp.polo_id AND sp.enable = 1 AND sp.api_key = oc.api_key)";
+        return $this->build_sql_users_by_oferta_curso_polo($ocid, $poloid, $only_count, $join);
+    }
+
+    function get_sql_users_by_oferta_curso_polo_courses($ocid=0, $poloid=0, $only_count=false) {
+        $join = " JOIN {saas_map_catcourses_polos} smcp ON (smcp.type = 'course' AND smcp.instanceid = c.id)
+                  JOIN {saas_polos} sp ON (sp.id = smcp.polo_id AND sp.enable = 1 AND sp.api_key = oc.api_key)";
+        return $this->build_sql_users_by_oferta_curso_polo($ocid, $poloid, $only_count, $join);
+    }
+
     function get_sql_users_by_oferta_curso_polo_groups($ocid=0, $poloid=0, $only_count=false) {
-        global $DB;
-
-        $condition = '';
-	    $field = '';
-        $params = array('contextcourse'=>CONTEXT_COURSE, 'enable'=>ENROL_INSTANCE_ENABLED);
-        if ($ocid) {
-            $condition .= ' AND oc.id = :ocid';
-            $params['ocid'] = $ocid;
-        }
-        if ($poloid) {
-            $condition .= ' AND sp.id = :poloid';
-            $params['poloid'] = $poloid;
-        }
-
-        $join_user_info_data = '';
-        if ($only_count) {
-            $group_by = 'GROUP BY oc.id, sp.id, scr.role';
-            $field .= ', COUNT(DISTINCT ra.userid) AS count';
-            $distinct = '';
-            $orderby = '';
-        } else {
-            $group_by = '';
-            $userid_field = $this->get_config('userid_field');
-            if ($userid_field == 'username' || $userid_field == 'idnumber') {
-                $field .= ", ra.userid, u.{$userid_field} AS uid";
-            } else {
-                if ($fieldid = $DB->get_field('user_info_field', 'id', array('shortname'=>$userid_field))) {
-                    $join_user_info_data = "JOIN {user_info_data} udt ON (udt.fieldid = :fieldid AND udt.userid = u.id AND udt.data != '')";
-                    $params['fieldid'] = $fieldid;
-                    $field .= ", ra.userid, udt.data AS uid";
-                } else {
-                    print_error('userid_field_unknown', 'report_saas_export', '', $userid_field);
-                }
-            }
-            $distinct = 'DISTINCT';
-            $concat_nome = self::get_concat_nome();
-            $orderby = ", {$concat_nome}";
-	        $field .= ", {$concat_nome} as nome";
-        }
-
-        list($join_ra, $params_ra) = $this->get_join_role_assignments();
-        $params = array_merge($params, $params_ra);
-
-        $sql = "SELECT {$distinct} oc.id AS ocid, sp.id AS p_id, scr.role $field
-                  FROM {saas_ofertas_cursos} oc
-                  JOIN {config_plugins} cp ON (cp.plugin = 'report_saas_export' AND cp.name = 'api_key' AND cp.value = oc.api_key)
-                  JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_id = oc.id AND od.enable = 1 AND od.api_key = oc.api_key)
-                  JOIN {saas_map_course} cm ON (cm.group_map_id = od.group_map_id)
-                  JOIN {course} c ON (c.id = cm.courseid)
-                  JOIN {enrol} e ON (e.courseid = c.id AND e.status = :enable)
-                  JOIN {user_enrolments} ue ON (ue.enrolid = e.id)
-                  JOIN {context} ctx ON (ctx.instanceid = c.id AND ctx.contextlevel = :contextcourse)
-                  {$join_ra}
-                  JOIN {saas_config_roles} scr ON (scr.roleid = ra.roleid AND scr.role IN ('student', 'tutor_polo'))
-                  JOIN {user} u ON (u.id = ue.userid AND u.deleted = 0)
-                  {$join_user_info_data}
-                  JOIN {groups} g ON (g.courseid = c.id)
+        $join = " JOIN {groups} g ON (g.courseid = c.id)
                   JOIN {groups_members} gm ON (gm.groupid = g.id AND gm.userid = u.id)
                   JOIN {saas_map_groups_polos} spm ON (spm.groupname = g.name AND spm.api_key = oc.api_key)
-                  JOIN {saas_polos} sp ON (sp.id = spm.polo_id AND sp.enable = 1 AND sp.api_key = oc.api_key)
-                 WHERE oc.enable = 1
-                   {$condition}
-              {$group_by}
-              ORDER BY oc.id, sp.id, scr.role {$orderby}";
-        return array($sql, $params);
+                  JOIN {saas_polos} sp ON (sp.id = spm.polo_id AND sp.enable = 1 AND sp.api_key = oc.api_key)";
+        return $this->build_sql_users_by_oferta_curso_polo($ocid, $poloid, $only_count, $join);
     }
 
     function has_polo() {
@@ -883,49 +774,58 @@ class saas {
         global $DB;
 
         $params = array('contextlevel'=>CONTEXT_COURSE, 'enable'=>ENROL_INSTANCE_ENABLED);
-        $group_by = 'GROUP BY odid, scr.role';
 
+        $fields_user = '';
+        $group_by_user = ''.
+        $condition_user = '';
         $join_user_info_data = '';
-        $join_user_lastaccess = '';
-        if ($only_count) {
-            $fields = ', COUNT(DISTINCT ra.userid) AS count';
-            $orderby = '';
-        } else {
-            $fields = ', u.suspended AS global_suspended';
-            $group_by .= ', u.suspended';
 
-            $userid_field = $this->get_config('userid_field');
-            if ($userid_field == 'username' || $userid_field == 'idnumber') {
-                $fields .= ", ra.userid, u.{$userid_field} AS uid";
-                $group_by .= ', ra.userid, u.' . $userid_field;
+        $userid_field = $this->get_config('userid_field');
+        if ($userid_field == 'username' || $userid_field == 'idnumber') {
+            $fields_user .= ", ra.userid, u.{$userid_field} AS uid";
+            $group_by_user .= ", ra.userid, u.{$userid_field}";
+            $condition_user .= " AND u.{$userid_field} != ''";
+        } else {
+            if ($fieldid = $DB->get_field('user_info_field', 'id', array('shortname'=>$userid_field))) {
+                $fields_user .= ", ra.userid, udt.data AS uid";
+                $group_by_user .= ', ra.userid, udt.data';
+                $join_user_info_data = "JOIN {user_info_data} udt ON (udt.fieldid = :fieldid AND udt.userid = u.id AND udt.data != '')";
+                $params['fieldid']   = $fieldid;
             } else {
-                if ($fieldid = $DB->get_field('user_info_field', 'id', array('shortname'=>$userid_field))) {
-                    $join_user_info_data = "JOIN {user_info_data} udt ON (udt.fieldid = :fieldid AND udt.userid = u.id AND udt.data != '')";
-                    $params['fieldid'] = $fieldid;
-                    $fields .= ", ra.userid, udt.data AS uid";
-                    $group_by .= ', ra.userid, udt.data';
-                } else {
-                    print_error('userid_field_unknown', 'report_saas_export', '', $userid_field);
-                }
+                print_error('userid_field_unknown', 'report_saas_export', '', $userid_field);
             }
-            $join_user_lastaccess = 'LEFT JOIN {user_lastaccess} ul ON (ul.userid = u.id AND ul.courseid = c.id)';
+        }
+
+        $fields = 'od.id AS odid, scr.role';
+        $condition = $condition_user;
+        $group_by = 'GROUP BY odid, scr.role';
+        $order_by = '';
+        $join_user_lastaccess = '';
+
+        if ($only_count) {
+            $fields .= ', COUNT(DISTINCT ra.userid) AS count';
+        } else {
+            $fields .= $fields_user . ', u.suspended AS global_suspended';
             $fields .= ', MIN(ue.status) as suspended, MAX(u.currentlogin) AS currentlogin, MAX(ul.timeaccess) AS lastaccess';
-            $orderby = ', ' . self::get_concat_nome();
+            $group_by .= $group_by_user . ', u.suspended';
+            $join_user_lastaccess = 'LEFT JOIN {user_lastaccess} ul ON (ul.userid = u.id AND ul.courseid = c.id)';
+            $order_by .= 'ORDER BY odid, scr.role, ' . self::get_concat_nome();
             $group_by .= ', u.firstname, u.lastname';
         }
 
-        $condition = '';
         if ($id_oferta_disciplina) {
-            $condition .= " AND od.id = {$id_oferta_disciplina}";
+            $condition .= ' AND od.id = :podid';
+            $params['podid'] = $id_oferta_disciplina;
         }
         if ($id_oferta_curso) {
-            $condition .= " AND oc.id = {$id_oferta_curso}";
+            $condition .= ' AND oc.id = :pocid';
+            $params['pocid'] = $id_oferta_curso;
         }
 
         list($join_ra, $params_ra) = $this->get_join_role_assignments();
         $params = array_merge($params, $params_ra);
 
-        $sql = "SELECT od.id AS odid, scr.role {$fields}
+        $sql = "SELECT {$fields}
                   FROM {saas_ofertas_cursos} oc
                   JOIN {config_plugins} cp ON (cp.plugin = 'report_saas_export' AND cp.name = 'api_key' AND cp.value = oc.api_key)
                   JOIN {saas_ofertas_disciplinas} od ON (od.oferta_curso_id = oc.id AND od.enable = 1 AND od.api_key = oc.api_key)
@@ -941,8 +841,8 @@ class saas {
                   {$join_user_lastaccess}
                  WHERE oc.enable = 1
                    {$condition}
-              {$group_by}
-              ORDER BY odid, scr.role {$orderby}";
+                   {$group_by}
+                   {$order_by}";
         return array($sql, $params);
     }
 
@@ -1037,7 +937,9 @@ class saas {
 
         $role_types = $this->get_role_types('polos');
 
-        $polos = $this->get_polos();
+        $all_polos = $this->get_polos();
+        $polos = $this->get_polos_by_oferta_curso($pocid);
+        $polos = $polos[$pocid];
 
         $polo_mapping_type = $this->get_config('polo_mapping');
         switch ($polo_mapping_type) {
@@ -1060,6 +962,7 @@ class saas {
             if ($rec->p_id != $poloid) {
                 if ($poloid !== 0) {
                     $this->send_users_by_polo($oc->uid, $polos[$poloid]->uid, $users_by_roles);
+                    unset($polos[$poloid]);
                 }
                 foreach ($role_types AS $r) {
                     $users_by_roles[$r] = array();
@@ -1072,15 +975,22 @@ class saas {
         //send the last one
         if ($poloid !== 0) {
             $this->send_users_by_polo($oc->uid, $polos[$poloid]->uid, $users_by_roles);
+            unset($polos[$poloid]);
         }
 
-        // clear not mapped polos that user selected
         $users_by_roles = array();
         foreach ($role_types AS $r) {
             $users_by_roles[$r] = array();
         }
+
+        // send mapped polos without users
+        foreach($polos AS $p) {
+            $this->send_users_by_polo($oc->uid, $p->uid, $users_by_roles);
+        }
+
+        // clear not mapped polos that user selected
         foreach ($clear_poloids AS $poloid=>$ok) {
-            $this->send_users_by_polo($oc->uid, $polos[$poloid]->uid, $users_by_roles, false, false);
+            $this->send_users_by_polo($oc->uid, $all_polos[$poloid]->uid, $users_by_roles, false, false);
         }
     }
 
@@ -1104,9 +1014,8 @@ class saas {
     function send_users_by_ofertas_disciplinas($pocid, $send_user_details=true, $clear_odids=array()) {
         global $DB;
 
-        $ofertas = $this->get_ofertas_disciplinas($pocid, false);
+        $ofertas = $this->get_ofertas_disciplinas($pocid, true);
         $ofertas = $ofertas[$pocid];
-
         $role_types = $this->get_role_types('disciplinas');
 
         list($sql, $params) = $this->get_sql_users_by_oferta_disciplina($pocid);
@@ -1119,6 +1028,7 @@ class saas {
             if ($rec->odid != $odid) {
                 if ($odid !== 0) {
                     $this->send_users_by_oferta_disciplina($ofertas[$odid], $users_by_roles, $send_user_details);
+                    unset($ofertas[$odid]);
                 }
                 foreach ($role_types AS $r) {
                     $users_by_roles[$r] = array();
@@ -1133,13 +1043,20 @@ class saas {
         //send the last one
         if ($odid !== 0) {
             $this->send_users_by_oferta_disciplina($ofertas[$odid], $users_by_roles, $send_user_details);
+            unset($ofertas[$odid]);
         }
 
-        // clear not mapped ods that user selected
         $users_by_roles = array();
         foreach ($role_types AS $r) {
             $users_by_roles[$r] = array();
         }
+
+        // send mapped polos without users
+        foreach($ofertas AS $od) {
+            $this->send_users_by_oferta_disciplina($od, $users_by_roles, false, true);
+        }
+
+        // clear not mapped ods that user selected
         foreach ($clear_odids AS $odid=>$ok) {
             $this->send_users_by_oferta_disciplina($ofertas[$odid], $users_by_roles, false, false);
         }

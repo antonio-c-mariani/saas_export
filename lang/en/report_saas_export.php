@@ -25,9 +25,8 @@ $string['periodo'] = 'Período';
 $string['od_mapped'] = 'Ofertas de disciplinas mapeadas:';
 $string['od_notmapped'] = 'Ofertas de disciplinas não mapeadas, mas com dados no SAAS:';
 $string['polos_mapped'] = 'Polos mapeadas:';
-$string['polos_notmapped'] = 'Polos não mapeadas, mas com dados no SAAS:';
-$string['mark_clear'] = '(*) Marque acima as ofertas de disciplina e polos cujos professores, estudantes e tutores
-    devam ser delas/deles desassociados no SAAS.';
+$string['polos_notmapped'] = 'Polos não mapeados, mas com dados no SAAS:';
+$string['mark_clear'] = 'Marque para limpar os dados no SAAS';
 
 $string['course_selection'] = 'Seleção de curso Moodle';
 $string['course_selection_help'] = '<P>Clique num dos cursos Moodle abaixo para associá-lo à oferta de disciplina indicada
@@ -204,7 +203,7 @@ $string['username'] = 'Id. Usuário';
 $string['userid_field'] = 'Id. de usuários';
 $string['userid_field_help'] = 'Campo do perfil do usuário a ser usado como identificador único do usuário no SAAS.';
 $string['filter_userid_field'] = 'Aplicar filtro de CPF';
-$string['filter_userid_field_help'] = 'Aplicar filtro de limpeza e formatação de CFP sobre o campo \'Id. de usuários\', resultando em um número de 11 dígitos (com zeros a esquerda).';
+$string['filter_userid_field_help'] = 'Aplicar filtro de limpeza e formatação de CPF sobre o campo \'Id. de usuários\', resultando em um número de 11 dígitos (com zeros a esquerda).';
 
 $string['lastcourseaccess'] = 'Último acesso<br>à disciplina';
 $string['suspended'] = 'Evasão<br><small>Suspenso disciplina</small>';
