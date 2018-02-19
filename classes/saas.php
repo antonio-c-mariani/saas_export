@@ -10,7 +10,6 @@ class saas {
     public static $role_types_polos       = array('tutor_polo', 'student');
 
     public $config;
-    public $api_key;
 
     private $saas_enrols_with_itemid = null;
 
@@ -38,8 +37,6 @@ class saas {
             $role = 'roles_'.$r;
             $this->config->$role = isset($roles[$r]) ? implode(',', $roles[$r]) : '';
         }
-
-        $this->api_key = $this->get_config('api_key');
     }
 
     function get_config($name) {
@@ -51,8 +48,11 @@ class saas {
     }
 
     function is_configured() {
-        $url = $this->get_config('ws_url');
-        return !empty($this->api_key) && !empty($url);
+        return !empty($this->get_config('sigla_instituicao'));
+    }
+
+    function api_key() {
+        return $this->get_config('api_key');
     }
 
     function verify_config($url='', $print_error=true) {
@@ -61,6 +61,8 @@ class saas {
             set_config('nome_instituicao', $institution->nome, 'report_saas_export');
             set_config('sigla_instituicao', $institution->sigla, 'report_saas_export');
         } catch(Exception $e) {
+            set_config('nome_instituicao', '', 'report_saas_export');
+            set_config('sigla_instituicao', '', 'report_saas_export');
             $a = new stdClass();
             $a->url_saas = $this->make_ws_url();
             $a->message = $e->getMessage();
@@ -125,32 +127,36 @@ class saas {
            } catch (dml_write_exception $e){
                print_error('bd_error', 'report_saas_export', '', $e->debuginfo);
            } catch (Exception $e){
-               $url = new moodle_url('index.php', array('action'=>'settings'));
+               $url = new moodle_url($this->report_path() . '/index.php', array('action'=>'settings'));
                print_error('ws_error', 'report_saas_export', $url, $e->getMessage());
            }
        }
     }
 
+    function report_path() {
+        return strpos(__FILE__, '/admin/report/') !== false ? '/admin/report/saas_export' : '/report/saas_export';
+    }
+
     function load_disciplinas_saas(){
         global $DB;
 
-        if (empty($this->api_key)) {
+        if (!$this->is_configured()) {
             return;
         }
 
-        $local = $DB->get_records_menu('saas_disciplinas', array('api_key'=>$this->api_key), '', 'id, enable');
+        $local = $DB->get_records_menu('saas_disciplinas', array('api_key'=>$this->api_key()), '', 'id, enable');
 
         $disciplinas = $this->get_ws('disciplinas');
         $disciplinas = empty($disciplinas) ? array() : $disciplinas;
 
         foreach ($disciplinas as $dis) {
             $dis->enable = 1;
-            if ($id = $DB->get_field('saas_disciplinas', 'id', array('api_key'=>$this->api_key, 'uid' => $dis->uid))) {
+            if ($id = $DB->get_field('saas_disciplinas', 'id', array('api_key'=>$this->api_key(), 'uid' => $dis->uid))) {
                 $dis->id = $id;
                 $DB->update_record('saas_disciplinas', $dis);
                 unset($local[$id]);
             } else {
-                $dis->api_key = $this->api_key;
+                $dis->api_key = $this->api_key();
                 $DB->insert_record('saas_disciplinas', $dis);
             }
         }
@@ -165,23 +171,23 @@ class saas {
     function load_cursos_saas(){
         global $DB;
 
-        if (empty($this->api_key)) {
+        if (!$this->is_configured()) {
             return;
         }
 
-        $local = $DB->get_records_menu('saas_cursos', array('api_key'=>$this->api_key), '', 'id, enable');
+        $local = $DB->get_records_menu('saas_cursos', array('api_key'=>$this->api_key()), '', 'id, enable');
 
         $cursos = $this->get_ws('cursos');
         $cursos = empty($cursos) ? array() : $cursos;
 
         foreach ($cursos as $cur) {
             $cur->enable = 1;
-            if ($id = $DB->get_field('saas_cursos', 'id', array('api_key'=>$this->api_key, 'uid' => $cur->uid))) {
+            if ($id = $DB->get_field('saas_cursos', 'id', array('api_key'=>$this->api_key(), 'uid' => $cur->uid))) {
                 $cur->id = $id;
                 $DB->update_record('saas_cursos', $cur);
                 unset($local[$id]);
             } else {
-                $cur->api_key = $this->api_key;
+                $cur->api_key = $this->api_key();
                 $DB->insert_record('saas_cursos', $cur);
             }
         }
@@ -196,17 +202,17 @@ class saas {
     function load_ofertas_cursos_saas(){
         global $DB;
 
-        if (empty($this->api_key)) {
+        if (!$this->is_configured()) {
             return;
         }
 
-        $local = $DB->get_records_menu('saas_ofertas_cursos', array('api_key'=>$this->api_key), '', 'id, enable');
+        $local = $DB->get_records_menu('saas_ofertas_cursos', array('api_key'=>$this->api_key()), '', 'id, enable');
 
         $ofertas_cursos_saas = $this->get_ws('ofertas/cursos');
         $ofertas_cursos_saas = empty($ofertas_cursos_saas) ? array() : $ofertas_cursos_saas;
 
         foreach ($ofertas_cursos_saas as $oferta_curso) {
-            $curso_id = $DB->get_field('saas_cursos', 'id', array('api_key' => $this->api_key, 'uid' => $oferta_curso->curso->uid));
+            $curso_id = $DB->get_field('saas_cursos', 'id', array('api_key' => $this->api_key(), 'uid' => $oferta_curso->curso->uid));
             if (empty($curso_id)) {
                 $curso_id = -1;
             }
@@ -217,13 +223,13 @@ class saas {
             $record->periodo = $oferta_curso->periodo;
             $record->enable = 1;
 
-            if ($id = $DB->get_field('saas_ofertas_cursos', 'id', array('api_key'=>$this->api_key, 'uid' => $oferta_curso->uid))) {
+            if ($id = $DB->get_field('saas_ofertas_cursos', 'id', array('api_key'=>$this->api_key(), 'uid' => $oferta_curso->uid))) {
                 $record->id = $id;
                 $DB->update_record('saas_ofertas_cursos', $record);
                 unset($local[$id]);
             } else {
                 $record->uid = $oferta_curso->uid;
-                $record->api_key = $this->api_key;
+                $record->api_key = $this->api_key();
                 $DB->insert_record('saas_ofertas_cursos', $record);
             }
         }
@@ -238,22 +244,22 @@ class saas {
     function load_ofertas_disciplinas_saas(){
         global $DB;
 
-        if (empty($this->api_key)) {
+        if (!$this->is_configured()) {
             return;
         }
 
-        $local = $DB->get_records_menu('saas_ofertas_disciplinas', array('api_key'=>$this->api_key), '', 'id, enable');
+        $local = $DB->get_records_menu('saas_ofertas_disciplinas', array('api_key'=>$this->api_key()), '', 'id, enable');
 
         $ofertas_disciplinas = $this->get_ws('ofertas/disciplinas');
         $ofertas_disciplinas = empty($ofertas_disciplinas) ? array() : $ofertas_disciplinas;
 
         foreach ($ofertas_disciplinas as $oferta_disciplina){
-            $disciplina_id = $DB->get_field('saas_disciplinas', 'id', array('api_key' => $this->api_key, 'uid' => $oferta_disciplina->disciplina->uid));
+            $disciplina_id = $DB->get_field('saas_disciplinas', 'id', array('api_key' => $this->api_key(), 'uid' => $oferta_disciplina->disciplina->uid));
             if (empty($disciplina_id)) {
                 $disciplina_id = -1;
             }
 
-            $oferta_curso_id = $DB->get_field('saas_ofertas_cursos', 'id', array('api_key' => $this->api_key, 'uid' => $oferta_disciplina->ofertaCurso->uid));
+            $oferta_curso_id = $DB->get_field('saas_ofertas_cursos', 'id', array('api_key' => $this->api_key(), 'uid' => $oferta_disciplina->ofertaCurso->uid));
             if (empty($oferta_curso_id)) {
                 $oferta_curso_id = -1;
             }
@@ -265,13 +271,13 @@ class saas {
             $record->oferta_curso_id = $oferta_curso_id;
             $record->enable = 1;
 
-            if ($id = $DB->get_field('saas_ofertas_disciplinas', 'id', array('api_key' => $this->api_key, 'uid' => $oferta_disciplina->uid))) {
+            if ($id = $DB->get_field('saas_ofertas_disciplinas', 'id', array('api_key' => $this->api_key(), 'uid' => $oferta_disciplina->uid))) {
                 $record->id = $id;
                 $DB->update_record('saas_ofertas_disciplinas', $record);
                 unset($local[$id]);
             } else {
                 $record->uid = $oferta_disciplina->uid;
-                $record->api_key = $this->api_key;
+                $record->api_key = $this->api_key();
                 $max = $DB->get_field_sql("SELECT MAX(group_map_id) FROM {saas_ofertas_disciplinas}");
                 $record->group_map_id = empty($max) ? 1 : $max+1;
                 $DB->insert_record('saas_ofertas_disciplinas', $record);
@@ -288,11 +294,11 @@ class saas {
     function load_polos_saas() {
         global $DB;
 
-        if (empty($this->api_key)) {
+        if (!$this->is_configured()) {
             return;
         }
 
-        $local = $DB->get_records_menu('saas_polos', array('api_key'=>$this->api_key), '', 'id, enable');
+        $local = $DB->get_records_menu('saas_polos', array('api_key'=>$this->api_key()), '', 'id, enable');
 
         $polos_saas = $this->get_ws('polos');
         $polos_saas = empty($polos_saas) ? array() : $polos_saas;
@@ -303,13 +309,13 @@ class saas {
             $record->cidade = $pl->cidade;
             $record->estado = $pl->estado;
             $record->enable = 1;
-            if ($id = $DB->get_field('saas_polos', 'id', array('api_key'=>$this->api_key, 'uid' => $pl->uid))) {
+            if ($id = $DB->get_field('saas_polos', 'id', array('api_key'=>$this->api_key(), 'uid' => $pl->uid))) {
                 $record->id = $id;
                 $DB->update_record('saas_polos', $record);
                 unset($local[$id]);
             } else {
                 $record->uid = $pl->uid;
-                $record->api_key = $this->api_key;
+                $record->api_key = $this->api_key();
                 $DB->insert_record('saas_polos', $record);
             }
         }
@@ -383,7 +389,7 @@ class saas {
     function get_disciplinas() {
         global $DB;
 
-        return $DB->get_records('saas_disciplinas', array('enable'=>1, 'api_key'=>$this->api_key), 'nome');
+        return $DB->get_records('saas_disciplinas', array('enable'=>1, 'api_key'=>$this->api_key()), 'nome');
     }
 
     function get_disciplinas_for_oc($ocid=0, $menu_format=false) {
@@ -425,13 +431,13 @@ class saas {
     function get_polos() {
         global $DB;
 
-        return $DB->get_records('saas_polos', array('enable'=>1, 'api_key'=>$this->api_key));
+        return $DB->get_records('saas_polos', array('enable'=>1, 'api_key'=>$this->api_key()));
     }
 
     function get_polo_by_uid($uid) {
         global $DB;
 
-        return $DB->get_record('saas_polos', array('uid'=>$uid, 'api_key'=>$this->api_key, 'enable'=>1));
+        return $DB->get_record('saas_polos', array('uid'=>$uid, 'api_key'=>$this->api_key(), 'enable'=>1));
     }
 
     // retorna os polos por oferta de curso
@@ -498,7 +504,7 @@ class saas {
     function has_oferta_curso() {
         global $DB;
 
-        return $DB->record_exists('saas_ofertas_cursos', array('enable'=>1, 'api_key'=>$this->api_key));
+        return $DB->record_exists('saas_ofertas_cursos', array('enable'=>1, 'api_key'=>$this->api_key()));
     }
 
     // retorna todas as ofertas de curso
@@ -511,7 +517,7 @@ class saas {
                  WHERE oc.api_key = :api_key
                    AND oc.enable = 1
               ORDER BY c.nome, oc.ano, oc.periodo";
-        return $DB->get_records_sql($sql, array('api_key'=>$this->api_key));
+        return $DB->get_records_sql($sql, array('api_key'=>$this->api_key()));
     }
 
     // retorna uma oferta de curso com base em seu id
@@ -524,7 +530,7 @@ class saas {
                  WHERE oc.api_key = :api_key
                    AND oc.id = :id
                    AND oc.enable = 1";
-        return $DB->get_record_sql($sql, array('api_key'=>$this->api_key, 'id'=>$id));
+        return $DB->get_record_sql($sql, array('api_key'=>$this->api_key(), 'id'=>$id));
     }
 
     // retorna array com ofertas de curso e respectivas ofertas de disciplinas, mapeadas ou não
@@ -584,7 +590,7 @@ class saas {
         global $DB;
 
         return $DB->get_records('saas_ofertas_disciplinas',
-                                 array('group_map_id'=>$group_map_id, 'api_key'=>$this->api_key, 'enable'=>1),
+                                 array('group_map_id'=>$group_map_id, 'api_key'=>$this->api_key(), 'enable'=>1),
                                  null, 'id, oferta_curso_id');
     }
 
@@ -731,14 +737,14 @@ class saas {
     function has_polo() {
         global $DB;
 
-        return $DB->record_exists('saas_polos', array('enable'=>1, 'api_key'=>$this->api_key));
+        return $DB->record_exists('saas_polos', array('enable'=>1, 'api_key'=>$this->api_key()));
     }
 
     function get_polos_menu() {
         global $DB;
 
         $concat_polo = saas::get_concat_polo();
-        return $DB->get_records_menu('saas_polos', array('enable'=>1, 'api_key'=>$this->api_key), 'nome', "id, {$concat_polo} as nome");
+        return $DB->get_records_menu('saas_polos', array('enable'=>1, 'api_key'=>$this->api_key()), 'nome', "id, {$concat_polo} as nome");
     }
 
     function get_polos_count() {
@@ -1544,7 +1550,6 @@ class saas {
             echo "\n== {$msg}\n";
         } else {
             $this->progressbar->update_full(0, $msg);
-            ob_flush();
         }
     }
 
@@ -1555,7 +1560,6 @@ class saas {
             echo '  --' . $final_msg . "\n";
         } else {
             $this->progressbar->update($this->progressbar_count, $this->progressbar_total, $final_msg);
-            ob_flush();
         }
     }
 
@@ -1565,7 +1569,6 @@ class saas {
             echo "\n== {$msg}\n";
         } else {
             $this->progressbar->update_full(100, $msg);
-            ob_flush();
         }
     }
 

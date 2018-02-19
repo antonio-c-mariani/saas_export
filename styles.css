@@ -10,14 +10,20 @@
     margin-right: auto;
 }
 
+h3.leftalign, h4.leftalign, h5.leftalign {
+    text-align: left;
+}
+
+div.saas_area_large > h3, div.saas_area_large > h4, div.saas_area_large > h5 {
+    text-align: left;
+}
+
 .saas_oferta_curso_menu {
     width: 80%;
     margin-left: auto;
     margin-right: 10%;
     padding-bottom: 2em;
 }
-
-.saas_hr {border-color: #CCC}
 
 .saas_list {list-style-type: none;}
 
@@ -48,6 +54,7 @@ tr.saas_alternatecolor td.saas_alternatecolor {
     background-color: #F8F8F8;
 }
 
+.saas_table {margin-left: 30px;}
 .saas_table tr.r0 {background-color: #E0E0E0;}
 .saas_table tr.r1 {background-color: #F8F8F8;}
 

@@ -1,7 +1,7 @@
 Moodle SAAS Export
 ==================
 
-Este módulo possibilita a exportação de dados do Moodle (versões 2.0 a 2.9) para o
+Este módulo possibilita a exportação de dados do Moodle (versões 2.0 a 3.4) para o
 SAAS (Sistema de Acompanhamento e Avaliação dos Cursos da Rede e-Tec Brasil).
 Os dados exportados incluem:
 
@@ -95,18 +95,22 @@ Permissões de acesso
 ====================
 
 O módulo SAAS define três permissões que controlam o acesso às suas funções:
+
     report/saas_export:view     - visualizar as configurações e dados a serem exportados
     report/saas_export:config   - configurar o módulo
     report/saas_export:export   - mapear ofertas de disciplinas e polos e exportar dados para SAAS
+
 Qualquer pessoa que utilize o módulo precisa no mínimo ter a permissão "report/saas_export:view" em nível global
 (de sistema). Adicionalmente ela pode ter uma ou as duas outras permissões, conforme o tipo de ação que ela deva realizar.
 
 O caso normal é a mesma pessoa poder tanto visualizar como configurar o módulo e exportar os dados para o SAAS.
 Neste caso a sugestão é:
+
     1) defina (crie) um novo papel no Moodle chamado "Gerente SAAS", selecionando a opção "Sistema" no item
        "Tipos de contexto onde esse papel pode ser atribuído" e marcando como "Permitir" as três permissões acima indicadas;
     2) atribua em nível global (de sistema) este papel às pessoas que devam ter estas permissões.
 As ações acima descritas estão disponíveis, respectivamente, nos itens:
     "Administração do site" => "Usuários" => "Definir papéis" e
     "Administração do site" => "Usuários" => "Atribuir papéis globais"
+
 da caixa de "Administração".

@@ -2,7 +2,7 @@
 
 $string['pluginname'] = 'Exportar dados SAAS';
 
-$string['add_polo'] = 'Adicionar novo polo';
+$string['add_polo'] = 'Adicionar polo';
 $string['add_oferta'] = 'Adicionar oferta de disciplina';
 $string['nome_polo'] = 'Nome do polo';
 $string['invalid_nome_polo'] = 'Nome de polo inválido';
@@ -191,8 +191,8 @@ $string['ws_url_help'] = 'URL do servidor do SAAS para onde os dados serão tran
 
 $string['api_key'] = 'Chave da Instituição';
 $string['api_key_help'] = 'Chave de identificação da instituição definida no SAAS. Entre em contato com a administração do SAAS para solicitar a chave.';
-$string['saas_access_fail'] = 'Não foi possível obter os dados da institução via URL: \'{$a->url_saas}\'.<br>
-    Entre em contato com a administração do SAAS para confirmar a validade desta URL.<br>
+$string['saas_access_fail'] = 'Não foi possível obter os dados da Instituição.<br>
+    Entre em contato com a administração do SAAS para confirmar a validade da URL e da chave da instituição.<br>
     Erro: \'{$a->message}\'';
 $string['nome_instituicao'] = 'Instituição';
 
@@ -260,3 +260,6 @@ $string['no_changes'] = 'Os dados não foram salvos pois não houve alterações
 $string['moodle_group'] = 'Grupo Moodle';
 $string['polo_saas'] = 'Polo SAAS';
 $string['suspended_settings'] = 'Inscrições suspensas';
+
+$string['no_institution'] = 'Obtida automaticamente a partir da URL e Chave configuradas acima.<br>
+     É prerequisito para o mapeamento de ofertas de disciplinas e de polos, e para posterior exportação de dados para o SAAS.';

@@ -32,9 +32,9 @@ class saas_export_settings_form extends moodleform {
         global $DB, $CFG, $OUTPUT, $saas;
 
         $syscontext = saas::get_context_system();
-        $may_config = has_capability('report/saas_export:config', $syscontext);
+        $can_config = has_capability('report/saas_export:config', $syscontext);
 
-        if ($may_config) {
+        if ($can_config) {
             $attributes = array();
             $text_attr = array('size' => 50);
         } else {
@@ -60,9 +60,10 @@ class saas_export_settings_form extends moodleform {
         $mform->setType('api_key', PARAM_RAW);
 
 
-        if (isset($saas->config->nome_instituicao)) {
-            $mform->addElement('static', 'nome_instituicao', get_string('nome_instituicao', 'report_saas_export'));
+        if (!$saas->is_configured()) {
+            $saas->config->nome_instituicao = html_writer::tag('font', get_string('no_institution', 'report_saas_export'), array('color'=>'Blue'));
         }
+        $mform->addElement('static', 'nome_instituicao', get_string('nome_instituicao', 'report_saas_export'));
 
         // ----------------------------------------------------------------------------------------------
         $mform->addElement('header', 'course_settings', get_string('course_settings', 'report_saas_export'));
@@ -191,7 +192,7 @@ class saas_export_settings_form extends moodleform {
 
         $this->set_data($saas->config);
 
-        if ($may_config) {
+        if ($can_config) {
             $this->add_action_buttons();
         }
     }

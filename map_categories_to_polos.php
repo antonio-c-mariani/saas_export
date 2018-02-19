@@ -75,30 +75,25 @@ if (isset($_POST['map_polos']) && isset($_POST['save']) && $may_export) {
     $message = $saved  ? get_string('saved', 'report_saas_export') : get_string('no_changes', 'report_saas_export');
 }
 
-saas_show_nome_instituicao();
-print html_writer::start_tag('DIV', array('align'=>'center'));
-print $OUTPUT->heading(get_string('category_to_polo', 'report_saas_export') . $OUTPUT->help_icon('category_to_polo', 'report_saas_export'), 3);
-print html_writer::end_tag('DIV');
-
-print html_writer::start_tag('div', array('class'=>'saas_area_large'));
+echo saas_print_title(get_string('category_to_polo', 'report_saas_export') . $OUTPUT->help_icon('category_to_polo', 'report_saas_export'));
 
 if (!empty($errors)) {
-    print $OUTPUT->box_start('generalbox boxwidthwide');
-    print html_writer::start_tag('ul');
+    $txt = html_writer::start_tag('ul');
     foreach ($errors AS $err) {
-        print html_writer::tag('LI', $err, array('class'=>'saas_export_error'));
+        $txt .= html_writer::tag('LI', $err, array('class'=>'saas_export_error'));
     }
-    print html_writer::end_tag('ul');
-    print $OUTPUT->box_end();
+    $txt .= html_writer::end_tag('ul');
+
+    echo $OUTPUT->box($txt, 'generalbox boxwidthwide');
 } else if ($message) {
-    print $OUTPUT->heading($message, 4, 'saas_export_message');
+    echo $OUTPUT->heading($message, 4, 'saas_export_message');
 }
 
 $categories = saas_get_category_tree_map_categories_polos();
 $polos = $saas->get_polos_menu();
 
 if (empty($categories)) {
-    print $OUTPUT->heading('Não foram encontrados mapeamentos de cursos Moodle para ofertas de disciplinas', 3);
+    echo saas_print_alert('Não foram encontrados mapeamentos de cursos Moodle para ofertas de disciplinas');
 } else {
     $rows = array();
     saas_mount_category_tree_map_categories_polos($categories, $polos, $rows);
@@ -110,15 +105,11 @@ if (empty($categories)) {
     $table->size = array('60%', '40%');
     $table->data = $rows;
 
-    print html_writer::start_tag('form', array('method'=>'post', 'action'=>'index.php'));
-    print html_writer::empty_tag('input', array('type'=>'hidden', 'name'=>'action', 'value'=>'polo_mapping'));
+    $form = html_writer::start_tag('form', array('method'=>'post', 'action'=>'index.php'));
+    $form .= html_writer::empty_tag('input', array('type'=>'hidden', 'name'=>'action', 'value'=>'polo_mapping'));
+    $form .= html_writer::table($table);
+    $form .= html_writer::empty_tag('input', array('type'=>'submit', 'name'=>'save', 'value'=>s(get_string('save', 'admin'))));
+    $form .= html_writer::end_tag('form');
 
-    print $OUTPUT->box_start('generalbox');
-    $table->tablealign = 'center';
-    print html_writer::table($table);
-    print $OUTPUT->box_end();
-
-    print html_writer::empty_tag('input', array('type'=>'submit', 'name'=>'save', 'value'=>s(get_string('save', 'admin'))));
-    print html_writer::end_tag('form');
+    echo $OUTPUT->box($form, 'generalbox saas_area_large');
 }
-print html_writer::end_tag('div');

@@ -3,15 +3,15 @@
 defined('MOODLE_INTERNAL') || die();
 
 $syscontext = saas::get_context_system();
-$may_export = has_capability('report/saas_export:export', $syscontext);
+$can_export = has_capability('report/saas_export:export', $syscontext);
 
 $message = '';
 
-if (isset($_POST['map_polos']) && isset($_POST['save']) && $may_export) {
+if (isset($_POST['map_polos']) && isset($_POST['save']) && $can_export) {
     $saved = false;
 
     foreach ($_POST['map_polos'] AS $groupname=>$poloid) {
-        if ($map_group_polo = $DB->get_record('saas_map_groups_polos', array('api_key'=>$saas->api_key, 'groupname'=>$groupname), 'id, polo_id')) {
+        if ($map_group_polo = $DB->get_record('saas_map_groups_polos', array('api_key'=>$saas->api_key(), 'groupname'=>$groupname), 'id, polo_id')) {
             if (empty($poloid)) {
                 $DB->delete_records('saas_map_groups_polos', array('id'=>$map_group_polo->id));
                 $saved = true;
@@ -27,7 +27,7 @@ if (isset($_POST['map_polos']) && isset($_POST['save']) && $may_export) {
         } else {
             if (!empty($poloid)) {
                 $obj = new stdClass();
-                $obj->api_key = $saas->api_key;
+                $obj->api_key = $saas->api_key();
                 $obj->groupname = $groupname;
                 $obj->polo_id = $poloid;
                 $DB->insert_record('saas_map_groups_polos', $obj);
@@ -66,77 +66,74 @@ $sql = "SELECT DISTINCT g.name as groupname, spm.polo_id
       ORDER BY g.name";
 $map = $DB->get_records_sql($sql);
 
-saas_show_nome_instituicao();
-print html_writer::start_tag('DIV', array('align'=>'center'));
-print $OUTPUT->heading(get_string('group_to_polo', 'report_saas_export') .
-      $OUTPUT->help_icon('group_to_polo', 'report_saas_export'), 3);
-print html_writer::end_tag('DIV');
+echo saas_print_title(get_string('group_to_polo', 'report_saas_export') . $OUTPUT->help_icon('group_to_polo', 'report_saas_export'));
 
-print html_writer::start_tag('div', array('class'=>'saas_area_normal'));
 if ($message) {
-    print $OUTPUT->heading($message, 4, 'saas_export_message');
+    echo $OUTPUT->heading($message, 5, 'saas_export_message');
 }
 
-print html_writer::start_tag('form', array('method'=>'post', 'action'=>'index.php'));
-print html_writer::empty_tag('input', array('type'=>'hidden', 'name'=>'action', 'value'=>'polo_mapping'));
+if (empty($map)) {
+    echo saas_print_alert('Não há polos a serem mapeados. É necessário inicialmente mapear as disciplinas.');
+} else {
+    $tipos = array(0 => 'Grupos novos (ainda não mapeados)',
+                   1 => 'Grupos corresponentes a polos SAAS',
+                   2 => 'Grupos que não correspondem a polos SAAS');
+    $html = '';
+    foreach ($tipos AS $tipo => $title) {
+        $rows = array();
+        $index = 0;
+        foreach ($map AS $groupname=>$m) {
+            $poloid = empty($m->polo_id) ? 0 : $m->polo_id;
+            if ($tipo == 0 && $poloid == 0 || $tipo == 1 && $poloid > 0 || $tipo == 2 && $poloid == -1) {
+                $index++;
+                $polo_name = empty($m->saas_polo_nome) ? '' : $m->saas_polo_nome;
 
-$tipos = array(0 => 'Grupos novos (ainda não mapeados)',
-               1 => 'Grupos corresponentes a polos SAAS',
-               2 => 'Grupos que não correspondem a polos SAAS');
-foreach ($tipos AS $tipo => $title) {
-    $rows = array();
-    $index = 0;
-    foreach ($map AS $groupname=>$m) {
-        $poloid = empty($m->polo_id) ? 0 : $m->polo_id;
-        if ($tipo == 0 && $poloid == 0 || $tipo == 1 && $poloid > 0 || $tipo == 2 && $poloid == -1) {
-            $index++;
-            $polo_name = empty($m->saas_polo_nome) ? '' : $m->saas_polo_nome;
+                $row = new html_table_row();
 
-            $row = new html_table_row();
+                $cell = new html_table_cell();
+                $cell->text = $index . '.';
+                $row->cells[] = $cell;
 
-            $cell = new html_table_cell();
-            $cell->text = $index . '.';
-            $row->cells[] = $cell;
+                $cell = new html_table_cell();
+                if (empty($m->polo_id)) {
+                    $cell->text = html_writer::tag('span', $m->groupname, array('style'=>'color:red'));
+                } else {
+                    $cell->text = $m->groupname;
+                }
+                $row->cells[] = $cell;
 
-            $cell = new html_table_cell();
-            if (empty($m->polo_id)) {
-                $cell->text = html_writer::tag('span', $m->groupname, array('style'=>'color:red'));
-            } else {
-                $cell->text = $m->groupname;
+                if ($poloid == 0) {
+                   $poloid = isset($candidate_group_names[$m->groupname]) ? $candidate_group_names[$m->groupname] : -1;
+                }
+
+                $cell = new html_table_cell();
+                $cell->text = $can_export ? html_writer::select($polos, "map_polos[{$groupname}]", $poloid) : $polo_name;
+                $row->cells[] = $cell;
+
+                $rows[] = $row;
             }
-            $row->cells[] = $cell;
+        }
 
-            if ($poloid == 0) {
-               $poloid = isset($candidate_group_names[$m->groupname]) ? $candidate_group_names[$m->groupname] : -1;
-            }
+        if (!empty($rows)) {
+            $table = new html_table();
+            $table->head  = array('', get_string('moodle_group', 'report_saas_export'), get_string('polo_saas', 'report_saas_export'));
+            $table->colclasses = array('leftalign', 'leftalign', 'centeralign');
+            $table->data = $rows;
+            $table->attributes = array('class'=>'saas_table');
 
-            $cell = new html_table_cell();
-            $cell->text = $may_export ? html_writer::select($polos, "map_polos[{$groupname}]", $poloid) : $polo_name;
-            $row->cells[] = $cell;
-
-            $rows[] = $row;
+            $str_title = saas_print_heading($title, 5);
+            $str_table = html_writer::table($table);
+            $html .= $OUTPUT->box($str_title  . $str_table, 'generalbox saas_area_large');
         }
     }
 
-    if (!empty($rows)) {
-        $table = new html_table();
-        $table->head  = array('', get_string('moodle_group', 'report_saas_export'), get_string('polo_saas', 'report_saas_export'));
-        $table->colclasses = array('leftalign', 'leftalign', 'leftalign');
-        $table->data = $rows;
-
-        $table->attributes = array('class'=>'saas_table');
-
-        print $OUTPUT->box_start('generalbox boxwidthwide');
-        print $OUTPUT->heading($title, 3);
-        $table->tablealign = 'center';
-        print html_writer::table($table);
-        print $OUTPUT->box_end();
+    if ($can_export) {
+        $html .= $OUTPUT->box(html_writer::empty_tag('input', array('type'=>'submit', 'name'=>'save', 'value'=>s(get_string('save', 'admin')))), 'saas_area_large');
     }
-}
 
-if ($may_export) {
-    print html_writer::empty_tag('input', array('type'=>'submit', 'name'=>'save', 'value'=>s(get_string('save', 'admin'))));
+    $form = html_writer::start_tag('form', array('method'=>'post', 'action'=>'index.php'));
+    $form .= html_writer::empty_tag('input', array('type'=>'hidden', 'name'=>'action', 'value'=>'polo_mapping'));
+    $form .= $html;
+    $form .= html_writer::end_tag('form');
+    echo $OUTPUT->box($form, '');
 }
-print html_writer::end_tag('form');
-
-print html_writer::end_tag('DIV');

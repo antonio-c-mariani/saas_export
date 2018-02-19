@@ -60,9 +60,9 @@ if ($options['help'] || !empty($unrecognized) || (empty($all) && empty($ocid) &&
             --ocid=<id da oferta de curso>  Exporta dados de uma oferta de curso específica
 
         Exemplos:
-           \$ php {$argv[0]} -a -d
+           \$ php {$argv[0]} -a -n
            \$ php {$argv[0]} -l
-           \$ php {$argv[0]} --ocid=42 -d
+           \$ php {$argv[0]} --ocid=42 -n
 
         \n";
         exit;
