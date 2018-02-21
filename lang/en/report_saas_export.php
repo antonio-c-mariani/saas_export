@@ -14,7 +14,7 @@ $string['estado'] = 'UF';
 $string['no_permission_to_config'] = 'Você não tem permissão para configurar o relatório de exportação de dados para SAAS';
 $string['no_permission_to_export'] = 'Você não tem permissão para exportar de dados para SAAS';
 $string['userid_field_unknown'] = 'Campo identificador de usuário inexistente: \'{$a}\'';
-$string['no_roles'] = 'Não foi selecionado nenhum papel para professores, estudantes e tutores. Nesta condição, nenhum dado será exportado para o SAAS.';
+$string['no_roles'] = 'Não foi selecionado nenhum papel para professores, estudantes e tutores. Nesta condição, nenhum dado poderá ser exportado para o SAAS.';
 
 $string['oferta_curso'] = 'Oferta de curso SAAS';
 $string['disciplina'] = 'Disciplina';

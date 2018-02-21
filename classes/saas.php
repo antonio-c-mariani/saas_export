@@ -48,7 +48,8 @@ class saas {
     }
 
     function is_configured() {
-        return !empty($this->get_config('sigla_instituicao'));
+        $sigla = $this->get_config('sigla_instituicao'); // separado em duas linhas em função de limitação do php 5.4
+        return !empty($sigla);
     }
 
     function api_key() {
