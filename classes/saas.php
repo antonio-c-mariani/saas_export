@@ -2,6 +2,7 @@
 
 require_once($CFG->libdir . '/gradelib.php');
 require_once(dirname(__FILE__) . '/curl.php');
+require_once(dirname(__FILE__) . '/saas_exception.php');
 
 class saas {
 
@@ -13,11 +14,9 @@ class saas {
 
     private $saas_enrols_with_itemid = null;
 
-    private $count_errors = 0;
-    private $errors = array();
-
     public $curl = null;
-    public $count_ws_calls = array('head'=>0, 'get'=>0, 'post'=>0, 'put'=>0, 'delete'=>0);
+    public $count_ws_calls = array('get'=>0, 'post'=>0);
+    public $time_ws_calls = array();
 
     function __construct() {
         $this->load_settings();
@@ -56,23 +55,15 @@ class saas {
         return $this->get_config('api_key');
     }
 
-    function verify_config($url='', $print_error=true) {
+    function verify_config($url='') {
         try {
-            $institution = $this->get_ws('', true);
+            $institution = $this->get_ws('', 200);
             set_config('nome_instituicao', $institution->nome, 'report_saas_export');
             set_config('sigla_instituicao', $institution->sigla, 'report_saas_export');
-        } catch(Exception $e) {
+        } catch (SAAS_Exception $e) {
             set_config('nome_instituicao', '', 'report_saas_export');
             set_config('sigla_instituicao', '', 'report_saas_export');
-            $a = new stdClass();
-            $a->url_saas = $this->make_ws_url();
-            $a->message = $e->getMessage();
-            if ($print_error) {
-                print_error('saas_access_fail', 'report_saas_export', $url, $a);
-            } else {
-                echo "\nERRO: " . get_string('saas_access_fail', 'report_saas_export', $a) . "\n";
-                return false;
-            }
+            print_error('ws_error', 'report_saas_export', $url);
         }
 
         $rteacher = $this->get_config('roles_teacher');
@@ -81,14 +72,8 @@ class saas {
         $rtutor_inst = $this->get_config('roles_tutor_inst');
 
         if (empty($rteacher) && empty($rstudent) && empty($rtutor_polo) && empty($rtutor_inst)) {
-            if ($print_error) {
-                print_error('no_roles', 'report_saas_export', $url);
-            } else {
-                echo "\nERRO: " . get_string('no_roles', 'report_saas_export') . "\n";
-                return false;
-            }
+            print_error('no_roles', 'report_saas_export', $url);
         }
-        return true;
     }
 
     // types: disciplinas || polos
@@ -127,6 +112,8 @@ class saas {
                set_config('lastupdated', $now, 'report_saas_export');
            } catch (dml_write_exception $e){
                print_error('bd_error', 'report_saas_export', '', $e->debuginfo);
+           } catch (SAAS_Exception $e){
+               print_error('get_saas_data_error', 'report_saas_export');
            } catch (Exception $e){
                $url = new moodle_url($this->report_path() . '/index.php', array('action'=>'settings'));
                print_error('ws_error', 'report_saas_export', $url, $e->getMessage());
@@ -147,7 +134,7 @@ class saas {
 
         $local = $DB->get_records_menu('saas_disciplinas', array('api_key'=>$this->api_key()), '', 'id, enable');
 
-        $disciplinas = $this->get_ws('disciplinas');
+        $disciplinas = $this->get_ws('disciplinas', 200);
         $disciplinas = empty($disciplinas) ? array() : $disciplinas;
 
         foreach ($disciplinas as $dis) {
@@ -336,17 +323,20 @@ class saas {
 
         $encoded_oferta_uid = rawurlencode($oc_uid);
         $polos = $this->get_ws("ofertas/cursos/{$encoded_oferta_uid}/polos");
-
-        $not_empty_polos = array();
-        foreach ($polos AS $p) {
-            foreach ($types AS $t) {
-                if ($p->$t != 0) {
-                    $not_empty_polos[$p->uid] = $p;
-                    break;
+        if ($polos == null) {
+            throw new Exception("Não foi possível obter os polos no SAAS. Por favor, verifique as configurações deste plugin");
+        } else {
+            $not_empty_polos = array();
+            foreach ($polos AS $p) {
+                foreach ($types AS $t) {
+                    if ($p->$t != 0) {
+                        $not_empty_polos[$p->uid] = $p;
+                        break;
+                    }
                 }
             }
+            return $not_empty_polos;
         }
-        return $not_empty_polos;
     }
 
     function get_not_empty_ofertas_disciplinas_saas_from_oferta_curso($oc_uid) {
@@ -357,17 +347,20 @@ class saas {
 
         $encoded_oferta_uid = rawurlencode($oc_uid);
         $ods = $this->get_ws("ofertas/cursos/{$encoded_oferta_uid}/disciplinas");
-
-        $not_empty_ods = array();
-        foreach ($ods AS $od) {
-            foreach ($types AS $t) {
-                if ($od->$t != 0) {
-                    $not_empty_ods[$od->uid] = $od;
-                    break;
+        if ($ods == null) {
+            throw new Exception("Não foi possível obter as ofertas de disciplinas no SAAS. Por favor, verifique as configurações deste plugin");
+        } else {
+            $not_empty_ods = array();
+            foreach ($ods AS $od) {
+                foreach ($types AS $t) {
+                    if ($od->$t != 0) {
+                        $not_empty_ods[$od->uid] = $od;
+                        break;
+                    }
                 }
             }
+            return $not_empty_ods;
         }
-        return $not_empty_ods;
     }
 
     function get_concatenated_categories_names($categoryid, $separator = '/') {
@@ -964,19 +957,19 @@ class saas {
         $poloid = 0;
         $users_by_roles = array();
         foreach ($rs AS $rec) {
-            $this->send_user($rec, $send_user_details);
-
-            if ($rec->p_id != $poloid) {
-                if ($poloid !== 0) {
-                    $this->send_users_by_polo($oc->uid, $polos[$poloid]->uid, $users_by_roles);
-                    unset($polos[$poloid]);
+            if ($this->send_user($rec, $send_user_details)) {
+                if ($rec->p_id != $poloid) {
+                    if ($poloid !== 0) {
+                        $this->send_users_by_polo($oc->uid, $polos[$poloid]->uid, $users_by_roles);
+                        unset($polos[$poloid]);
+                    }
+                    foreach ($role_types AS $r) {
+                        $users_by_roles[$r] = array();
+                    }
+                    $poloid = $rec->p_id;
                 }
-                foreach ($role_types AS $r) {
-                    $users_by_roles[$r] = array();
-                }
-                $poloid = $rec->p_id;
+                $users_by_roles[$rec->role][] = $rec->uid;
             }
-            $users_by_roles[$rec->role][] = $rec->uid;
         }
 
         //send the last one
@@ -1003,13 +996,15 @@ class saas {
 
     function send_users_by_polo($oc_uid, $polo_uid, $users_by_roles, $show_progress=true) {
         if ($show_progress) {
-            $this->update_progressbar("Exportando polos");
+            $this->update_progressbar();
         }
 
         $encoded_oferta_uid = rawurlencode($oc_uid);
         $encoded_polo_uid = rawurlencode($polo_uid);
         foreach ($users_by_roles AS $r=>$users) {
             $this->put_ws("ofertas/cursos/{$encoded_oferta_uid}/polos/{$encoded_polo_uid}/".self::$role_types[$r], $users);
+            $this->put_ws_count('cursos_polos_'.$r);
+            $this->update_progressbar(false);
         }
 
         if ($show_progress) {
@@ -1030,20 +1025,20 @@ class saas {
         $odid = 0;
         $users_by_roles = array();
         foreach ($rs AS $rec) {
-            $this->send_user($rec, $send_user_details);
+            if ($this->send_user($rec, $send_user_details)) {
+                if ($rec->odid != $odid) {
+                    if ($odid !== 0) {
+                        $this->send_users_by_oferta_disciplina($ofertas[$odid], $users_by_roles, $send_user_details);
+                        unset($ofertas[$odid]);
+                    }
+                    foreach ($role_types AS $r) {
+                        $users_by_roles[$r] = array();
+                    }
+                    $odid = $rec->odid;
+                }
 
-            if ($rec->odid != $odid) {
-                if ($odid !== 0) {
-                    $this->send_users_by_oferta_disciplina($ofertas[$odid], $users_by_roles, $send_user_details);
-                    unset($ofertas[$odid]);
-                }
-                foreach ($role_types AS $r) {
-                    $users_by_roles[$r] = array();
-                }
-                $odid = $rec->odid;
+                $users_by_roles[$rec->role][$rec->uid] = $rec;
             }
-
-            $users_by_roles[$rec->role][$rec->uid] = $rec;
         }
         $rs->close();
 
@@ -1071,13 +1066,14 @@ class saas {
 
     function send_users_by_oferta_disciplina($oferta_disciplina, $users_by_roles, $send_user_details=true, $show_progress=true) {
         if ($show_progress) {
-            $this->update_progressbar("Exportando ofertas de disciplina");
+            $this->update_progressbar();
         }
 
         $oferta_uid_encoded = rawurlencode($oferta_disciplina->uid);
         $suspended_as_evaded = $this->get_config('suspended_as_evaded');
         foreach ($users_by_roles AS $r=>$users) {
             $this->put_ws("ofertas/disciplinas/{$oferta_uid_encoded}/". self::$role_types[$r], array_keys($users));
+            $this->put_ws_count('disciplinas_'.$r);
             if ($r == 'student' && $send_user_details) {
                 $grades = $this->get_grades($oferta_disciplina->id);
                 $obj_nota = new stdClass();
@@ -1088,15 +1084,20 @@ class saas {
                     if (isset($grades[$user->userid])) {
                         $obj_nota->nota = $grades[$user->userid];
                         $this->put_ws("ofertas/disciplinas/{$oferta_uid_encoded}/estudantes/{$user_uid_encoded}/nota", $obj_nota);
+                        $this->put_ws_count('disciplinas_nota');
                     }
 
-                    if (!empty($users_lastaccess[$user->userid])) {
-                        $obj_lastaccess->ultimoAcesso = $users_lastaccess[$user->userid];
+                    if ($user->lastaccess !== null) {
+                        $obj_lastaccess->ultimoAcesso = $user->lastaccess;
                         $this->put_ws("ofertas/disciplinas/{$oferta_uid_encoded}/estudantes/{$user_uid_encoded}/ultimoAcesso", $obj_lastaccess);
+                        $this->put_ws_count('disciplinas_ultimoAcesso');
                     }
 
                     $obj_suspended->suspenso = $suspended_as_evaded && $user->suspended == ENROL_USER_SUSPENDED;
                     $this->put_ws("ofertas/disciplinas/{$oferta_uid_encoded}/estudantes/{$user_uid_encoded}/suspenso", $obj_suspended);
+                    $this->put_ws_count('disciplinas_suspenso');
+
+                    $this->update_progressbar(false);
                 }
             }
         }
@@ -1108,36 +1109,45 @@ class saas {
 
     function send_user($rec, $send_user_details=true) {
         if (!isset($this->sent_users[$rec->userid])) {
-            $user_uid_encoded = rawurlencode($rec->uid);
-            $this->put_ws("pessoas/{$user_uid_encoded}",  $this->get_user($rec->role, $rec->userid, $rec->uid));
-
-            if ($send_user_details && $rec->role == 'student') {
-                if (!empty($rec->currentlogin)) {
-                    $this->put_ws("pessoas/{$user_uid_encoded}/ultimoLogin", array('ultimoLogin'=>$rec->currentlogin));
+            try {
+                $user_uid_encoded = rawurlencode($rec->uid);
+                $this->put_ws("pessoas/{$user_uid_encoded}",  $this->get_user($rec->role, $rec->userid, $rec->uid), 204);
+                $this->put_ws_count('pessoa_'.$rec->role);
+                if ($send_user_details && $rec->role == 'student') {
+                    if (!empty($rec->currentlogin)) {
+                        $this->put_ws("pessoas/{$user_uid_encoded}/ultimoLogin", array('ultimoLogin'=>$rec->currentlogin), 204);
+                        $this->put_ws_count('pessoa_ultimoLogin');
+                    }
+                    $suspended = $this->get_config('suspended_as_evaded') && !empty($rec->global_suspended);
+                    $this->put_ws("pessoas/{$user_uid_encoded}/suspenso", array('suspenso'=>$suspended), 204);
+                    $this->put_ws_count('pessoa_suspenso_'.$rec->role);
                 }
-                $suspended = $this->get_config('suspended_as_evaded') && !empty($rec->global_suspended);
-                $this->put_ws("pessoas/{$user_uid_encoded}/suspenso", array('suspenso'=>$suspended));
+                $this->sent_users[$rec->userid] = true;
+            } catch (Exception $e) {
+                $this->sent_users[$rec->userid] = false;
+                $this->count_sent_users_failed[$rec->role]++;
+                $this->put_ws_count('pessoa_'.$rec->role);
             }
-            $this->sent_users[$rec->userid] = true;
             $this->count_sent_users[$rec->role]++;
         }
+
+        return $this->sent_users[$rec->userid];
     }
 
-    function send_data($selected_ocs=array(), $send_user_details=true, $clear_ods=array(), $clear_polos=array(), $print_error=true) {
+    function send_data($selected_ocs=array(), $send_user_details=true, $clear_ods=array(), $clear_polos=array()) {
         global $DB;
 
-        if ($this->verify_config('', $print_error) === false) {
-            exit;
-        }
+        $this->time_start = microtime(true);
+        $institution = $this->get_ws('');
 
-        $this->count_errors = 0;
-        $this->errors = array();
         $this->count_sent_ods = 0;
         $this->count_sent_polos = 0;
         $this->sent_users = array();
         $this->count_sent_users = array();
+        $this->count_sent_users_failed = array();
         foreach (self::$role_types AS $r=>$rname) {
             $this->count_sent_users[$r] = 0;
+            $this->count_sent_users_failed[$r] = 0;
         }
 
         $this->send_resume(false);
@@ -1181,24 +1191,23 @@ class saas {
             }
         }
 
+        $this->elapsed_time = microtime(true) - $this->time_start;
         $this->send_resume();
         $this->end_progressbar();
-
-        $result = array($this->count_errors, $this->errors, $this->count_sent_users, $this->count_sent_ods, $this->count_sent_polos);
-        return $result;
     }
 
     function send_resume($complete=true) {
         $resume = array();
         $resume['config'] = $this->config;
         if ($complete) {
-            $resume['count_errors'] = $this->count_errors;
-            $resume['errors'] = $this->errors;
             $resume['count_sent_ods'] = $this->count_sent_ods;
             $resume['count_sent_polos'] = $this->count_sent_polos;
             $resume['count_sent_users'] = $this->count_sent_users;
+            $resume['count_sent_users_failed'] = $this->count_sent_users_failed;
+            $resume['elapsed_time'] = $this->elapsed_time;
+            $resume['tempos_chamadas_ws'] = $this->time_ws_calls;
         }
-        $this->post_ws('moodle/configuracoes', $resume);
+        $this->post_ws('moodle/configuracoes', $resume, 202);
     }
 
     function send_polo($data) {
@@ -1206,7 +1215,7 @@ class saas {
         $new_polo->nome = trim($data->nome);
         $new_polo->cidade = trim($data->cidade);
         $new_polo->estado = $data->estado;
-        $this->post_ws('polos', $new_polo);
+        return $this->post_ws('polos', $new_polo);
     }
 
     function send_oferta_disciplina($data) {
@@ -1219,7 +1228,7 @@ class saas {
         $new_oferta->ofertaCurso->uid = $DB->get_field('saas_ofertas_cursos', 'uid', array('id'=>$data->oferta_curso_id), MUST_EXIST);
         $new_oferta->inicio = $data->inicio;
         $new_oferta->fim = $data->fim;
-        $this->post_ws('ofertas/disciplinas', $new_oferta);
+        return $this->post_ws('ofertas/disciplinas', $new_oferta);
     }
 
     //Métodos para acesso ao webservice.
@@ -1235,59 +1244,45 @@ class saas {
         $this->curl = new \report_saas_export\curl();
     }
 
-    function head_ws($functionname, $throw_exception=false) {
-        $this->init_curl();
-        $this->curl->head($this->make_ws_url($functionname));
-        $this->count_ws_calls['head']++;
-        return $this->handle_ws_errors('head', $throw_exception);
-    }
-
-    function get_ws($functionname='', $throw_exception=false) {
+    function get_ws($functionname='', $expected_http_code=200) {
         $this->init_curl();
         $response = $this->curl->get($this->make_ws_url($functionname));
-        $this->handle_ws_errors('get', $throw_exception);
         $this->count_ws_calls['get']++;
+        $this->signal_exception_if_error($expected_http_code);
         return json_decode($response);
     }
 
-    function post_ws($functionname, $data = array(), $throw_exception=false) {
+    function post_ws($functionname, $data = array(), $expected_http_code=201) {
         $this->init_curl();
         $options = array('CURLOPT_HTTPHEADER'=>array('Content-Type: application/json'));
         $response = $this->curl->post($this->make_ws_url($functionname), json_encode($data), $options);
-        $this->handle_ws_errors('post', $throw_exception);
         $this->count_ws_calls['post']++;
+        $this->signal_exception_if_error($expected_http_code);
         return json_decode($response);
     }
 
-    function put_ws($functionname, $data = array(), $throw_exception=false) {
+    function put_ws($functionname, $data = array(), $expected_http_code=204) {
+        $this->inicio_put_ws = microtime(true);
         $this->init_curl();
         $this->curl->put_json($this->make_ws_url($functionname), json_encode($data));
-        $this->count_ws_calls['put']++;
-        return $this->handle_ws_errors('put', $throw_exception);
+        $this->signal_exception_if_error($expected_http_code);
     }
 
-    function delete_ws($functionname, $data = array(), $throw_exception=false) {
-        $this->init_curl();
-        $this->curl->delete($this->make_ws_url($functionname), $data);
-        $this->count_ws_calls['delete']++;
-        return $this->handle_ws_errors('delete', $throw_exception);
-    }
-
-    function handle_ws_errors($ws_type, $throw_exception=false) {
-        $info = $this->curl->get_info();
-        if ($info['http_code'] <= 299) {
-            return true;
-        } else if ($info['http_code'] <= 499) {
-            $this->count_errors++;
-            if (count($this->errors) < 50) {
-                $this->errors[] = "Falha {$info['http_code']} executando '{$ws_type}' no SAAS para: ". $info['url'];
-            }
-            if ($throw_exception) {
-                throw new Exception("Falha {$info['http_code']} executando '{$ws_type}' no SAAS para: ". $info['url']);
-            }
-            return true;
+    function put_ws_count($mnemonico) {
+        $item = 'put_' . $mnemonico;
+        if (isset($this->count_ws_calls[$item])) {
+            $this->count_ws_calls[$item]++;
+            $this->time_ws_calls[$item] += microtime(true) - $this->inicio_put_ws;
         } else {
-            throw new Exception("Falha {$info['http_code']} executando '{$ws_type}' no SAAS para: ". $info['url']);
+            $this->count_ws_calls[$item] = 1;
+            $this->time_ws_calls[$item] = microtime(true) - $this->inicio_put_ws;
+        }
+    }
+
+    private function signal_exception_if_error($expected_http_code) {
+        $info = $this->curl->get_info();
+        if ($info['http_code'] != $expected_http_code) {
+            throw new SAAS_Exception('', $info['http_code']);
         }
     }
 
@@ -1547,6 +1542,7 @@ class saas {
     function start_progressbar($msg) {
         $this->progressbar_total = 0;
         $this->progressbar_count = 0;
+        $this->progressbar_msg = $msg;
         if (CLI_SCRIPT) {
             echo "\n== {$msg}\n";
         } else {
@@ -1554,11 +1550,15 @@ class saas {
         }
     }
 
-    function update_progressbar($msg) {
-        $this->progressbar_count++;
-        $final_msg = "{$msg}: {$this->progressbar_count}/{$this->progressbar_total}";
+    function update_progressbar($increment=true) {
+        if ($increment) {
+            $this->progressbar_count++;
+        }
+        $final_msg = "{$this->progressbar_msg}: {$this->progressbar_count}/{$this->progressbar_total}";
         if (CLI_SCRIPT) {
-            echo '  --' . $final_msg . "\n";
+            if ($increment) {
+                echo '  --' . $final_msg . "\n";
+            }
         } else {
             $this->progressbar->update($this->progressbar_count, $this->progressbar_total, $final_msg);
         }

@@ -192,8 +192,7 @@ $string['ws_url_help'] = 'URL do servidor do SAAS para onde os dados serão tran
 $string['api_key'] = 'Chave da Instituição';
 $string['api_key_help'] = 'Chave de identificação da instituição definida no SAAS. Entre em contato com a administração do SAAS para solicitar a chave.';
 $string['saas_access_fail'] = 'Não foi possível obter os dados da Instituição.<br>
-    Entre em contato com a administração do SAAS para confirmar a validade da URL e da chave da instituição.<br>
-    Erro: \'{$a->message}\'';
+    Entre em contato com a administração do SAAS para confirmar a validade da URL e da chave da instituição.';
 $string['nome_instituicao'] = 'Instituição';
 
 $string['course_name_default'] = 'Nome de cursos';
@@ -231,8 +230,10 @@ $string['no_class_offer_from_ws'] = 'Não foi localizada nenhuma oferta de disci
 $string['no_mapped_classes_offer'] = 'Não há ofertas de disciplinas mapeadas.';
 $string['no_mapped_courses_offer'] = 'Não há ofertas de cursos mapeadas mapeadas.';
 $string['bd_error'] = 'Falha de acesso ao banco de dados: {$a}';
-$string['ws_error'] = '{$a}<BR>Verifique se os campos \'URL SAAS\' e \'Chave da instituição\' estão corretos na aba de configurações.<BR>
+$string['ws_error'] = 'Verifique se os campos \'URL SAAS\' e \'Chave da instituição\' estão corretos na aba de configurações.<BR>
     Entre em contato com a equipe do SAAS caso tenhas alguma dúvida.';
+$string['get_saas_data_error'] = 'Erro ao buscar dados no SAAS.';
+$string['put_saas_data_error'] = 'Falha ao enviar dados para o SAAS. Tente novamente mais tarde.';
 $string['update_data_error'] = 'Erro ao atualizar base de dados {$a}';
 $string['get_data_error'] = 'Erro ao acessar base de dados {$a}';
 
@@ -263,3 +264,4 @@ $string['suspended_settings'] = 'Inscrições suspensas';
 
 $string['no_institution'] = 'Obtida automaticamente a partir da URL e Chave configuradas acima.<br>
      É prerequisito para o mapeamento de ofertas de disciplinas e de polos, e para posterior exportação de dados para o SAAS.';
+$string['send_failed'] = 'Houve problemas no envio de {$a} deles';

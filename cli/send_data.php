@@ -100,41 +100,39 @@ if ($list) {
     echo "\n";
 } else {
     echo 'Início: ' . date('d/m/Y H:i:s') . "\n";
-    $time_start = microtime(true);
 
     try {
-        list($count_errors, $errors, $count_sent_users, $count_sent_ods, $count_sent_polos) =
-            $saas->send_data($selected_ocs, $details, array(), array(), false);
+        $saas->send_data($selected_ocs, $details, array(), array(), false);
+        $count_sent_users = $saas->count_sent_users;
+        $count_sent_users_failed = $saas->count_sent_users_failed;
+        $count_sent_ods = $saas->count_sent_ods;
+        $count_sent_polos = $saas->count_sent_polos;
+        $elapsed_time = $saas->elapsed_time;
     } catch (Exception $e){
         var_dump($e->getMessage());
         exit;
     }
 
-
-    $time_end = microtime(true);
-    $execution_time = ($time_end - $time_start);
-    if ($execution_time <= 60) {
-        $msg = round($execution_time, 1) . ' segundos';
+    if ($elapsed_time <= 60) {
+        $msg = round($elapsed_time, 1) . ' segundos';
     } else {
-        $msg = round($execution_time/60, 2) . ' minutos';
+        $msg = round($elapsed_time/60, 2) . ' minutos';
     }
     echo "\nFim: " . date('d/m/Y H:i:s') . "\n";
     echo 'Tempo da exportação: ' . $msg. "\n";
-    echo 'Chamadas de WS = ' . var_export($saas->count_ws_calls, true) . "\n";
+    ksort($saas->count_ws_calls);
+    echo "\nChamadas de WS = " . var_export($saas->count_ws_calls, true) . "\n";
+    ksort($saas->time_ws_calls);
+    echo "\nTempos de WS = " . var_export($saas->time_ws_calls, true) . "\n";
 
     echo "\nOfertas de disciplinas exportadas = {$count_sent_ods}\n";
     echo "Polos exportados = {$count_sent_polos}\n";
     foreach ($count_sent_users AS $r=>$count) {
-        echo get_string($r.'s', 'report_saas_export') . " exportados = {$count}\n";
+        $msg_failed = '';
+        if ($count_sent_users_failed[$r] > 0) {
+            $msg_failed = "\n\t- " . get_string('send_failed', 'report_saas_export', $count_sent_users_failed[$r]);
+        }
+        echo get_string($r.'s', 'report_saas_export') . " exportados = {$count}{$msg_failed}\n";
     }
     echo "\n";
-
-    if ($count_errors > 0) {
-        $n = min($count_errors, 3);
-        echo "HOUVE {$count_errors} ERROS ao exportar os dados. Os primeiros {$n} estão listados abaixo:\n";
-        for ($i=0; $i < $n; $i++) {
-            echo "     - {$errors[$i]}\n";
-        }
-    }
-
 }

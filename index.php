@@ -366,13 +366,17 @@ switch ($action) {
 
                 $exception_msg = false;
                 try {
-                    list($count_errors, $errors, $count_sent_users, $count_sent_ods, $count_sent_polos) =
-                                        $saas->send_data($ocs, $send_user_details, $clear_ods, $clear_polos);
+                    $saas->send_data($ocs, $send_user_details, $clear_ods, $clear_polos);
+                    $count_sent_users = $saas->count_sent_users;
+                    $count_sent_users_failed = $saas->count_sent_users_failed;
+                    $count_sent_ods = $saas->count_sent_ods;
+                    $count_sent_polos = $saas->count_sent_polos;
+                    $elapsed_time = $saas->elapsed_time;
                 } catch (dml_exception $e){
                     $debuginfo = empty($e->debuginfo) ? '' : '<BR>'.$e->debuginfo;
                     $exception_msg = get_string('bd_error', 'report_saas_export', $e->getMessage() . $debuginfo);
                 } catch (Exception $e){
-                    $exception_msg = get_string('ws_error', 'report_saas_export', $e->getMessage());
+                    $exception_msg = get_string('put_saas_data_error', 'report_saas_export');
                 }
 
                 $report_url = $saas->make_ws_url('moodle/relatorioDeExportacao');
@@ -384,20 +388,25 @@ switch ($action) {
                     $rows[] = array('Ofertas de disciplinas exportadas', $count_sent_ods);
                     $rows[] = array('Polos exportados', $count_sent_polos);
                     foreach ($count_sent_users AS $r=>$count) {
-                        $rows[] = array(get_string($r.'s', 'report_saas_export') . ' exportados', $count);
+                        $msg_failed = '';
+                        if ($count_sent_users_failed[$r] > 0) {
+                            $msg_failed = ' (<font color="red">' . get_string('send_failed', 'report_saas_export', $count_sent_users_failed[$r]) . '</font>)';
+                        }
+                        $rows[] = array(get_string($r.'s', 'report_saas_export') . ' exportados', $count, $msg_failed);
                     }
+
+                    if ($elapsed_time <= 60) {
+                        $msg_elapsed_time = round($elapsed_time, 1) . ' segundos';
+                    } else {
+                        $msg_elapsed_time = round($elapsed_time/60, 2) . ' minutos';
+                    }
+                    $rows[] = array('Tempo de exportação', $msg_elapsed_time);
+
                     $table = new html_table();
                     $table->tablealign = 'center';
                     $table->attributes = array('class'=>'saas_table');
                     $table->data = $rows;
                     echo html_writer::table($table);
-
-                    if ($count_errors != 0) {
-                        $a = new stdClass();
-                        $a->report_url = $report_url;
-                        $a->errors = $count_errors;
-                        echo $OUTPUT->box(get_string('export_errors', 'report_saas_export', $a), array('class'=>'saas_export_error'));
-                    }
                 }
                 saas_show_export_options($baseurl, $ocs);
             } else {

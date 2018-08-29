@@ -1,269 +1,251 @@
 <?php
 
-die('Somente para testes');
-
 define('CLI_SCRIPT', true);
 error_reporting(E_ALL);
 
-if (strpos(__FILE__, '/admin/report/') !== false) {
-    require(dirname(dirname(dirname(dirname(dirname(__FILE__))))).'/config.php');
-} else {
-    require(dirname(dirname(dirname(dirname(__FILE__)))).'/config.php');
+require_once(dirname(__FILE__) . '/lib.php');
+require_once($CFG->libdir.'/clilib.php');
+
+list($options, $unrecognized) = cli_get_params(
+        array('help'     => false,
+              'do'       => false,
+              'update'   => false,
+             ),
+        array('h' => 'help',
+              'd' => 'do',
+              'u' => 'update',
+             ));
+
+$update_user_data = !empty($options['update']);
+$really_do = !empty($options['do']);
+
+if ($options['help'] || !$really_do) {
+        echo "
+        Define estrutura de testes:
+          \$ php {$argv[0]} [options]
+
+        Options:
+        -h, --help                  Mostra este auxílio
+        -d, --do                    Realmente definir estrutura de testes (serão criados usuários e cursos no Moodle)
+        -u, --update                Atualiza dados de todos usuários, em particular o email e a senha
+
+        Exemplos:
+           \$ php {$argv[0]} -d -u
+
+        \n";
+        exit;
 }
 
-defined('MOODLE_INTERNAL') || die('Interno');
+$dados = array(
+    array('categoria' => array('TÉCNICO EM ELETROTÉCNICA', 'FORTALEZA', '1º Período'),
+          'cursos'    => array('[2017/2] - 287264 - AMBIENTAÇÃO EM EAD',
+                               '[2017/2] - 287265 - DESENHO TÉCNICO',
+                               '[2017/2] - 287266 - ELETRICIDADE CA',
+                               '[2017/2] - 287267 - ELETRICIDADE CC',
+                               '[2017/2] - 287268 - ELETROMAGNETISMO',
+                               '[2017/2] - 287269 - INFORMÁTICA APLICADA',
+                               '[2017/2] - 287270 - SEGURANÇA EM INSTALAÇÕES E SERVIÇOS EM ELETRICIDADE',
+                               ),
+          'alunos'    => 61,
+         ),
+    array('categoria' => array('TÉCNICO EM ELETROTÉCNICA', 'FORTALEZA', '2º Período'),
+          'cursos'    => array('[2018/1] - 304539 - ELETRÔNICA ANALÓGICA',
+                               '[2018/1] - 304540 - ELETRÔNICA DIGITAL',
+                               '[2018/1] - 304541 - INSTALAÇÕES ELÉTRICAS PREDIAIS E INDUSTRIAIS',
+                               '[2018/1] - 304542 - INSTRUMENTAÇÃO E MEDIDAS ELÉTRICAS',
+                               '[2018/1] - 304543 - MÁQUINAS ELÉTRICAS',
+                               ),
+          'alunos'    => 42,
+         ),
+    array('categoria' => array('TÉCNICO EM ELETROTÉCNICA', 'PACAJÚS', '1º Período'),
+          'cursos'    => array('[2017/2] - 287271 - AMBIENTAÇÃO EM EAD',
+                               '[2017/2] - 287272 - DESENHO TÉCNICO',
+                               '[2017/2] - 287273 - ELETRICIDADE CA',
+                               '[2017/2] - 287274 - ELETRICIDADE CC',
+                               '[2017/2] - 287275 - ELETROMAGNETISMO',
+                               '[2017/2] - 287276 - INFORMÁTICA APLICADA',
+                               '[2017/2] - 287277 - SEGURANÇA EM INSTALAÇÕES E SERVIÇOS EM ELETRICIDADE',
+                               ),
+          'alunos'    => 62,
+         ),
+    array('categoria' => array('TÉCNICO EM ELETROTÉCNICA', 'PACAJÚS', '2º Período'),
+          'cursos'    => array('[2018/1] - 304544 - ELETRÔNICA ANALÓGICA',
+                               '[2018/1] - 304545 - ELETRÔNICA DIGITAL',
+                               '[2018/1] - 304546 - INSTALAÇÕES ELÉTRICAS PREDIAIS E INDUSTRIAIS',
+                               '[2018/1] - 304547 - INSTRUMENTAÇÃO E MEDIDAS ELÉTRICAS',
+                               '[2018/1] - 304548 - MÁQUINAS ELÉTRICAS',
+                               ),
+          'alunos'    => 48,
+         ),
+    array('categoria' => array('TÉCNICO EM INFORMÁTICA', 'CAMPOS SALES', '1º Período'),
+          'cursos'    => array('[2017/2] - 287278 - AMBIENTAÇÃO EM EDUCAÇÃO A DISTÂNCIA',
+                               '[2017/2] - 287279 - ARQUITETURA DE COMPUTADORES',
+                               '[2017/2] - 287280 - FUNDAMENTOS DE INFORMÁTICA',
+                               '[2017/2] - 287282 - LÓGICA DE PROGRAMAÇÃO',
+                               '[2017/2] - 287284 - SISTEMAS OPERACIONAIS',
+                               '[2017/2] - 287285 - SOFTWARES UTILITÁRIOS',
+                               ),
+          'alunos'    => 56,
+         ),
+    array('categoria' => array('TÉCNICO EM INFORMÁTICA', 'CAMPOS SALES', '2º Período'),
+          'cursos'    => array('[2018/1] - 304518 - EMPREENDEDORISMO',
+                               '[2018/1] - 304519 - ÉTICA PROFISSIONAL',
+                               '[2018/1] - 304520 - FUNDAMENTOS DE DESENVOLVIMENTO WEB',
+                               '[2018/1] - 304521 - INSTALAÇÃO E MANUTENÇÃO DE COMPUTADORES',
+                               '[2018/1] - 304522 - REDES DE COMPUTADORES',
+                               '[2018/1] - 304523 - SEGURANÇA DA INFORMAÇÃO',
+                               '[2018/1] - 304524 - SUPORTE AO USUÁRIO',
+                               ),
+          'alunos'    => 47,
+         ),
+    array('categoria' => array('TÉCNICO EM INFORMÁTICA', 'CAUCAIA', '1º Período'),
+          'cursos'    => array('[2017/2] - 287294 - AMBIENTAÇÃO EM EDUCAÇÃO A DISTÂNCIA',
+                               '[2017/2] - 287295 - ARQUITETURA DE COMPUTADORES',
+                               '[2017/2] - 287296 - FUNDAMENTOS DE INFORMÁTICA',
+                               '[2017/2] - 287298 - LÓGICA DE PROGRAMAÇÃO',
+                               '[2017/2] - 287300 - SISTEMAS OPERACIONAIS',
+                               '[2017/2] - 287301 - SOFTWARES UTILITÁRIOS',
+                               ),
+          'alunos'    => 56,
+         ),
+    array('categoria' => array('TÉCNICO EM INFORMÁTICA', 'CAUCAIA', '2º Período'),
+          'cursos'    => array('[2018/1] - 304525 - EMPREENDEDORISMO',
+                               '[2018/1] - 304526 - ÉTICA PROFISSIONAL',
+                               '[2018/1] - 304527 - FUNDAMENTOS DE DESENVOLVIMENTO WEB',
+                               '[2018/1] - 304528 - INSTALAÇÃO E MANUTENÇÃO DE COMPUTADORES',
+                               '[2018/1] - 304529 - REDES DE COMPUTADORES',
+                               '[2018/1] - 304530 - SEGURANÇA DA INFORMAÇÃO',
+                               '[2018/1] - 304531 - SUPORTE AO USUÁRIO',
+                               ),
+          'alunos'    => 51,
+         ),
+    array('categoria' => array('TÉCNICO EM INFORMÁTICA', 'PACAJÚS', '1º Período'),
+          'cursos'    => array('[2017/2] - 287286 - AMBIENTAÇÃO EM EDUCAÇÃO A DISTÂNCIA',
+                               '[2017/2] - 287287 - ARQUITETURA DE COMPUTADORES',
+                               '[2017/2] - 287288 - FUNDAMENTOS DE INFORMÁTICA',
+                               '[2017/2] - 287290 - LÓGICA DE PROGRAMAÇÃO',
+                               '[2017/2] - 287292 - SISTEMAS OPERACIONAIS',
+                               '[2017/2] - 287293 - SOFTWARES UTILITÁRIOS',
+                               ),
+          'alunos'    => 60,
+         ),
+    array('categoria' => array('TÉCNICO EM INFORMÁTICA', 'PACAJÚS', '2º Período'),
+          'cursos'    => array('[2018/1] - 304532 - EMPREENDEDORISMO',
+                               '[2018/1] - 304533 - ÉTICA PROFISSIONAL',
+                               '[2018/1] - 304534 - FUNDAMENTOS DE DESENVOLVIMENTO WEB',
+                               '[2018/1] - 304535 - INSTALAÇÃO E MANUTENÇÃO DE COMPUTADORES',
+                               '[2018/1] - 304536 - REDES DE COMPUTADORES',
+                               '[2018/1] - 304537 - SEGURANÇA DA INFORMAÇÃO',
+                               '[2018/1] - 304538 - SUPORTE AO USUÁRIO',
+                               ),
+          'alunos'    => 52,
+         ),
+    array('categoria' => array('TÉCNICO EM REDES DE COMPUTADORES', 'FORTALEZA', '1º Período'),
+          'cursos'    => array('[2017/2] - 287259 - AMBIENTAÇÃO EM EDUCAÇÃO A DISTÂNCIA',
+                               '[2017/2] - 287260 - ARQUITETURA DE COMPUTADORES',
+                               '[2017/2] - 287261 - COMUNICAÇÃO DE DADOS',
+                               '[2017/2] - 287262 - ELETRICIDADE PARA INFORMÁTICA',
+                               '[2017/2] - 287263 - SISTEMAS OPERACIONAIS',
+                               ),
+          'alunos'    => 50,
+         ),
+    array('categoria' => array('TÉCNICO EM REDES DE COMPUTADORES', 'FORTALEZA', '2º Período'),
+          'cursos'    => array('[2018/1] - 304506 - ADMINISTRAÇÃO DE SISTEMAS OPERACIONAIS',
+                               '[2018/1] - 304507 - GERENCIAMENTO DE REDES',
+                               '[2018/1] - 304508 - PROJETO DE REDES',
+                               '[2018/1] - 304509 - REDES DE COMPUTADORES',
+                               '[2018/1] - 304510 - SEGURANÇA DE REDES',
+                               ),
+          'alunos'    => 57,
+         ),
+    array('categoria' => array('TÉCNICO EM SEGURANÇA DO TRABALHO', 'FORTALEZA', '1º Período'),
+          'cursos'    => array('[2017/2] - 287238 - AMBIENTAÇÃO EM EAD',
+                               '[2017/2] - 287239 - DESENHO TÉCNICO',
+                               '[2017/2] - 287240 - INFORMÁTICA BÁSICA',
+                               '[2017/2] - 287241 - LEGISLAÇÃO E NORMAS TÉCNICAS E SMS',
+                               '[2017/2] - 287242 - PORTUGUÊS INSTRUMENTAL',
+                               '[2017/2] - 287243 - SEGURANÇA NA ELETROTÉCNICA',
+                               '[2017/2] - 287244 - SEGURANÇA PORTUÁRIA E AQUAVIÁRIA',
+                               '[2017/2] - 298263 - SEGURANÇA NA CONSTRUÇÃO NAVAL',
+                               ),
+          'alunos'    => 59,
+         ),
+    array('categoria' => array('TÉCNICO EM SEGURANÇA DO TRABALHO', 'FORTALEZA', '2º Período'),
+          'cursos'    => array('[2018/1] - 304511 - COMBATE E PREVENÇÃO A SINISTROS E ÁREAS CLASSIFICADAS',
+                               '[2018/1] - 304512 - INSPEÇÃO DE RISCOS',
+                               '[2018/1] - 304513 - MÁQUINAS E EQUIPAMENTOS',
+                               '[2018/1] - 304514 - MEDICINA DO TRABALHO',
+                               '[2018/1] - 304515 - SEGURANÇA DO TRABALHO',
+                               '[2018/1] - 304516 - SEGURANÇA NA INDÚSTRIA',
+                               '[2018/1] - 304517 - SEGURANÇA NA INDÚSTRIA DA CONSTRUÇÃO CIVIL',
+                               ),
+          'alunos'    => 47,
+         ),
+    );
 
-require_once($CFG->dirroot.'/group/lib.php');
-require_once($CFG->dirroot.'/course/lib.php');
-require_once($CFG->dirroot.'/user/lib.php');
 
-if (file_exists($CFG->dirroot.'/lib/coursecatlib.php')) {
-    require_once($CFG->dirroot.'/lib/coursecatlib.php');
-}
+echo "\nDefinindo estrutura de testes para o plugin do SAAS\n";
+
+$role_tutor_presencial = 'tutor_presencial';
+saas_create_role($role_tutor_presencial, 'Tutor Presencial');
+
+$role_tutor_distancia = 'tutor_distancia';
+saas_create_role($role_tutor_distancia, 'Tutor Distância');
 
 saas_create_user_custom_field('cpf', 'CPF');
 
-saas_create_category('Cursos');
-saas_create_category('Curso 1', 'Cursos');
-saas_create_category('Curso 2', 'Cursos');
-
-saas_create_user('e1', 'Student 1');
-saas_create_user('e2', 'Student 2');
-saas_create_user('e3', 'Student 3');
-saas_create_user('e4', 'Student 4');
-saas_create_user('p1', 'Teacher 1');
-saas_create_user('p2', 'Teacher 2');
-saas_create_user('tpolo1', 'TutorPolo 1');
-saas_create_user('tpolo2', 'TutorPolo 2');
-saas_create_user('tinst1', 'TutorInst 1');
-saas_create_user('tinst2', 'TutorInst 2');
-
-saas_user_custom_data('e1', 'cpf', rand(11111111111, 99999999999));
-saas_user_custom_data('e2', 'cpf', rand(11111111111, 99999999999));
-saas_user_custom_data('e3', 'cpf', rand(11111111111, 99999999999));
-saas_user_custom_data('e4', 'cpf', rand(11111111111, 99999999999));
-saas_user_custom_data('p1', 'cpf', rand(11111111111, 99999999999));
-saas_user_custom_data('p2', 'cpf', rand(11111111111, 99999999999));
-saas_user_custom_data('tpolo1', 'cpf', rand(11111111111, 99999999999));
-saas_user_custom_data('tpolo2', 'cpf', rand(11111111111, 99999999999));
-saas_user_custom_data('tinst1', 'cpf', rand(11111111111, 99999999999));
-saas_user_custom_data('tinst2', 'cpf', rand(11111111111, 99999999999));
-
-saas_create_role('tutor_presencial', 'Tutor Presencial');
-saas_create_role('tutor_distancia', 'Tutor a Distância');
-
-saas_create_course('Informática Básica', 'Curso 1');
-saas_create_course('Cálculo', 'Curso 1');
-saas_create_course('Legislação', 'Curso 2');
-saas_create_course('Algoritmos', 'Curso 2');
-
-saas_enrol_user('e1', 'Informática Básica', 'student');
-saas_enrol_user('e2', 'Informática Básica', 'student');
-saas_enrol_user('p1', 'Informática Básica', 'editingteacher');
-saas_enrol_user('tpolo1', 'Informática Básica', 'tutor_presencial');
-saas_enrol_user('tinst1', 'Informática Básica', 'tutor_distancia');
-
-saas_enrol_user('e1', 'Cálculo', 'student');
-saas_enrol_user('e2', 'Cálculo', 'student');
-saas_enrol_user('p1', 'Cálculo', 'editingteacher');
-saas_enrol_user('tpolo1', 'Cálculo', 'tutor_presencial');
-saas_enrol_user('tinst1', 'Cálculo', 'tutor_distancia');
-
-saas_enrol_user('e3', 'Legislação', 'student');
-saas_enrol_user('e4', 'Legislação', 'student');
-saas_enrol_user('p2', 'Legislação', 'editingteacher');
-saas_enrol_user('tpolo2', 'Legislação', 'tutor_presencial');
-saas_enrol_user('tinst2', 'Legislação', 'tutor_distancia');
-
-saas_enrol_user('e3', 'Algoritmos', 'student');
-saas_enrol_user('e4', 'Algoritmos', 'student');
-saas_enrol_user('p2', 'Algoritmos', 'editingteacher');
-saas_enrol_user('tpolo2', 'Algoritmos', 'tutor_presencial');
-saas_enrol_user('tinst2', 'Algoritmos', 'tutor_distancia');
-
-saas_create_group('Jaraguá do sul', 'Informática Básica');
-saas_create_group('São José', 'Informática Básica');
-saas_create_group('Jaraguá do sul', 'Cálculo');
-saas_create_group('São José', 'Cálculo');
-saas_create_group('Escola Estadual', 'Legislação');
-saas_create_group('Escola Municipal', 'Legislação');
-saas_create_group('Escola Estadual', 'Algoritmos');
-saas_create_group('Escola Municipal', 'Algoritmos');
-
-saas_add_group_member('Jaraguá do sul', 'Informática Básica', 'e2');
-saas_add_group_member('Jaraguá do sul', 'Informática Básica', 'tpolo1');
-saas_add_group_member('São José', 'Informática Básica', 'e1');
-saas_add_group_member('São José', 'Informática Básica', 'tpolo1');
-
-saas_add_group_member('Jaraguá do sul', 'Cálculo', 'e2');
-saas_add_group_member('Jaraguá do sul', 'Cálculo', 'tpolo1');
-saas_add_group_member('São José', 'Cálculo', 'e1');
-saas_add_group_member('São José', 'Cálculo', 'tpolo1');
-
-saas_add_group_member('Escola Estadual', 'Legislação', 'e4');
-saas_add_group_member('Escola Estadual', 'Legislação', 'tpolo2');
-saas_add_group_member('Escola Municipal', 'Legislação', 'e3');
-saas_add_group_member('Escola Municipal', 'Legislação', 'tpolo2');
-
-saas_add_group_member('Escola Estadual', 'Algoritmos', 'e4');
-saas_add_group_member('Escola Estadual', 'Algoritmos', 'tpolo2');
-saas_add_group_member('Escola Municipal', 'Algoritmos', 'e3');
-saas_add_group_member('Escola Municipal', 'Algoritmos', 'tpolo2');
-
-
-function saas_create_user($username, $name) {
-    global $DB, $CFG;
-
-    if ($DB->get_field('user', 'id', array('username'=>$username))) {
-        return;
+foreach ($dados as $dad) {
+    $cat_pai = '';
+    $catid = 0;
+    $catid_curso = 0;
+    foreach ($dad['categoria'] as $cat) {
+        $catid = saas_create_category($cat, $catid);
+        if (empty($catid_curso)) {
+           $catid_curso = $catid;
+        }
     }
 
-    $nuser = new stdClass();
-    $nuser->username   = $username;
-    $nuser->confirmed  = 1;
-    $nuser->mnethostid = $CFG->mnet_localhost_id;
-    $nuser->lang       = $CFG->lang;
+    foreach ($dad['cursos'] as $fullname) {
+        if (preg_match('/.* - ([0-9]{6}) - .*/', $fullname, $matches)) {
+            $shortname = $matches[1];
+            $courseid = saas_create_course($fullname, $shortname, $catid);
 
-    list($firstname, $lastname) = explode(' ', $name);
-    $nuser->firstname  = $firstname;
-    $nuser->lastname   = $lastname;
-    $nuser->email      = $username . '@moodle.org';
+            $username = "p{$shortname}";
+            $userid = saas_create_user($username, "Professor {$shortname}", $update_user_data);
+            saas_user_custom_data($userid, 'cpf', rand(11111111111, 99999999999));
+            saas_enrol_user($username, $shortname, 'editingteacher');
 
-    user_create_user($nuser, false);
-}
+            $username = "tp{$shortname}";
+            $userid = saas_create_user($username, "Tutor Presencial {$shortname}", $update_user_data);
+            saas_user_custom_data($userid, 'cpf', rand(11111111111, 99999999999));
+            saas_enrol_user($username, $shortname, $role_tutor_presencial);
 
-function saas_create_category($catname, $parentname='') {
-    global $DB;
+            $username = "td{$shortname}";
+            $userid = saas_create_user($username, "Tutor Distância {$shortname}", $update_user_data);
+            saas_user_custom_data($userid, 'cpf', rand(11111111111, 99999999999));
+            saas_enrol_user($username, $shortname, $role_tutor_distancia);
 
-    if (empty($parentname)) {
-        $parentid = 0;
-    } else {
-        $parentid = $DB->get_field('course_categories', 'id', array('name'=>$parentname));
+            $assid = saas_create_assignment($shortname, 'Tarefa 1');
+            $asscm = get_coursemodule_from_instance('assign', $assid);
+            $assctx = context_module::instance($asscm->id);
+            $ass = new assign($assctx, $asscm, null);
+
+            $n = $dad['alunos'];
+            for ($i=1; $i <= $n; $i++) {
+                $username = "e{$i}-{$catid_curso}";
+                $userid = saas_create_user($username, "Estudante {$username}", $update_user_data);
+                saas_user_custom_data($userid, 'cpf', rand(11111111111, 99999999999));
+                saas_enrol_user($username, $shortname, 'student');
+
+                $grade = $ass->get_user_grade($userid, true);
+                $grade->grader = 1;
+                $grade->grade = rand(10, 100);
+                $res = $ass->update_grade($grade);
+            }
+        } else {
+            throw new Exception("Não localizado shortname no curso: '{$fullname}'");
+        }
+        echo '.';
     }
 
-    if ($DB->get_field('course_categories', 'id', array('name'=>$catname, 'parent'=>$parentid))) {
-        return;
-    }
-
-    $newcategory = new stdClass();
-	$newcategory->name = $catname;
-	$newcategory->parent = $parentid;
-    if (class_exists('coursecat')) {
-        coursecat::create($newcategory);
-    } else {
-        $newcategory->id = $DB->insert_record('course_categories', $newcategory);
-        $newcategory->context = get_context_instance(CONTEXT_COURSECAT, $newcategory->id);
-        $categorycontext = $newcategory->context;
-        mark_context_dirty($newcategory->context->path);
-    }
-}
-
-function saas_create_course($coursename, $catname) {
-    global $DB;
-
-    if ($DB->get_field('course', 'id', array('shortname'=>$coursename))) {
-        return;
-    }
-
-    $catid = $DB->get_field('course_categories', 'id', array('name'=>$catname));
-
-    $newcourse = new stdClass();
-    $newcourse->shortname = $coursename;
-    $newcourse->fullname = $coursename;
-    $newcourse->category  = $catid;
-    $newcourse->visible   = '1';
-    $newcourse->enrollable   = 0;
-    $newcourse->startdate    = time();
-    $course = create_course($newcourse);
-
-    if (class_exists('context_course')) {
-        context_course::instance($course->id);
-    } else {
-        get_context_instance(CONTEXT_COURSE, $course->id, MUST_EXIST);
-    }
-}
-
-function saas_enrol_user($username, $coursename, $rolename) {
-    global $DB;
-
-    $roleid = $DB->get_field('role', 'id', array('shortname'=>$rolename));
-    $userid = $DB->get_field('user', 'id', array('username'=>$username));
-    $courseid = $DB->get_field('course', 'id', array('shortname'=>$coursename));
-
-    $enrol = enrol_get_plugin('manual');
-    $instance = $DB->get_record('enrol', array('courseid'=>$courseid, 'enrol'=>'manual'), '*', IGNORE_MULTIPLE);
-    $enrol->enrol_user($instance, $userid, $roleid, time(), 0, ENROL_USER_ACTIVE);
-}
-
-function saas_create_group($groupname, $coursename) {
-    global $DB;
-
-    $courseid = $DB->get_field('course', 'id', array('shortname'=>$coursename));
-    if ($DB->get_field('groups', 'id', array('name'=>$groupname, 'courseid'=>$courseid))) {
-        return;
-    }
-
-    $newgroup = new stdClass();
-    $newgroup->name = $groupname;
-    $newgroup->courseid = $courseid;
-
-    return groups_create_group($newgroup);
-}
-
-function saas_add_group_member($groupname, $coursename, $username) {
-    global $DB;
-
-    $courseid = $DB->get_field('course', 'id', array('shortname'=>$coursename));
-    $groupid = $DB->get_field('groups', 'id', array('name'=>$groupname, 'courseid'=>$courseid));
-    $userid = $DB->get_field('user', 'id', array('username'=>$username));
-    groups_add_member($groupid, $userid);
-}
-
-function saas_create_role($shortname, $fullname) {
-    global $DB;
-
-    if ($DB->get_field('role', 'id', array('shortname'=>$shortname))) {
-        return;
-    }
-
-    create_role($fullname, $shortname, '');
-}
-
-function saas_create_user_custom_field($shortname, $name, $datatype='text') {
-	global $DB;
-
-    if ($DB->get_field('user_info_field', 'id', array('shortname'=>$shortname))) {
-        return;
-    }
-
-	$field = new stdClass();
-	$field->datatype = $datatype;
-	$field->shortname = $shortname;
-	$field->name = $name;
-	$field->description = $name;
-    $field->categoryid = 1;
-    $field->descriptionformat = 1;
-    $field->visible = 2;
-    $field->param1 = 50;
-    $field->param2 = 255;
-    $DB->insert_record('user_info_field', $field);
-}
-
-function saas_user_custom_data($username, $fieldname, $value) {
-	global $DB;
-
-    $userid = $DB->get_field('user', 'id', array('username'=>$username));
-    $fieldid = $DB->get_field('user_info_field', 'id', array('shortname'=>$fieldname));
-
-	$data = new stdClass();
-    $data->userid = $userid;
-    $data->fieldid = $fieldid;
-    $data->data = $value;
-
-    if ($id = $DB->get_field('user_info_data', 'id', array('userid'=>$userid, 'fieldid'=>$fieldid))) {
-        $data->id = $id;
-        $DB->update_record('user_info_data', $data);
-    } else {
-        $DB->insert_record('user_info_data', $data);
-    }
 }

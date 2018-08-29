@@ -1,7 +1,7 @@
 Moodle SAAS Export
 ==================
 
-Este módulo possibilita a exportação de dados do Moodle (versões 2.0 a 3.4) para o
+Este módulo possibilita a exportação de dados do Moodle (versões 2.0 a 3.5) para o
 SAAS (Sistema de Acompanhamento e Avaliação dos Cursos da Rede e-Tec Brasil).
 Os dados exportados incluem:
 
