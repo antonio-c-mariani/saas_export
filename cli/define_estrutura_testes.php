@@ -225,22 +225,27 @@ foreach ($dados as $dad) {
             saas_user_custom_data($userid, 'cpf', rand(11111111111, 99999999999));
             saas_enrol_user($username, $shortname, $role_tutor_distancia);
 
-            $assid = saas_create_assignment($shortname, 'Tarefa 1');
-            $asscm = get_coursemodule_from_instance('assign', $assid);
-            $assctx = context_module::instance($asscm->id);
-            $ass = new assign($assctx, $asscm, null);
-
             $n = $dad['alunos'];
             for ($i=1; $i <= $n; $i++) {
                 $username = "e{$i}-{$catid_curso}";
                 $userid = saas_create_user($username, "Estudante {$username}", $update_user_data);
                 saas_user_custom_data($userid, 'cpf', rand(11111111111, 99999999999));
-                saas_enrol_user($username, $shortname, 'student');
 
-                $grade = $ass->get_user_grade($userid, true);
-                $grade->grader = 1;
-                $grade->grade = rand(10, 100);
-                $res = $ass->update_grade($grade);
+                $status = $i % 13 == 0 ? ENROL_USER_SUSPENDED : ENROL_USER_ACTIVE;
+                saas_enrol_user($username, $shortname, 'student', $status);
+
+                saas_assign_grade($userid, $courseid);
+
+				if ($i % 3 == 0) {
+					saas_update_user_login_times($userid);
+					saas_set_course_lastaccess($userid, $courseid);
+				} else if ($i % 7 == 0) {
+					saas_update_user_login_times($userid);
+				}
+
+				if ($i % 17 == 0) {
+                    saas_set_user_suspended($userid);
+                }
             }
         } else {
             throw new Exception("Não localizado shortname no curso: '{$fullname}'");

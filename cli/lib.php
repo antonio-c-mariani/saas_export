@@ -9,7 +9,7 @@ if (strpos(__FILE__, '/admin/report/') !== false) {
 require_once($CFG->dirroot.'/group/lib.php');
 require_once($CFG->dirroot.'/course/lib.php');
 require_once($CFG->dirroot.'/user/lib.php');
-require_once($CFG->dirroot.'/mod/assign/locallib.php');
+require_once($CFG->dirroot.'/lib/gradelib.php');
 
 if (file_exists($CFG->dirroot.'/lib/coursecatlib.php')) {
     require_once($CFG->dirroot.'/lib/coursecatlib.php');
@@ -106,7 +106,7 @@ function saas_create_course($fullname, $shortname, $catid) {
     return $course->id;
 }
 
-function saas_enrol_user($username, $coursename, $rolename) {
+function saas_enrol_user($username, $coursename, $rolename, $status=ENROL_USER_ACTIVE) {
     global $DB;
 
     $roleid = $DB->get_field('role', 'id', array('shortname'=>$rolename));
@@ -115,7 +115,7 @@ function saas_enrol_user($username, $coursename, $rolename) {
 
     $enrol = enrol_get_plugin('manual');
     $instance = $DB->get_record('enrol', array('courseid'=>$courseid, 'enrol'=>'manual'), '*', IGNORE_MULTIPLE);
-    $enrol->enrol_user($instance, $userid, $roleid, time(), 0, ENROL_USER_ACTIVE);
+    $enrol->enrol_user($instance, $userid, $roleid, 0, 0, $status);
 }
 
 function saas_create_group($groupname, $coursename) {
@@ -190,46 +190,45 @@ function saas_user_custom_data($userid, $fieldname, $value) {
     }
 }
 
-function saas_create_assignment($shortname, $name) {
+function saas_assign_grade($userid, $courseid) {
+    $course_item = grade_item::fetch_course_item($courseid);
+    $grade = rand($course_item->grademin, $course_item->grademax);
+    $course_item->update_final_grade($userid, $grade);
+}
+
+function saas_set_course_lastaccess($userid, $courseid) {
 	global $DB;
 
-    if (!$course = $DB->get_record('course', array('shortname'=>$shortname))) {
-        return false;
+    if (!$DB->record_exists('user_lastaccess', array('userid'=>$userid, 'courseid'=>$courseid))) {
+        $last = new stdClass();
+        $last->userid     = $userid;
+        $last->courseid   = $courseid;
+        $last->timeaccess = time();
+        $DB->insert_record_raw('user_lastaccess', $last, false);
     }
+}
 
-    $modulename = 'assign';
-	if ($id = $DB->get_field('assign', 'id', array('course'=>$course->id, 'name'=>$name))) {
-		return $id;
-	}
+function saas_update_user_login_times($userid) {
+    global $DB;
 
-    $moduleinfo = new stdClass();
-    $moduleinfo->modulename = $modulename;
-	$moduleinfo->name = $name;
-    $moduleinfo->course = $course->id;
-    $moduleinfo->section = 0;
-    $moduleinfo->visible = 1;
-    $moduleinfo->intro = "<p>{$name}</p>".
-    $moduleinfo->introformat = 1;
+    $now = time();
 
-    $moduleinfo->submissiondrafts = 0;
-    $moduleinfo->requiresubmissionstatement = 0;
-    $moduleinfo->sendnotifications = 0;
-    $moduleinfo->sendlatenotifications = 0;
-    $moduleinfo->duedate = 0;
-    $moduleinfo->cutoffdate = 0;
-    $moduleinfo->gradingduedate = 0;
-    $moduleinfo->allowsubmissionsfromdate = 0;
-    $moduleinfo->grade = 100;
-    $moduleinfo->teamsubmission = 0;
-    $moduleinfo->requireallteammemberssubmit = 0;
-    $moduleinfo->blindmarking = 0;
-    $moduleinfo->markingworkflow = 0;
-    $moduleinfo->markingallocation = 0;
-    $moduleinfo->cmidnumber = 0;
+    $user = new stdClass();
+    $user->id = $userid;
 
-    $module = $DB->get_record('modules', array('name'=>$modulename), '*', MUST_EXIST);
-    $moduleinfo->module = $module->id;
+    $user->firstaccess = $now;
+    $user->lastlogin = $DB->get_field('user', 'currentlogin', array('id'=>$userid));
 
-    $mdi =  add_moduleinfo($moduleinfo, $course, null);
-    return $mdi->instance;
+    $user->currentlogin = $now;
+
+    $user->lastaccess = $now;
+    $user->lastip = '10.1.1.1';
+
+    $DB->update_record('user', $user);
+}
+
+function saas_set_user_suspended($userid) {
+    global $DB;
+
+    $DB->set_field('user', 'suspended', 1, array('id'=>$userid));
 }
