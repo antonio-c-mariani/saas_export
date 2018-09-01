@@ -1197,15 +1197,24 @@ class saas {
     }
 
     function send_resume($complete=true) {
+        global $CFG;
+
         $resume = array();
         $resume['config'] = $this->config;
+
+        $resume['moodle'] = array(
+            'version' => $CFG->version,
+            'release' => $CFG->release,
+            'dbtype' => $CFG->dbtype,
+            );
+
         if ($complete) {
             $resume['count_sent_ods'] = $this->count_sent_ods;
             $resume['count_sent_polos'] = $this->count_sent_polos;
             $resume['count_sent_users'] = $this->count_sent_users;
             $resume['count_sent_users_failed'] = $this->count_sent_users_failed;
             $resume['elapsed_time'] = $this->elapsed_time;
-            $resume['tempos_chamadas_ws'] = $this->time_ws_calls;
+            $resume['ws_call_times'] = $this->time_ws_calls;
         }
         $this->post_ws('moodle/configuracoes', $resume, 202);
     }
