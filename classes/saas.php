@@ -323,7 +323,7 @@ class saas {
 
         $encoded_oferta_uid = rawurlencode($oc_uid);
         $polos = $this->get_ws("ofertas/cursos/{$encoded_oferta_uid}/polos");
-        if ($polos == null) {
+        if (is_null($polos)) {
             throw new Exception("Não foi possível obter os polos no SAAS. Por favor, verifique as configurações deste plugin");
         } else {
             $not_empty_polos = array();
@@ -347,7 +347,7 @@ class saas {
 
         $encoded_oferta_uid = rawurlencode($oc_uid);
         $ods = $this->get_ws("ofertas/cursos/{$encoded_oferta_uid}/disciplinas");
-        if ($ods == null) {
+        if (is_null($ods)) {
             throw new Exception("Não foi possível obter as ofertas de disciplinas no SAAS. Por favor, verifique as configurações deste plugin");
         } else {
             $not_empty_ods = array();
